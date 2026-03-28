@@ -1,6 +1,16 @@
 import customtkinter as ctk
 import threading
 from tkinter import messagebox
+import ctypes
+import os
+import sys
+
+# * Set AppID buat Taskbar Icon Sync v5.8.15
+try:
+    myappid = 'zaqi.apexomega.terminal.v5'
+    ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
+except Exception:
+    pass
 
 # * Tema Shell Mode (Zaqi Interactive Edition v4.6)
 ctk.set_appearance_mode("Dark")
@@ -83,15 +93,21 @@ oLink.Save
 
     def _set_window_icon(self):
         try:
-            import os, sys
             if getattr(sys, 'frozen', False):
                 base_path = sys._MEIPASS
                 icon_path = os.path.join(base_path, 'app_icon.ico')
             else:
-                icon_path = 'app_icon.ico'
+                icon_path = os.path.abspath('app_icon.ico')
             
             if os.path.exists(icon_path):
+                # * Dual-Set: iconbitmap & iconphoto (Biar taskbar anteng)
                 self.iconbitmap(icon_path)
+                try:
+                    from PIL import Image, ImageTk
+                    img = Image.open(icon_path)
+                    self.iconphoto(True, ImageTk.PhotoImage(img))
+                except Exception:
+                    pass
         except Exception:
             pass
 
