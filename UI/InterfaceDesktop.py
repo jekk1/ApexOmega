@@ -98,6 +98,9 @@ class InterfaceDesktop(ctk.CTk):
         self._tw.bind("<<Cut>>", self._block_cut)
         self._tw.bind("<Control-a>", self._block_select_all)
         
+        # * Global Panic Stop (v5.8.10)
+        self.bind_all("<Escape>", self._on_panic_stop)
+        
         self._tw.insert("end", f"ApexOmega Console [Version: {self.core.VERSION}]\n", "dimText")
         self._tw.insert("end", "Titanium Absolute (Global DLL & Tcl Lock)\n\n", "dimText")
         
@@ -230,7 +233,11 @@ class InterfaceDesktop(ctk.CTk):
             self.log_to_terminal(f"\n[!] UI Logic Error: {str(e)}\n", "error")
         
         return "break"
-        
+
+    # * Global Panic Stop Handler v5.8.10
+    def _on_panic_stop(self, event=None):
+        self.log_to_terminal("\n[!] PANIC STOP: ESCAPE KEY PRESSED! Cleaning up...\n", "danger")
+        self.core.stop_running_tool()
         return "break"
 
     # * Tampilkan prompt baru (Thread-Safe untuk v5.7)

