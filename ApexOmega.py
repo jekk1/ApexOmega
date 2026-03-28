@@ -27,8 +27,9 @@ from tkinter import messagebox
 
 # * Inisialisasi framework Apex Omega Shell v5.1 (Auto-Pilot Edition)
 class ApexOmega:
-    VERSION = "5.3"
+    VERSION = "5.4"
     def __init__(self, mode="gui"):
+        self.stop_requested = False
         self.ui_mode = mode
         self.isRunning = True
         self.active_target = None
@@ -49,6 +50,17 @@ class ApexOmega:
         self.atlas = VulnAtlas()
         self.api_auditor = ApiAuditor()
         self.cloud_audit = CloudAudit()
+        
+        # * Link Core for Global Events (v5.4)
+        self.web.core = self
+        self.atlas.core = self
+        self.net.core = self
+        self.discovery.core = self
+        self.api_auditor.core = self
+        self.wp.core = self
+        self.special.core = self
+        self.payload_gen.core = self
+        self.cloud_audit.core = self
         
         # * GUI Handle
         if self.ui_mode == "gui":
@@ -74,16 +86,28 @@ class ApexOmega:
             self.bridge.startNativeSession()
             self.gui.mainloop()
 
+    # * Berhenti paksa tool yang sedang jalan (v5.4 Control-c)
+    def stop_running_tool(self):
+        self.stop_requested = True
+        self.gui.log_to_terminal("\n[!] PANIC STOP INITIATED (Ctrl+C). Terminating current process...\n", "[error] ")
+        self.gui.show_prompt()
+
     # * Set Target Utama (IP/Domain)
     def set_active_target(self, target):
         self.active_target = target
         return target
 
-    # * Interactive Shell Command Handler (Zaqi Shell Logic)
-    def execute_shell_command(self, cmd):
+    # * Interactive Shell Command Handler (Terminal Logic v5.4)
+    def execute_shell_command(self, userInput):
+        parts = userInput.split()
+        if not parts: return
+        
+        # * Reset flag stop tiap kali command baru dieksekusi v5.4
+        self.stop_requested = False
+        
         def thread_task():
             # * Format: !nmap atau !exit
-            command = cmd.strip().lower()
+            command = parts[0].strip().lower()
             
             if command == "!exit":
                 if self.current_module:
@@ -97,7 +121,7 @@ class ApexOmega:
             if command.startswith("!"):
                 tool_name = command[1:] # Hapus tanda seru
                 
-                # -- Verifikasi Tool v5.2 (Args Support) --
+                # -- Verifikasi Tool v5.4 (Args Support) --
                 args = parts[1:]
                 
                 if tool_name in ["recon", "info"]:
@@ -183,8 +207,23 @@ class ApexOmega:
         cors = self.atlas.auditCors(target)
         if cors: self.gui.log_to_terminal(f"  [!] CORS MISCONFIGURED: {cors}\n", "[warning] ")
         
-        # 3. Path Fuzzing (Extreme)
-        self.gui.log_to_terminal("  [*] Fuzzing 50+ Sensitive Paths (config, backup, dev)...\n")
+        # 4. SSTI Check (v5.4 New)
+        self.gui.log_to_terminal("  [*] Testing Server-Side Template Injection (SSTI)...\n")
+        ssti = self.atlas.checkSsti(target)
+        if ssti: self.gui.log_to_terminal(f"  [!!!] SSTI VULNERABLE: Found echo with payload {ssti}\n", "[danger] ")
+
+        # 5. File Upload Detection (v5.4 New)
+        self.gui.log_to_terminal("  [*] Searching for File Upload vectors...\n")
+        if self.atlas.checkUpload(target):
+            self.gui.log_to_terminal("  [!] FILE UPLOAD DETECTED: Found upload form on page\n", "[warning] ")
+
+        # 6. CRLF Injection (v5.4 New)
+        self.gui.log_to_terminal("  [*] Testing CRLF Injection (HTTP Splitting)...\n")
+        if self.atlas.checkCrlf(target):
+            self.gui.log_to_terminal("  [!] CRLF INJECTION VULNERABLE: Header injection possible\n", "[danger] ")
+
+        # 7. Path Fuzzing (Extreme 100+ Paths)
+        self.gui.log_to_terminal("  [*] Fuzzing 100+ Sensitive Paths (config, backup, dev, git)...\n")
         paths = self.atlas.fuzzSensitivePaths(target)
         for p, code in paths:
             self.gui.log_to_terminal(f"  [+] FOUND PATH: {p:25} (HTTP {code})\n", "[success] ")
@@ -221,9 +260,10 @@ class ApexOmega:
         threads = int(args[0]) if args else 50
         self.gui.log_to_terminal(f"[*] STRESS ENGINE: Launching {threads} threads to {self.active_target} (Nitro-Flood)\n", "[init] ")
         
-        # Simulasi serangan asinkron
+        # Simulasi serangan asinkron dengan support stop flag v5.4
         self.special.runNitroStress(self.active_target, threads=threads)
         self.gui.log_to_terminal("  [!] Attack Running (Check target status manually)\n", "[danger] ")
+        
         self.gui.log_to_terminal("Stress complete. Check server health.\n", "[info] ")
         self.gui.update_roadmap_check(6)
 
@@ -231,12 +271,17 @@ class ApexOmega:
         if not self.active_target:
             self.gui.log_to_terminal("Dirb: No target set.\n", "[error] ")
             return
-        target = f"http://{self.active_target}" if not self.active_target.startswith("http") else self.active_target
-        self.gui.log_to_terminal(f"[*] DIRB: Brute-forcing directories on {target}\n", "[init] ")
-        res = self.web.bruteDir(target)
-        for d, code in res:
-            tag = "[success]" if code == 200 else "[warning]"
-            self.gui.log_to_terminal(f"  [+] /{d:20} (HTTP {code})\n", tag)
+        baseUrl = f"http://{self.active_target}" if not self.active_target.startswith("http") else self.active_target
+        self.gui.log_to_terminal(f"[*] DIRB: Brute-forcing directories on {baseUrl}\n", "[init] ")
+        
+        commonDirs = ["admin", "config", "backup", "dev", "login", "wp-admin"]
+        for d in commonDirs:
+            if self.stop_requested: break
+            target = urljoin(baseUrl, d)
+            code = self.web.checkPath(target)
+            if code:
+                tag = "[success]" if code == 200 else "[warning]"
+                self.gui.log_to_terminal(f"  [+] /{d:20} (HTTP {code})\n", tag)
         self.gui.log_to_terminal("Dirb complete.\n", "[info] ")
 
     def _run_headers_module(self, args=[]):

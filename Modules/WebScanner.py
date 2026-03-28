@@ -9,6 +9,7 @@ class WebScanner:
     def __init__(self):
         self.session = requests.Session()
         self.headers = {'User-Agent': 'ApexOmega/4.8 (X11; Linux x86_64)'} # Kali Linux Style UA
+        self.core = None # Will be set by core
         self.discovered = set()
         self.waf_signatures = {
             "Cloudflare": ["cf-ray", "__cfduid", "cloudflare"],
@@ -42,6 +43,7 @@ class WebScanner:
         
         found = []
         for d in commonDirs:
+            if self.core and self.core.stop_requested: break
             target = urljoin(baseUrl, d)
             try:
                 # * Kita pake HEAD biar kenceng (v5.3 Optimize)

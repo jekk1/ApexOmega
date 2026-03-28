@@ -83,8 +83,12 @@ class InterfaceDesktop(ctk.CTk):
         self._tw.tag_config("cyanText", foreground="#00ffff")
         self._tw.tag_config("init", foreground="#aaaaaa")
         
-        # * Bind event untuk proteksi teks dan handle input
-        self._tw.bind("<Return>", self._on_enter)
+        # * Bind event untuk proteksi
+        self._tw.bind("<Control-c>", lambda e: self.core.stop_running_tool())
+        
+        # * Label Instruksi Bawah
+        lbl_info = ctk.CTkLabel(self.tab_console, text="[!] CTRL+C TO STOP | !EXIT TO ROOT | !HELP FOR MANUAL", font=("Roboto", 10), text_color="#444444")
+        lbl_info.pack(side="bottom", pady=5)
         self._tw.bind("<Key>", self._on_key)
         self._tw.bind("<BackSpace>", self._on_backspace)
         self._tw.bind("<Delete>", self._on_delete)
@@ -267,19 +271,23 @@ class InterfaceDesktop(ctk.CTk):
         roadmap_frame = ctk.CTkFrame(self.tab_roadmap, fg_color="#0a0a0a", border_width=1, border_color="#222222")
         roadmap_frame.pack(fill="both", expand=True, padx=80, pady=20)
         
-        # * Daftar checklist (Berdasarkan GuidedAssistant)
-        steps = [
-            "1. Information Gathering (!recon)",
-            "2. Infrastructure Scan (!nmap)",
-            "3. Subdomain Discovery (!subdomain)",
-            "4. Vulnerability Audit (!webaudit / !vuln)",
-            "5. API & Cloud Hunting (!api / !cloud)",
-            "6. Stress Testing (!stress)"
+        # * Daftar checklist (Berdasarkan GuidedAssistant v5.4)
+        missions = [
+            ("1. Information Gathering (!recon)", "Stalking IP, DNS, Whois, dan Server Info buat nyari titik lemah target."),
+            ("2. Infrastructure Scan (!nmap)", "Cari pintu (Port) mana aja yang kebuka di server musuh biar bisa masuk."),
+            ("3. Subdomain Discovery (!subdomain)", "Buru subdomain rahasia (dev, test, staging) yang sering dilupain admin."),
+            ("4. Vulnerability Audit (!webaudit / !vuln)", "Audit celah SQLi, XSS, dan Host Injection di level aplikasi web."),
+            ("5. API & Cloud Hunting (!api / !cloud)", "Bongkar urat nadi data di API endpoint dan storage awan (S3 Bucket)."),
+            ("6. Stress Testing (!stress)", "Uji ketahanan akhir dengan tsunami request buat bikin server megap-megap.")
         ]
         
-        for i, s in enumerate(steps):
-            cb = ctk.CTkCheckBox(roadmap_frame, text=s, font=("Roboto", 15), text_color="#cccccc", fg_color="#00cc66", hover_color="#00aa55", border_color="#333333")
-            cb.pack(anchor="w", padx=40, pady=15)
+        for i, (m, desc) in enumerate(missions):
+            cb = ctk.CTkCheckBox(roadmap_frame, text=m, font=("Roboto", 15, "bold"), text_color="#00ff00", fg_color="#00cc66", hover_color="#00aa55", border_color="#333333")
+            cb.pack(anchor="w", padx=40, pady=(20, 2))
+            
+            lbl_desc = ctk.CTkLabel(roadmap_frame, text=desc, font=("Roboto", 12), text_color="#666666", wraplength=500, justify="left")
+            lbl_desc.pack(anchor="w", padx=75, pady=(0, 10))
+            
             self.roadmap_checks.append(cb)
 
     # * Tandai misi selesai dari luar (Auto-Checkbox v5.0)
