@@ -51,7 +51,7 @@ from urllib.parse import urljoin
 
 # * Inisialisasi framework Apex Omega Shell v5.1 (Auto-Pilot Edition)
 class ApexOmega:
-    VERSION = "5.8.8"
+    VERSION = "5.8.9"
     def __init__(self, mode="gui"):
         socket.setdefaulttimeout(3) # * Anti-Stuck Globally
         self.stop_requested = False
@@ -568,6 +568,8 @@ class ApexOmega:
                     self.gui.log_to_terminal(f"Failed to check updates (HTTP {response.status_code})")
                     self.gui.show_prompt()
                     return
+                if getattr(sys, 'frozen', False):
+                    self._create_desktop_shortcut()
                 
                 remoteVer = response.text.strip()
                 
@@ -724,6 +726,38 @@ class ApexOmega:
         # * Restart process pake executable python yang sama
         python = sys.executable
         os.execl(python, python, *sys.argv)
+
+    # * Auto-Create Shortcut v5.8.9
+    def _create_desktop_shortcut(self):
+        try:
+            import os, sys, subprocess
+            desktop = os.path.join(os.environ.get("USERPROFILE"), "Desktop")
+            shortcut_path = os.path.join(desktop, "ApexOmega.lnk")
+            
+            if os.path.exists(shortcut_path):
+                return
+
+            target = sys.executable
+            work_dir = os.path.dirname(sys.executable)
+            
+            vbs_code = f"""
+Set oWS = WScript.CreateObject("WScript.Shell")
+sLinkFile = "{shortcut_path}"
+Set oLink = oWS.CreateShortcut(sLinkFile)
+oLink.TargetPath = "{target}"
+oLink.WorkingDirectory = "{work_dir}"
+oLink.Description = "Apex Omega Pentest Framework"
+oLink.Save
+"""
+            vbs_path = os.path.join(os.environ.get("TEMP"), "ao_shortcut.vbs")
+            with open(vbs_path, "w") as f:
+                f.write(vbs_code)
+                
+            subprocess.run(["cscript", "//nologo", vbs_path], capture_output=True, creationflags=subprocess.CREATE_NO_WINDOW if hasattr(subprocess, 'CREATE_NO_WINDOW') else 0)
+            os.remove(vbs_path)
+            self.gui.log_to_terminal("[+] Desktop Shortcut (ApexOmega) created automatically.\n", "[info] ")
+        except Exception:
+            pass
 
     # * Bersihkan sesi
     def exitFramework(self):
