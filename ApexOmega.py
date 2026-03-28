@@ -506,17 +506,31 @@ class ApexOmega:
                     return
                 
                 remoteVer = response.text.strip()
-                if remoteVer <= self.VERSION:
-                    self.gui.log_to_terminal(f"System is up-to-date (v{self.VERSION}).\n", "[info] ")
+                
+                # -- Logika Small Update v5.7.1 --
+                if remoteVer < self.VERSION:
+                    self.gui.log_to_terminal(f"Warning: Remote version (v{remoteVer}) is older than local (v{self.VERSION}).\n", "[warning] ")
                     self.gui.show_prompt()
                     return
                 
-                # -- Auto-Pilot Update v5.1 --
-                self.gui.log_to_terminal(f"\n[!] New version found: v{remoteVer}\n", "[warning] ")
-                confirm = messagebox.askyesno("ApexOmega Update", f"Ada versi baru v{remoteVer}. Mau download & restart otomatis?")
-                if not confirm: 
-                    self.gui.log_to_terminal("Update dibatalkan oleh user.")
-                    return
+                isSmallUpdate = False
+                if remoteVer == self.VERSION:
+                    confirm = messagebox.askyesno("ApexOmega: Small Update", f"System sudah v{self.VERSION}. Mau lakuin 'Small Update' (Force Sync) dari GitHub?")
+                    if not confirm:
+                        self.gui.log_to_terminal(f"System is up-to-date (v{self.VERSION}).\n", "[info] ")
+                        self.gui.show_prompt()
+                        return
+                    isSmallUpdate = True
+                
+                # -- Proceed with Update (Large or Small) --
+                msg = f"\n[!] New version found: v{remoteVer}\n" if not isSmallUpdate else "\n[*] Initiating Small Update (Force Sync)...\n"
+                self.gui.log_to_terminal(msg, "[warning] " if not isSmallUpdate else "[info] ")
+                
+                if not isSmallUpdate:
+                    confirm = messagebox.askyesno("ApexOmega Update", f"Ada versi baru v{remoteVer}. Mau download & restart otomatis?")
+                    if not confirm: 
+                        self.gui.log_to_terminal("Update dibatalkan oleh user.")
+                        return
 
                 self.gui.log_to_terminal("[*] Downloading updates from GitHub (Git Pull)...\n", "[info] ")
                 try:
