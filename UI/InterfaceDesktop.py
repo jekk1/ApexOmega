@@ -205,28 +205,22 @@ class InterfaceDesktop(ctk.CTk):
             
             self._append_system(f"\n[root@shell] [INITIATING AUTOMATED RECON ON: {target}]\n", "cyanText")
             
-            # -- Quick real recon --
+            # -- Quick real recon v5.7.1 (Instant Prompt) --
+            self.show_prompt() 
+            
             def quick_recon():
                 try:
                     import socket
                     self.core.set_active_target(target)
-                    self._append_system(f"[*] Switching Target to: {target}\n", "info")
+                    self._append_system(f"[*] Reconnaissance for {target} started in background...\n", "info")
                     
-                    # * Resolve IP dasar
+                    # * Resolve IP dasar (Silent)
                     pure_domain = target.replace("http://", "").replace("https://", "").split("/")[0]
                     ip = socket.gethostbyname(pure_domain)
-                    self._append_system(f"  [+] PRIMARY IP: {ip}\n", "greenText")
-                    
-                    tech = self.core.web.detectTech(target if "://" in target else f"http://{target}")
-                    server = tech.get('server', ['Unknown'])[0]
-                    self._append_system(f"  [+] SERVER TECH: {server}\n", "greenText")
-                    
-                    self._append_system(f"\n[root@shell] TARGET LOCKED. Ready for exploitation.\n", "success")
-                except Exception as e:
-                    self._append_system(f"[-] Recon status: Limited connectivity to {target}\n", "dimText")
-                
-                self.show_prompt()
-
+                    self._append_system(f"  [+] TARGET IP DISCOVERED: {ip}\n", "success")
+                except Exception:
+                    pass # Silent failure to keep UI clean
+            
             threading.Thread(target=quick_recon, daemon=True).start()
         
         return "break"
