@@ -26,5 +26,5 @@ Thumbs.db
 Desktop.ini
 .DS_Store
 
-# Software (build output folder)
-Software/
+# Build output (EXE result)
+dist/

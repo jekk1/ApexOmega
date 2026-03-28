@@ -189,9 +189,11 @@ class ApexOmega:
                 self.gui.log_to_terminal(f"Download failed (HTTP {response.status_code})")
                 return
             
-            projectDir = os.path.dirname(os.path.abspath(__file__))
-            tempDir = os.path.join(projectDir, "_update_temp")
-            zipPath = os.path.join(projectDir, "_update.zip")
+            # * Software/ -> parent = git root
+            softwareDir = os.path.dirname(os.path.abspath(__file__))
+            rootDir = os.path.dirname(softwareDir)
+            tempDir = os.path.join(rootDir, "_update_temp")
+            zipPath = os.path.join(rootDir, "_update.zip")
             
             # * Simpan ZIP ke disk
             with open(zipPath, "wb") as f:
@@ -217,14 +219,14 @@ class ApexOmega:
             
             # * Replace files dari source ke project directory
             updatedCount = 0
-            skippedItems = {"_update_temp", "_update.zip", ".git", "__pycache__", "Software"}
+            skippedItems = {"_update_temp", "_update.zip", ".git", ".gitignore"}
             
             for item in os.listdir(sourceDir):
                 if item in skippedItems:
                     continue
                 
                 srcPath = os.path.join(sourceDir, item)
-                dstPath = os.path.join(projectDir, item)
+                dstPath = os.path.join(rootDir, item)
                 
                 if os.path.isdir(srcPath):
                     if os.path.exists(dstPath):
@@ -247,8 +249,9 @@ class ApexOmega:
         except Exception as e:
             self.gui.log_to_terminal(f"Update Error: {str(e)}")
             # * Cleanup on failure
-            tempDir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "_update_temp")
-            zipPath = os.path.join(os.path.dirname(os.path.abspath(__file__)), "_update.zip")
+            rootDir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            tempDir = os.path.join(rootDir, "_update_temp")
+            zipPath = os.path.join(rootDir, "_update.zip")
             shutil.rmtree(tempDir, ignore_errors=True)
             if os.path.exists(zipPath):
                 os.remove(zipPath)
