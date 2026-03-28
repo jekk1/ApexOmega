@@ -20,6 +20,8 @@ class GuidedAssistant:
             "nitro": "Alias untuk Chaos Engine (Destroyer Profile).",
             "metasploit": "Framework eksploitasi paling lengkap untuk pengujian penetrasi sistem.",
             
+            "payload": "Payload Generator: Tool untuk membuat encoding (Base64, Hex, URL) buat bypass filter dasar. CARA PAKAI: Ketik !payload.",
+            
             # -- System Commands --
             "exit": "Keluar dari modul aktif atau aplikasi. CARA PAKAI: Ketik !exit.",
             "clear": "Membersihkan layar terminal console.",
@@ -30,7 +32,8 @@ class GuidedAssistant:
         self.roadmap = [
             "v1.0-v3.x: Desktop UI Dasar.",
             "v4.0: Console Edition.",
-            "v4.5: Interactive Shell Edition (Mode !tool & !exit)."
+            "v4.5: Interactive Shell Edition (Mode !tool & !exit).",
+            "v4.7: Zero-to-Hero Edition (Beginner Roadmap & Color Aesthetics)."
         ]
 
     def getSteps(self):

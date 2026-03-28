@@ -1,4 +1,4 @@
-# * Modul edukasi untuk pemula (Pentesting Academy)
+# * Modul edukasi untuk pemula (Pentesting Academy v4.7)
 class EduModule:
     def __init__(self):
         pass
@@ -6,29 +6,46 @@ class EduModule:
     # * Kamus istilah pentester dalam bahasa Indonesia santai
     def getWiki(self):
         return {
-            "XSS": "Cross-Site Scripting. Bayangin lu nyelipin catetan kecil ke website orang lain biar tampil di semua user.",
-            "SQLi": "SQL Injection. Nanya ke database dengan cara licik biar dikirim semua data sensitifnya.",
-            "Whois": "KTP-nya domain. Isinya info siapa yang punya, belinya kapan, dan domain-nya kemana.",
-            "Brute Force": "Coba-coba sampe mampus. Lu nebak kunci pake sejuta cara sampe ada yang kebuka.",
-            "Honeypot": "Sistem jebakan. Dibikin keliatan gampang di-hack biar hacker masuk ke situ padahal dipantau.",
-            "Payload": "Senjata utamannya. Serangkaian kode yang lu kirim buat eksploitasi celah keamanan."
+            "XSS": "Cross-Site Scripting. Nyelipin script (biasanya JS) biar jalan di browser korban via website target.",
+            "SQLi": "SQL Injection. Nyelipin perintah database via input form biar data kesedot semua.",
+            "WHOIS": "KTP-nya domain. Info pemilik, registrar, sampe tanggal kadaluarsa.",
+            "BRUTE FORCE": "Nebak password pake kombinasi jutaan kata sampe jebol.",
+            "HONEYPOT": "Server jebakan buat manggil hacker, padahal isinya cuma rekaman aktivitas mereka.",
+            "PAYLOAD": "Kode jahat (senjata) yang dikirim buat eksploitasi celah.",
+            "REVERSE SHELL": "Teknik biar server target yang 'nelfon' balik ke komputer lu (dapet akses terminal).",
+            "C2": "Command & Control. Server pusat buat ngontrol semua komputer yang udah kena hack.",
+            "PRIVSET": "Privilege Escalation. Dari user biasa naik pangkat jadi admin/root biar bisa ngapa-ngapain."
         }
 
-    # * Langkah-langkah belajar buat jadi pentester (Roadmap)
+    # * Langkah-langkah belajar buat jadi pentester (Zero-to-Hero Roadmap)
     def getRoadmap(self):
         return [
-            "1. Belajar Dasar Jaringan (IP Address, Port, TCP/UDP)",
-            "2. Kuasai OS Linux (Command line adalah pedang lu)",
-            "3. Paham HTTP Protocol (Gimana browser ngobrol sama server)",
-            "4. Belajar SQL Dasar (Database itu gudang harta karun)",
-            "5. Belajar 1 Bahasa Scripting (Python disarankan!)",
-            "6. Praktek di lab legal (TryHackMe, HackTheBox)"
+            "[LEVEL 0: THE INFRASTRUCTURE]",
+            "1. Paham OS: Pake Linux/Terminal. Cek isi folder (ls), pindah folder (cd), liat posisi (pwd).",
+            "2. File System: Tau bedanya file teks, binary, sama script (sh/py/php).",
+            "3. User Power: Tau bedanya user biasa sama 'sudo' (sang penguasa root).",
+            "4. Basic Network: Tau IP lu sendiri (ifconfig), tes koneksi (ping), liat rute (tracert).",
+            "",
+            "[LEVEL 1: WEB BASICS]",
+            "5. HTTP Protocol: Gimana website ngirim data (GET vs POST).",
+            "6. Browser DevTools: Teken F12, liat isinya, edit HTML-nya secara lokal.",
+            "7. Domain & DNS: Tau gimana 'google.com' berubah jadi IP (nslookup).",
+            "",
+            "[LEVEL 2: ATTACK FUNDAMENTALS]",
+            "8. Information Gathering: Cari tau sebanyak mungkin tentang target (Whois, Port Scan).",
+            "9. Vulnerability Scan: Pake tool otomatis buat nyari celah (Web Scanner).",
+            "10. Exploitation: Praktekin celah yang ditemuin (SQLi/XSS).",
+            "",
+            "[LEVEL 3: PROFESSIONALISM]",
+            "11. Bug Bounty Platform: Cari duit legal di HackerOne atau Bugcrowd.",
+            "12. Documentation: Catat setiap langkah lu. Report adalah bukti kerja profesional."
         ]
 
     # * Tips keamanan cepat buat pemula
     def getQuickTips(self):
         return [
-            "Selalu pake VPN kalo lagi audit target luar.",
-            "Jangan pernah audit target tanpa ijin (Gunakan platform Bug Bounty).",
-            "Update tools lu secara berkala biar gak ketinggalan jaman."
+            "JANGAN PERNAH audit target tanpa ijin (Itu tindak kriminal!).",
+            "Selalu pake Virtual Machine (VM) buat nyobain tool baru.",
+            "Komunitas adalah kunci. Join Discord/Telegram security lokal.",
+            "Gunakan platform legal kayak TryHackMe buat latihan aman."
         ]

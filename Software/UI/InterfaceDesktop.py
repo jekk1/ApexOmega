@@ -60,12 +60,12 @@ class InterfaceDesktop(ctk.CTk):
         self.terminal.pack(fill="both", expand=True)
         self._tw = self.terminal._textbox
         
-        # * Tag warna untuk output system (Semua ijo bro)
-        self._tw.tag_config("sysText", foreground="#00cc66")
-        self._tw.tag_config("dimText", foreground="#003311")
+        # * Tag warna untuk output system (Gray for system, Green for results)
+        self._tw.tag_config("sysText", foreground="#555555")
+        self._tw.tag_config("dimText", foreground="#333333")
         self._tw.tag_config("cyanText", foreground="#00cc66")
         self._tw.tag_config("greenText", foreground="#00cc66")
-        self._tw.tag_config("prompt", foreground="#00ff66")
+        self._tw.tag_config("prompt", foreground="#444444")
         
         # * Bind event untuk proteksi teks dan handle input
         self._tw.bind("<Return>", self._on_enter)

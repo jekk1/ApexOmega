@@ -17,12 +17,13 @@ import threading
 
 from Modules.GuidedAssistant import GuidedAssistant
 from Modules.WordPressScanner import WordPressScanner
+from Modules.PayloadGen import PayloadGen
 import requests
 from tkinter import messagebox
 
-# * Inisialisasi framework Apex Omega Shell v4.6 (Zaqi Interactive Edition)
+# * Inisialisasi framework Apex Omega Shell v4.7 (Zaqi Interactive Edition)
 class ApexOmega:
-    VERSION = "4.6"
+    VERSION = "4.7"
     def __init__(self, mode="gui"):
         self.ui_mode = mode
         self.isRunning = True
@@ -39,6 +40,7 @@ class ApexOmega:
         self.special = SpecialTools()
         self.edu = EduModule()
         self.guided = GuidedAssistant()
+        self.payload_gen = PayloadGen()
         
         # * GUI Handle
         if self.ui_mode == "gui":
@@ -51,7 +53,7 @@ class ApexOmega:
         if self.ui_mode == "cli":
             console.clear()
             self.ui.showBanner()
-            self.ui.logStatus("Memeriksa mesin Apex v4.5...", "info")
+            self.ui.logStatus("Memeriksa mesin Apex v4.7...", "info")
             time.sleep(0.5)
             
             if self.bridge.startNativeSession():
@@ -100,6 +102,9 @@ class ApexOmega:
                 elif tool_name in ["chaos", "nitro"]:
                     self.current_module = "chaos"
                     self._run_chaos_module()
+                elif tool_name in ["payload"]:
+                    self.current_module = "payload"
+                    self._run_payload_module()
                 elif tool_name == "help":
                     self.gui.tabview.set("How to Use")
                 else:
@@ -108,6 +113,19 @@ class ApexOmega:
         threading.Thread(target=thread_task, daemon=True).start()
 
     # -- Module Automated Runners --
+
+    def _run_payload_module(self):
+        if not self.active_target:
+            self.gui.log_to_terminal("Payload Gen: No target set, using generic payload.\n", "[info] ")
+        
+        # Contoh payload sederhana (bypass/xss)
+        text = self.active_target if self.active_target else "alert('ApexOmega')"
+        res = self.payload_gen.generate(text)
+        
+        self.gui.log_to_terminal(f"Generating Payloads for: {text}\n", "[gen] ")
+        for fmt, val in res.items():
+            self.gui.log_to_terminal(f"  {fmt}: {val}\n", "[+] ")
+        self.gui.log_to_terminal("Payloads ready. Type !exit to switch.\n")
 
     def _run_nmap_module(self):
         if not self.active_target:
