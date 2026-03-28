@@ -51,7 +51,7 @@ from urllib.parse import urljoin
 
 # * Inisialisasi framework Apex Omega Shell v5.1 (Auto-Pilot Edition)
 class ApexOmega:
-    VERSION = "5.8.13"
+    VERSION = "5.8.14"
     def __init__(self, mode="gui"):
         socket.setdefaulttimeout(3) # * Anti-Stuck Globally
         self.stop_requested = False
@@ -315,19 +315,19 @@ class ApexOmega:
             while time.time() - start_wait < duration:
                 if self.stop_requested or not self.isRunning:
                     break
-                # * Live Status v5.8.13 (Zaqi Debug Edition)
+                # * Live Status v5.8.14 (Zaqi Debug Edition - Overwrite)
                 s = self.special.stats
-                curr_status = f"  [*] PROGRESS: [success .{s['success']}x] [blocked .{s['blocked']}x] [redirect .{s['redirect']}x] [error .{s['error']}x]"
-                self.gui.log_to_terminal(f"\r{curr_status}", "[info] ")
+                curr_status = f"\r  [*] PROGRESS: [success .{s['success']}x] [blocked .{s['blocked']}x] [redirect .{s['redirect']}x] [error .{s['error']}x]"
+                self.gui.log_to_terminal(curr_status, "[info] ")
                 time.sleep(1.0)
             self.gui.log_to_terminal("\n[*] Attack Duration Finished.\n", "[info] ")
         else:
             self.gui.log_to_terminal(f"  [!] Infinite Attack Running (Press ESC or !stop to terminate)\n", "[danger] ")
             while not self.stop_requested and self.isRunning:
-                # * Live Status v5.8.13 (Zaqi Debug Edition - Infinite Mode)
+                # * Live Status v5.8.14 (Zaqi Debug Edition - Infinite Mode Overwrite)
                 s = self.special.stats
-                curr_status = f"  [*] PROGRESS: [success .{s['success']}x] [blocked .{s['blocked']}x] [redirect .{s['redirect']}x] [error .{s['error']}x]"
-                self.gui.log_to_terminal(f"\r{curr_status}", "[info] ")
+                curr_status = f"\r  [*] PROGRESS: [success .{s['success']}x] [blocked .{s['blocked']}x] [redirect .{s['redirect']}x] [error .{s['error']}x]"
+                self.gui.log_to_terminal(curr_status, "[info] ")
                 time.sleep(1.0)
         
         self.gui.update_roadmap_check(5)

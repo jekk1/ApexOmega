@@ -319,8 +319,16 @@ oLink.Save
     # * Log output ke terminal (v5.7 Tag-Supported Thread-Safe)
     def log_to_terminal(self, message, tag="sysText"):
         def _exec():
+            # * Support for CRLF/Carriage Return Overwrite v5.8.14
+            if message.startswith("\r"):
+                # Hapus dari awal baris terakhir sampai akhir (overwrite effect)
+                self._tw.delete("end-1c linestart", "end-1c")
+                clean_msg = message.replace("\r", "")
+            else:
+                clean_msg = message
+                
             clean_tag = tag.replace("[", "").replace("]", "").strip()
-            self._tw.insert("end", f"{message}", clean_tag)
+            self._tw.insert("end", clean_msg, clean_tag)
             self._tw.see("end")
             self._set_input_mark()
         self.after(0, _exec)
