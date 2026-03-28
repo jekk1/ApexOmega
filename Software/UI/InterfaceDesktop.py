@@ -2,7 +2,7 @@ import customtkinter as ctk
 import threading
 from tkinter import messagebox
 
-# * Tema Shell Mode (Zaqi Interactive Edition v4.5)
+# * Tema Shell Mode (Zaqi Interactive Edition v4.6)
 ctk.set_appearance_mode("Dark")
 ctk.set_default_color_theme("blue")
 
@@ -10,7 +10,7 @@ class InterfaceDesktop(ctk.CTk):
     def __init__(self, app_core):
         super().__init__()
         self.core = app_core
-        self.title("ApexOmega Shell v4.5")
+        self.title("ApexOmega Shell v4.6")
         self.geometry("1100x700")
         
         # * Standard Resizable Window
@@ -18,6 +18,7 @@ class InterfaceDesktop(ctk.CTk):
         self.attributes("-alpha", 0.98)
         
         self.tools_visible = False
+        self.waitingTarget = True
         self._setup_ui()
         
         # * Auto-Prompt Target on Startup
@@ -37,7 +38,6 @@ class InterfaceDesktop(ctk.CTk):
         
         # -- Expanding Tools Frame --
         self.tools_frame = ctk.CTkScrollableFrame(self.sidebar, fg_color="transparent")
-        # * Sembunyi dulu (pack_forget)
         
         self.btn_update = ctk.CTkButton(self.sidebar, text="CHECK FOR UPDATES", font=("Roboto", 11, "bold"), fg_color="#1a1a1a", text_color="#555555", hover_color="#222222", height=30, command=self.core.check_updates)
         self.btn_update.pack(side="bottom", pady=5)
@@ -55,18 +55,159 @@ class InterfaceDesktop(ctk.CTk):
         self.tab_console = self.tabview.add("Zaqi Shell")
         self.tab_tutorial = self.tabview.add("How to Use")
 
-        # * -- Interactive Terminal --
-        # * Kita pake textbox yang bisa diketik tapi di-handle Enter-nya
+        # * Akses internal textbox dari CTkTextbox buat kontrol granular
         self.terminal = ctk.CTkTextbox(self.tab_console, font=("Consolas", 13), text_color="#cccccc", border_width=0, border_spacing=20, fg_color="#050505")
         self.terminal.pack(fill="both", expand=True)
-        self.terminal.bind("<Return>", self._on_enter)
+        self._tw = self.terminal._textbox
         
-        # * Startup System Teks (Small & Dark)
-        self.terminal.insert("end", "ApexOmega Console [Version: 4.5]\n", ("small_dark",))
-        self.terminal.tag_config("small_dark", foreground="#333333")
+        # * Tag warna untuk output system
+        self._tw.tag_config("sysText", foreground="#cccccc")
+        self._tw.tag_config("dimText", foreground="#333333")
+        self._tw.tag_config("cyanText", foreground="#00d4ff")
+        self._tw.tag_config("greenText", foreground="#00cc66")
+        self._tw.tag_config("prompt", foreground="#666666")
+        
+        # * Bind event untuk proteksi teks dan handle input
+        self._tw.bind("<Return>", self._on_enter)
+        self._tw.bind("<Key>", self._on_key)
+        self._tw.bind("<BackSpace>", self._on_backspace)
+        self._tw.bind("<Delete>", self._on_delete)
+        self._tw.bind("<<Cut>>", self._block_cut)
+        self._tw.bind("<Control-a>", self._block_select_all)
+        
+        # * Startup header
+        self._tw.insert("end", "ApexOmega Console [Version: 4.6]\n", "dimText")
+        self._tw.insert("end", "Zaqi Interactive Shell Edition\n\n", "dimText")
+        
+        # * Mark posisi awal input (semua sebelumnya protected)
+        self._tw.mark_set("inputStart", "end-1c")
+        self._tw.mark_gravity("inputStart", "left")
 
+    # * Prompt awal minta target
     def _initial_prompt(self):
-        self.log_to_terminal("ENTER TARGET IP/URL >> ")
+        self._append_system("[root@shell] ENTER TARGET IP/URL >> ", "prompt")
+        self._set_input_mark()
+
+    # * Tulis teks system yang terproteksi
+    def _append_system(self, text, tag="sysText"):
+        self._tw.insert("end", text, tag)
+        self._tw.see("end")
+
+    # * Set input mark setelah output baru
+    def _set_input_mark(self):
+        self._tw.mark_set("inputStart", "end-1c")
+        self._tw.mark_gravity("inputStart", "left")
+        self._tw.see("end")
+
+    # * Blokir penghapusan teks sebelum inputStart
+    def _on_backspace(self, event):
+        cursorPos = self._tw.index("insert")
+        markPos = self._tw.index("inputStart")
+        if self._tw.compare(cursorPos, "<=", markPos):
+            return "break"
+        return None
+
+    # * Blokir delete key di area protected
+    def _on_delete(self, event):
+        cursorPos = self._tw.index("insert")
+        markPos = self._tw.index("inputStart")
+        if self._tw.compare(cursorPos, "<", markPos):
+            return "break"
+        return None
+
+    # * Blokir ketikan di area protected
+    def _on_key(self, event):
+        if event.keysym in ("Return", "BackSpace", "Delete", "Left", "Right", "Up", "Down", "Home", "End"):
+            return None
+        if event.state & 0x4:
+            return None
+        cursorPos = self._tw.index("insert")
+        markPos = self._tw.index("inputStart")
+        if self._tw.compare(cursorPos, "<", markPos):
+            self._tw.mark_set("insert", "end-1c")
+        return None
+
+    # * Blokir cut di area protected
+    def _block_cut(self, event):
+        try:
+            selStart = self._tw.index("sel.first")
+            markPos = self._tw.index("inputStart")
+            if self._tw.compare(selStart, "<", markPos):
+                return "break"
+        except Exception:
+            pass
+        return None
+
+    # * Blokir select all (cuma select area input)
+    def _block_select_all(self, event):
+        markPos = self._tw.index("inputStart")
+        self._tw.tag_remove("sel", "1.0", "end")
+        self._tw.tag_add("sel", markPos, "end-1c")
+        return "break"
+
+    # * Handle Enter (submit command/target)
+    def _on_enter(self, event):
+        markPos = self._tw.index("inputStart")
+        userInput = self._tw.get(markPos, "end-1c").strip()
+        
+        # * Tambah newline setelah input
+        self._tw.insert("end", "\n")
+        
+        if not userInput:
+            self._append_prompt()
+            return "break"
+        
+        # * Mode target input
+        if self.waitingTarget:
+            self.waitingTarget = False
+            target = userInput
+            self.core.set_active_target(target)
+            
+            self._append_system(f"\n[root@shell] [INITIATING AUTOMATED RECON ON: {target}]\n", "cyanText")
+            self._append_system("[*] Checking connectivity... CONNECTED\n", "sysText")
+            self._append_system("[*] Resolving DNS infrastructure...\n", "sysText")
+            
+            # -- Quick real recon --
+            def quick_recon():
+                try:
+                    records = self.core.net.getDnsInfo(target)
+                    ip = records.get('IP', 'Unknown')
+                    self._append_system(f"[+] PRIMARY IP: {ip}\n", "greenText")
+                    
+                    tech = self.core.web.detectTech(f"http://{target}" if not target.startswith("http") else target)
+                    server = tech.get('server', ['Unknown'])[0]
+                    self._append_system(f"[+] SERVER TECH: {server}\n", "greenText")
+                except Exception:
+                    self._append_system("[-] Recon limited (target specific restriction)\n", "dimText")
+                
+                self._append_system(f"\n[root@shell] TARGET LOCKED: {target}\n", "greenText")
+                self._append_system("[root@shell] Commands: !nmap, !webaudit, !wordpress, !chaos, !help, !exit\n\n", "cyanText")
+                self._append_prompt()
+
+            threading.Thread(target=quick_recon, daemon=True).start()
+            return "break"
+        
+        # * Mode command
+        if userInput.startswith("!"):
+            self.core.execute_shell_command(userInput)
+        else:
+            # * Cek apakah user mau ganti target
+            self.core.set_active_target(userInput)
+            self._append_system(f"[root@shell] TARGET CHANGED: {userInput}\n", "greenText")
+        
+        self._append_prompt()
+        return "break"
+
+    # * Tampilkan prompt baru dan set input mark
+    def _append_prompt(self):
+        target = self.core.active_target or "none"
+        self._append_system(f"[root@shell:{target}] >> ", "prompt")
+        self._set_input_mark()
+
+    # * Log output ke terminal (dipanggil dari luar class)
+    def log_to_terminal(self, message, prefix="[root@shell] "):
+        self._append_system(f"{prefix}{message}\n", "sysText")
+        self._set_input_mark()
 
     def _toggle_tools(self):
         if not self.tools_visible:
@@ -101,34 +242,6 @@ class InterfaceDesktop(ctk.CTk):
         txt_body.insert("end", f"{info}\n\n")
         txt_body.insert("end", f"TO RUN:\nType '!{tool_name}' in the Zaqi Shell.\nType '!exit' to close the module.")
         txt_body.configure(state="disabled")
-
-    def log_to_terminal(self, message, prefix="[root@shell] "):
-        self.terminal.configure(state="normal")
-        self.terminal.insert("end", f"{prefix}{message}\n")
-        self.terminal.see("end")
-        # * Note: Kita sisakan state normal biar user bisa ngetik
-
-    def _on_enter(self, event):
-        # * Ambil baris terakhir tempat user ngetik
-        raw_text = self.terminal.get("1.0", "end-1c")
-        lines = raw_text.split("\n")
-        if not lines: return
-        
-        last_line = lines[-1]
-        # * Bersihkan prefix kalo ada buat ambil command aslinya
-        cmd = last_line.split(">>")[-1].strip() if ">>" in last_line else last_line.strip()
-        
-        # * Kalo ngetik !exit atau !command
-        if cmd.startswith("!"):
-            self.core.execute_shell_command(cmd)
-        elif "ENTER TARGET" in last_line:
-            target = last_line.split(">>")[-1].strip()
-            self.core.set_active_target(target)
-            self.log_to_terminal(f"TARGET SET: {target}")
-            self.log_to_terminal("Type !<tool_name> to begin (e.g. !nmap)")
-        
-        # * Jangan biarkan Return default nambah baris kosong tanpa handle
-        return None
 
     def _on_close(self):
         self.core.exitFramework()
