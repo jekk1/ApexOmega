@@ -1,23 +1,22 @@
 import os
 import sys
 
-# --- DLL PATH FALLBACK v5.8.3 (PRE-EMPTIVE) ---
+# --- DLL PATH FALLBACK v5.8.6 (ABSOLUTE) ---
 # Harus paling atas sebelum import UI yang pake Tkinter
 try:
     python_dir = os.path.dirname(sys.executable)
-    dll_paths = [
-        os.path.join(python_dir, 'DLLs'),
-        os.path.join(python_dir, 'tcl'),
-        os.path.join(os.getcwd(), 'Software'),
-        r"C:\Windows\System32",
-        r"C:\Windows\SysWOW64"
-    ]
-    for path in dll_paths:
-        if os.path.exists(path):
-            if hasattr(os, 'add_dll_directory'):
-                os.add_dll_directory(path)
-            else:
-                os.environ['PATH'] = path + os.pathsep + os.environ['PATH']
+    # Deteksi folder DLLs & Tcl di Python 3.13
+    dll_dir = os.path.join(python_dir, 'DLLs')
+    tcl_dir = os.path.join(python_dir, 'tcl')
+    
+    if os.path.exists(dll_dir):
+        if hasattr(os, 'add_dll_directory'):
+            os.add_dll_directory(dll_dir)
+        os.environ['PATH'] = dll_dir + os.pathsep + os.environ['PATH']
+    
+    if os.path.exists(tcl_dir):
+        os.environ['TCL_LIBRARY'] = os.path.join(tcl_dir, 'tcl8.6')
+        os.environ['TK_LIBRARY'] = os.path.join(tcl_dir, 'tk8.6')
 except Exception:
     pass
 
@@ -51,7 +50,7 @@ from tkinter import messagebox
 
 # * Inisialisasi framework Apex Omega Shell v5.1 (Auto-Pilot Edition)
 class ApexOmega:
-    VERSION = "5.8.5"
+    VERSION = "5.8.6"
     def __init__(self, mode="gui"):
         socket.setdefaulttimeout(3) # * Anti-Stuck Globally
         self.stop_requested = False
@@ -486,8 +485,8 @@ class ApexOmega:
             return
         self.gui.log_to_terminal(f"WP Specialized Module: Checking {self.active_target}...")
         ver = self.wp.detectVersion(self.active_target)
-        self._tw.insert("end", "ApexOmega Console [Version: 5.8.5]\n", "dimText")
-        self._tw.insert("end", "Titanium Bullet-Proof (Final Logic & DLL Lock)\n\n", "dimText")
+        self._tw.insert("end", "ApexOmega Console [Version: 5.8.6]\n", "dimText")
+        self._tw.insert("end", "Titanium Absolute (Global DLL & Tcl Lock)\n\n", "dimText")
 
     def _run_chaos_module(self):
         if not self.active_target:

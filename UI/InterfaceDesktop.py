@@ -98,8 +98,8 @@ class InterfaceDesktop(ctk.CTk):
         self._tw.bind("<<Cut>>", self._block_cut)
         self._tw.bind("<Control-a>", self._block_select_all)
         
-        self._tw.insert("end", "ApexOmega Console [Version: 5.8.5]\n", "dimText")
-        self._tw.insert("end", "Titanium Bullet-Proof (Final Logic & DLL Lock)\n\n", "dimText")
+        self._tw.insert("end", "ApexOmega Console [Version: 5.8.6]\n", "dimText")
+        self._tw.insert("end", "Titanium Absolute (Global DLL & Tcl Lock)\n\n", "dimText")
         
         # * Mark posisi awal input (semua sebelumnya protected)
         self._tw.mark_set("inputStart", "end-1c")
