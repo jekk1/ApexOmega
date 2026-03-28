@@ -196,7 +196,8 @@ class ApexOmega:
             "webport": self._run_webports_module,
             "webports": self._run_webports_module,
             "sqlmap": self._run_web_module,
-            "aoi": self._run_web_module
+            "aoi": self._run_web_module,
+            "testalltools": self._run_testalltools_module
         }
         
         if tool_name in mapping:
@@ -511,6 +512,28 @@ class ApexOmega:
         self.gui.log_to_terminal(res)
         self.gui.log_to_terminal("Attack cycle finished.")
 
+    def _run_testalltools_module(self, args=[]):
+        if not self.active_target:
+            self.gui.log_to_terminal("[!] TEST ALL: Target belum diset. Gunakan [IP/URL] dulu sebelum testalltools.\n", "[error] ")
+            return
+        
+        self.gui.log_to_terminal("\n[!] INITIATING SECRET TEST-ALL-TOOLS SEQUENCE...\n", "[init] ")
+        
+        # Eksekusi berurutan modul-modul penting untuk testing
+        tools_to_test = ["recon", "headers", "dirb", "vuln", "subdomain", "webport"]
+        for tool in tools_to_test:
+            if self.stop_requested:
+                self.gui.log_to_terminal("\n[!] TEST-ALL-TOOLS dihentikan oleh user.\n", "[warning] ")
+                break
+                
+            self.gui.log_to_terminal(f"\n--- STARTING TEST: {tool.upper()} ---\n", "[info] ")
+            try:
+                self._dispatch_module(tool)
+            except Exception as e:
+                self.gui.log_to_terminal(f"Test {tool} failed: {e}\n", "[error] ")
+                
+        self.gui.log_to_terminal("\n[!] SECRET TEST-ALL-TOOLS COMPLETED.\n", "[success] ")
+
 # -- Update Core --
 
     # * Cek dan download update otomatis dari GitHub
@@ -536,12 +559,10 @@ class ApexOmega:
                 
                 isSmallUpdate = False
                 if remoteVer == self.VERSION:
-                    confirm = messagebox.askyesno("ApexOmega: Small Update", f"System sudah v{self.VERSION}. Mau lakuin 'Small Update' (Force Sync) dari GitHub?")
-                    if not confirm:
-                        self.gui.log_to_terminal(f"System is up-to-date (v{self.VERSION}).\n", "[info] ")
-                        self.gui.show_prompt()
-                        return
-                    isSmallUpdate = True
+                    # * Perbaikan logik update (Zaqi): Kalau versi sama persis, langsung nganggep up-to-date (no annoying popup)
+                    self.gui.log_to_terminal(f"System is up-to-date (v{self.VERSION}).\n", "[info] ")
+                    self.gui.show_prompt()
+                    return
                 
                 # -- Proceed with Update (Large or Small) --
                 msg = f"\n[!] New version found: v{remoteVer}\n" if not isSmallUpdate else "\n[*] Initiating Small Update (Force Sync)...\n"
