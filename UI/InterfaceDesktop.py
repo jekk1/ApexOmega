@@ -187,8 +187,11 @@ class InterfaceDesktop(ctk.CTk):
         # * Tambah newline setelah input
         self._tw.insert("end", "\n")
         
+        # * --- INSTANT FEEDBACK v5.7.3 ---
+        # Langsung kasih prompt baru biar gak 'stuck' nunggu proses background
+        self.show_prompt()
+
         if not userInput:
-            self.show_prompt()
             return "break"
         
         # * Mode command
@@ -201,9 +204,7 @@ class InterfaceDesktop(ctk.CTk):
             
             self._append_system(f"\n[root@shell] [INITIATING AUTOMATED RECON ON: {target}]\n", "cyanText")
             
-            # -- Quick real recon v5.7.1 (Instant Prompt) --
-            self.show_prompt() 
-            
+            # -- Quick real recon v5.7.3 (Full Background) --
             def quick_recon():
                 try:
                     import socket

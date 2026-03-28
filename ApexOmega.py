@@ -24,12 +24,13 @@ from Modules.VulnAtlas import VulnAtlas
 from Modules.ApiAuditor import ApiAuditor
 from Modules.CloudAudit import CloudAudit
 import requests
-from tkinter import messagebox
+import socket
 
 # * Inisialisasi framework Apex Omega Shell v5.1 (Auto-Pilot Edition)
 class ApexOmega:
     VERSION = "5.7"
     def __init__(self, mode="gui"):
+        socket.setdefaulttimeout(3) # * Anti-Stuck Globally
         self.stop_requested = False
         self.ui_mode = mode
         self.isRunning = True
@@ -175,14 +176,14 @@ class ApexOmega:
                     self._run_cookie_module(args)
                 elif tool_name in ["git"]:
                     self.current_module = "webaudit"
-                    self._run_git_module(args)
-                elif tool_name == "help":
-                    self.gui.tabview.set("How to Use")
-                else:
-                    self.gui.log_to_terminal(f"Error: Unknown tool '{tool_name}'.\n")
-            
-            # * Auto-show prompt after process completion v5.2
-            self.gui.show_prompt()
+                    # * Jalankan modul yang dipilih (v5.7 Background Isolated)
+                try:
+                    self._dispatch_module(tool_name, args)
+                except Exception as e:
+                    self.gui.log_to_terminal(f"Error executing {tool_name}: {e}\n", "error")
+            else:
+                target = self.set_active_target(userInput)
+                self.gui.log_to_terminal(f"[*] Switching Target to: {target}\n", "[info] ")
 
         threading.Thread(target=thread_task, daemon=True).start()
 
