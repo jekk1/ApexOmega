@@ -1,5 +1,26 @@
-import sys
 import os
+import sys
+
+# --- DLL PATH FALLBACK v5.8.3 (PRE-EMPTIVE) ---
+# Harus paling atas sebelum import UI yang pake Tkinter
+try:
+    python_dir = os.path.dirname(sys.executable)
+    dll_paths = [
+        os.path.join(python_dir, 'DLLs'),
+        os.path.join(python_dir, 'tcl'),
+        os.path.join(os.getcwd(), 'Software'),
+        r"C:\Windows\System32",
+        r"C:\Windows\SysWOW64"
+    ]
+    for path in dll_paths:
+        if os.path.exists(path):
+            if hasattr(os, 'add_dll_directory'):
+                os.add_dll_directory(path)
+            else:
+                os.environ['PATH'] = path + os.pathsep + os.environ['PATH']
+except Exception:
+    pass
+
 import subprocess
 import time
 import zipfile
@@ -30,7 +51,7 @@ from tkinter import messagebox
 
 # * Inisialisasi framework Apex Omega Shell v5.1 (Auto-Pilot Edition)
 class ApexOmega:
-    VERSION = "5.8"
+    VERSION = "5.8.5"
     def __init__(self, mode="gui"):
         socket.setdefaulttimeout(3) # * Anti-Stuck Globally
         self.stop_requested = False
@@ -131,63 +152,47 @@ class ApexOmega:
                 if tool_name in ["recon", "info"]:
                     self.current_module = "recon"
                     self._run_recon_module(args)
-                elif tool_name in ["nmap", "scan"]:
-                    self.current_module = "nmap"
-                    self._run_nmap_module(args)
-                elif tool_name in ["webaudit", "web"]:
-                    self.current_module = "webaudit"
-                    self._run_web_module(args)
-                elif tool_name in ["wordpress", "wp"]:
-                    self.current_module = "wordpress"
-                    self._run_wp_module(args)
-                elif tool_name in ["chaos", "nitro"]:
-                    self.current_module = "chaos"
-                    self._run_chaos_module(args)
-                elif tool_name in ["payload"]:
-                    self.current_module = "payload"
-                    self._run_payload_module(args)
-                elif tool_name in ["subdomain", "sub"]:
-                    self.current_module = "discovery"
-                    self._run_subdomain_module(args)
-                elif tool_name in ["vhost"]:
-                    self.current_module = "discovery"
-                    self._run_vhost_module(args)
-                elif tool_name in ["webports", "ports"]:
-                    self.current_module = "discovery"
-                    self._run_webports_module(args)
-                elif tool_name in ["vuln", "atlas"]:
-                    self.current_module = "vulnerability"
-                    self._run_vuln_module(args)
-                elif tool_name in ["api"]:
-                    self.current_module = "api"
-                    self._run_api_module(args)
-                elif tool_name in ["cloud"]:
-                    self.current_module = "cloud"
-                    self._run_cloud_module(args)
-                elif tool_name in ["dirb", "directory"]:
-                    self.current_module = "webaudit"
-                    self._run_dirb_module(args)
-                elif tool_name in ["headers", "security"]:
-                    self.current_module = "webaudit"
-                    self._run_headers_module(args)
-                elif tool_name in ["form", "auditform"]:
-                    self.current_module = "webaudit"
-                    self._run_form_module(args)
-                elif tool_name in ["cookie", "cookies"]:
-                    self.current_module = "webaudit"
-                    self._run_cookie_module(args)
-                elif tool_name in ["git"]:
-                    self.current_module = "webaudit"
-                    # * Jalankan modul yang dipilih (v5.7 Background Isolated)
-                try:
-                    self._dispatch_module(tool_name, args)
-                except Exception as e:
-                    self.gui.log_to_terminal(f"Error executing {tool_name}: {e}\n", "error")
-            else:
-                target = self.set_active_target(userInput)
-                self.gui.log_to_terminal(f"[*] Switching Target to: {target}\n", "[info] ")
+            tool_name = userInput.lower().replace("!", "").split()[0]
+            args = userInput.split()[1:]
+            
+            try:
+                # * Unified Dispatch System v5.8.1
+                self._dispatch_module(tool_name, args)
+            except Exception as e:
+                self.gui.log_to_terminal(f"Error executing {tool_name}: {e}\n", "error")
 
         threading.Thread(target=thread_task, daemon=True).start()
+
+    # -- Module Dispatcher & Runners --
+
+    def _dispatch_module(self, tool_name, args=[]):
+        mapping = {
+            "nmap": self._run_nmap_module,
+            "recon": self._run_recon_module,
+            "vuln": self._run_vuln_module,
+            "atlas": self._run_vuln_module,
+            "api": self._run_api_module,
+            "cloud": self._run_cloud_module,
+            "dirb": self._run_dirb_module,
+            "directory": self._run_dirb_module,
+            "headers": self._run_headers_module,
+            "security": self._run_headers_module,
+            "form": self._run_form_module,
+            "cookie": self._run_cookie_module,
+            "cookies": self._run_cookie_module,
+            "git": self._run_git_module,
+            "wp": self._run_wp_module,
+            "wordpress": self._run_wp_module,
+            "chaos": self._run_chaos_module,
+            "nitro": self._run_stress_module,
+            "payload": self._run_payload_module
+        }
+        
+        if tool_name in mapping:
+            self.current_module = tool_name
+            mapping[tool_name](args)
+        else:
+            self.gui.log_to_terminal(f"[!] Unknown tool: {tool_name}. Type !help for manual.\n", "error")
 
     # -- Module Automated Runners --
 
@@ -481,8 +486,8 @@ class ApexOmega:
             return
         self.gui.log_to_terminal(f"WP Specialized Module: Checking {self.active_target}...")
         ver = self.wp.detectVersion(self.active_target)
-        self.gui.log_to_terminal(f"Version: {ver}")
-        self.gui.log_to_terminal("WP Scan Complete.")
+        self._tw.insert("end", "ApexOmega Console [Version: 5.8.5]\n", "dimText")
+        self._tw.insert("end", "Titanium Bullet-Proof (Final Logic & DLL Lock)\n\n", "dimText")
 
     def _run_chaos_module(self):
         if not self.active_target:
@@ -651,7 +656,7 @@ class ApexOmega:
             if os.path.exists(zipPath):
                 os.remove(zipPath)
 
-    # * Run Headers Check v5.8
+    # * Run Headers Check v5.8.5
     def _run_headers_module(self, args):
         self.gui.log_to_terminal(f"\n[*] INITIATING HEADS-CHECK (SECURITY HEADERS AUDIT)...\n", "cyanText")
         scanner = HeadsCheck(self)

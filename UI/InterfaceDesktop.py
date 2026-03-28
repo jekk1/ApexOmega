@@ -98,8 +98,8 @@ class InterfaceDesktop(ctk.CTk):
         self._tw.bind("<<Cut>>", self._block_cut)
         self._tw.bind("<Control-a>", self._block_select_all)
         
-        self._tw.insert("end", "ApexOmega Console [Version: 5.8]\n", "dimText")
-        self._tw.insert("end", "Turbo-Nova Edition (Ultra-Stability)\n\n", "dimText")
+        self._tw.insert("end", "ApexOmega Console [Version: 5.8.5]\n", "dimText")
+        self._tw.insert("end", "Titanium Bullet-Proof (Final Logic & DLL Lock)\n\n", "dimText")
         
         # * Mark posisi awal input (semua sebelumnya protected)
         self._tw.mark_set("inputStart", "end-1c")
@@ -180,35 +180,32 @@ class InterfaceDesktop(ctk.CTk):
         self._tw.tag_add("sel", markPos, "end-1c")
         return "break"
 
-    # * Handle Enter (Exclusively Bound v5.8)
+    # * Handle Enter (Exclusively Bound v5.8.2)
     def _on_enter(self, event):
         try:
-            # * DUAL-CHECK INPUT EXTRACTION v5.8
-            # Cara 1: Line-Based Offset (Most Robust)
+            # * DUAL-CHECK INPUT EXTRACTION
             last_line = self._tw.get("end-2l", "end-1c")
             userInput = ""
             if ">>" in last_line:
                 userInput = last_line.split(">>")[-1].strip()
             
-            # Cara 2: Mark-Based Fallback
             if not userInput:
                 markPos = self._tw.index("inputStart")
                 userInput = self._tw.get(markPos, "end-1c").strip()
 
-            # --- TURBO SYNC RESET v5.8 ---
+            # --- TITANIUM SYNC RESET v5.8.2 ---
+            # Kita kunci prompt BARU dulu sebelum eksekusi logic command
             self._tw.insert("end", "\n")
-            
             target_display = self.core.active_target or "none"
             prompt_header = f"[root@shell:{target_display}] >> "
-            
-            # Sinkronisasi instan
             self._tw.insert("end", prompt_header, "prompt")
             self._tw.mark_set("inputStart", "end-1c")
             self._tw.mark_gravity("inputStart", "left")
             self._tw.mark_set("insert", "end-1c")
             self._tw.see("end")
 
-            if not userInput:
+            # * FILTER LOG (Jangan sampe log sistem disangka input)
+            if not userInput or any(p in userInput for p in ["[*]", "[!]", "[+]", "[-]"]):
                 return "break"
             
             # * Execute Dispatch
@@ -216,16 +213,18 @@ class InterfaceDesktop(ctk.CTk):
                 self.core.execute_shell_command(userInput)
             else:
                 target = userInput
+                # Re-validate if target is accidentally a log line
+                if " " in target or len(target) > 100:
+                    return "break"
+                    
                 self.core.set_active_target(target)
-                self._append_system(f"\n[*] Target identified: {target}\n", "cyanText")
-                # -- Silent Recon --
+                self._append_system(f"\n[*] New Target Set: {target}\n", "cyanText")
                 threading.Thread(target=lambda: self.core._run_recon_module([]), daemon=True).start()
 
         except Exception as e:
-            self._tw.insert("end", f"\n[!] UI Error: {str(e)}\n")
-            self.show_prompt()
+            self.log_to_terminal(f"\n[!] UI Logic Error: {str(e)}\n", "error")
         
-        return "break" # * Penting: Stop default behavior
+        return "break"
         
         return "break"
 
