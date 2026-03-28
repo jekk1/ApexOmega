@@ -155,7 +155,8 @@ class ApexOmega:
         def task():
             self.gui.log_to_terminal("Checking GitHub for updates (jekk1/ApexOmega)...")
             try:
-                versionUrl = "https://raw.githubusercontent.com/jekk1/ApexOmega/main/version.txt"
+                # * Path version.txt sekarang di dalam Software/
+                versionUrl = "https://raw.githubusercontent.com/jekk1/ApexOmega/main/Software/version.txt"
                 response = requests.get(versionUrl, timeout=5)
                 if response.status_code != 200:
                     self.gui.log_to_terminal(f"Failed to check updates (HTTP {response.status_code})")
@@ -189,66 +190,70 @@ class ApexOmega:
                 self.gui.log_to_terminal(f"Download failed (HTTP {response.status_code})")
                 return
             
-            # * Software/ -> parent = git root
+            # * Lokasi Software/ saat ini
             softwareDir = os.path.dirname(os.path.abspath(__file__))
             rootDir = os.path.dirname(softwareDir)
             tempDir = os.path.join(rootDir, "_update_temp")
             zipPath = os.path.join(rootDir, "_update.zip")
             
-            # * Simpan ZIP ke disk
             with open(zipPath, "wb") as f:
                 for chunk in response.iter_content(chunk_size=8192):
                     f.write(chunk)
             
             self.gui.log_to_terminal("Extracting update...")
-            
-            # * Extract ZIP
             if os.path.exists(tempDir):
                 shutil.rmtree(tempDir)
             
             with zipfile.ZipFile(zipPath, "r") as zf:
                 zf.extractall(tempDir)
             
-            # * Cari folder hasil extract (biasanya ApexOmega-main/)
             extractedFolders = os.listdir(tempDir)
             if not extractedFolders:
                 self.gui.log_to_terminal("ERROR: Empty archive.")
                 return
             
-            sourceDir = os.path.join(tempDir, extractedFolders[0])
+            # * Repo root di ZIP: ApexOmega-main/
+            sourceRepoRoot = os.path.join(tempDir, extractedFolders[0])
+            # * Source Software: ApexOmega-main/Software/
+            sourceSoftwareDir = os.path.join(sourceRepoRoot, "Software")
             
-            # * Replace files dari source ke project directory
+            if not os.path.exists(sourceSoftwareDir):
+                self.gui.log_to_terminal("ERROR: Software folder not found in update.")
+                return
+
+            self.gui.log_to_terminal("Replacing files...")
             updatedCount = 0
-            skippedItems = {"_update_temp", "_update.zip", ".git", ".gitignore"}
             
-            for item in os.listdir(sourceDir):
-                if item in skippedItems:
+            # * Update isi Software/
+            for item in os.listdir(sourceSoftwareDir):
+                if item in {".git", "__pycache__", "_update_temp", "_update.zip"}:
                     continue
                 
-                srcPath = os.path.join(sourceDir, item)
-                dstPath = os.path.join(rootDir, item)
+                srcPath = os.path.join(sourceSoftwareDir, item)
+                dstPath = os.path.join(softwareDir, item)
                 
-                if os.path.isdir(srcPath):
-                    if os.path.exists(dstPath):
-                        shutil.rmtree(dstPath)
-                    shutil.copytree(srcPath, dstPath)
-                else:
-                    shutil.copy2(srcPath, dstPath)
-                updatedCount += 1
-                self.gui.log_to_terminal(f"  Updated: {item}")
+                try:
+                    if os.path.isdir(srcPath):
+                        if os.path.exists(dstPath):
+                            shutil.rmtree(dstPath, ignore_errors=True)
+                        shutil.copytree(srcPath, dstPath)
+                    else:
+                        shutil.copy2(srcPath, dstPath)
+                    updatedCount += 1
+                except Exception as e:
+                    self.gui.log_to_terminal(f"  [!] Skipped: {item} (File in use?)")
             
-            # * Bersihkan temp files
+            # * Cleanup
             shutil.rmtree(tempDir, ignore_errors=True)
             if os.path.exists(zipPath):
                 os.remove(zipPath)
             
             self.gui.log_to_terminal(f"Update complete! {updatedCount} items updated to v{remoteVer}.")
-            self.gui.log_to_terminal("Please restart the application to apply changes.")
             messagebox.showinfo("Update Complete", f"Updated to v{remoteVer}.\nPlease restart the application.")
             
         except Exception as e:
             self.gui.log_to_terminal(f"Update Error: {str(e)}")
-            # * Cleanup on failure
+            # * Final cleanup
             rootDir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
             tempDir = os.path.join(rootDir, "_update_temp")
             zipPath = os.path.join(rootDir, "_update.zip")
