@@ -44,6 +44,9 @@ class VulnAtlas:
     def auditCors(self, url):
         try:
             res = self.session.get(url, headers={"Origin": "https://evil-attacker.com"}, timeout=5)
+            # * Ignore Vercel WAF/403 challenges
+            if res.status_code >= 400: return None
+            
             aco = res.headers.get('Access-Control-Allow-Origin', '')
             acac = res.headers.get('Access-Control-Allow-Credentials', '')
             
@@ -91,6 +94,9 @@ class VulnAtlas:
         for p in payloads:
             try:
                 res = self.session.get(f"{url}?q={p}", timeout=5)
+                # * Anti False Positive: Abaikan WAF/Vercel Cloudflare pages
+                if res.status_code >= 400 or "Vercel Security Checkpoint" in res.text:
+                    continue
                 if "49" in res.text: return p
             except: pass
         return None
