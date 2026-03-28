@@ -55,7 +55,7 @@ class InterfaceDesktop(ctk.CTk):
         self.tabview = ctk.CTkTabview(self.content_area, border_width=1, border_color="#222222", fg_color="#050505")
         self.tabview.pack(fill="both", expand=True)
         
-        self.tab_console = self.tabview.add("Zaqi Shell")
+        self.tab_console = self.tabview.add("Terminal")
         self.tab_roadmap = self.tabview.add("Roadmap")
         self.tab_tutorial = self.tabview.add("How to Use")
         
@@ -222,8 +222,7 @@ class InterfaceDesktop(ctk.CTk):
 
     # * Log output ke terminal (v5.2 Tag-Supported)
     def log_to_terminal(self, message, tag="sysText"):
-        # Check if the message contains its own prefix, if not add it.
-        # This allows raw logs from modules to be colored perfectly.
+        # Check for clean output v5.2
         clean_tag = tag.replace("[", "").replace("]", "").strip()
         self._tw.insert("end", f"{message}", clean_tag)
         self._tw.see("end")

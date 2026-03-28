@@ -97,43 +97,45 @@ class ApexOmega:
             if command.startswith("!"):
                 tool_name = command[1:] # Hapus tanda seru
                 
-                # -- Verifikasi Tool --
+                # -- Verifikasi Tool v5.2 (Args Support) --
+                args = parts[1:]
+                
                 if tool_name in ["recon", "info"]:
                     self.current_module = "recon"
-                    self._run_recon_module()
+                    self._run_recon_module(args)
                 elif tool_name in ["nmap", "scan"]:
                     self.current_module = "nmap"
-                    self._run_nmap_module()
+                    self._run_nmap_module(args)
                 elif tool_name in ["webaudit", "web"]:
                     self.current_module = "webaudit"
-                    self._run_web_module()
+                    self._run_web_module(args)
                 elif tool_name in ["wordpress", "wp"]:
                     self.current_module = "wordpress"
-                    self._run_wp_module()
+                    self._run_wp_module(args)
                 elif tool_name in ["chaos", "nitro"]:
                     self.current_module = "chaos"
-                    self._run_chaos_module()
+                    self._run_chaos_module(args)
                 elif tool_name in ["payload"]:
                     self.current_module = "payload"
-                    self._run_payload_module()
+                    self._run_payload_module(args)
                 elif tool_name in ["subdomain", "sub"]:
                     self.current_module = "discovery"
-                    self._run_subdomain_module()
+                    self._run_subdomain_module(args)
                 elif tool_name in ["vhost"]:
                     self.current_module = "discovery"
-                    self._run_vhost_module()
+                    self._run_vhost_module(args)
                 elif tool_name in ["webports", "ports"]:
                     self.current_module = "discovery"
-                    self._run_webports_module()
+                    self._run_webports_module(args)
                 elif tool_name in ["vuln", "atlas"]:
                     self.current_module = "vulnerability"
-                    self._run_vuln_module()
+                    self._run_vuln_module(args)
                 elif tool_name in ["api"]:
                     self.current_module = "api"
-                    self._run_api_module()
+                    self._run_api_module(args)
                 elif tool_name in ["cloud"]:
                     self.current_module = "cloud"
-                    self._run_cloud_module()
+                    self._run_cloud_module(args)
                 elif tool_name == "help":
                     self.gui.tabview.set("How to Use")
                 else:
@@ -143,14 +145,15 @@ class ApexOmega:
 
     # -- Module Automated Runners --
 
-    def _run_vuln_module(self):
+    def _run_vuln_module(self, args=[]):
         if not self.active_target:
             self.gui.log_to_terminal("Vuln: No target set.\n", "[error] ")
             return
         target = self.active_target
         if not target.startswith('http'): target = f"http://{target}"
         
-        self.gui.log_to_terminal(f"Starting VULN ATLAS on: {target}\n", "[init] ")
+        mode = args[0] if args else "Full"
+        self.gui.log_to_terminal(f"Starting VULN ATLAS ({mode}) on: {target}\n", "[init] ")
         
         # 1. Host Injection
         self.gui.log_to_terminal("  [*] Testing Host Header Injection...\n")
@@ -191,6 +194,20 @@ class ApexOmega:
         self.gui.log_to_terminal(f"  [+] ALLOWED: {', '.join(m_res)}\n")
         
         self.gui.log_to_terminal("API Audit Complete.\n")
+
+    def _run_stress_module(self, args=[]):
+        if not self.active_target:
+            self.gui.log_to_terminal("Stress: No target set.\n", "[error] ")
+            return
+        
+        threads = int(args[0]) if args else 50
+        self.gui.log_to_terminal(f"[*] STRESS ENGINE: Launching {threads} threads to {self.active_target} (Nitro-Flood)\n", "[init] ")
+        
+        # Simulasi serangan asinkron
+        self.special.runNitroStress(self.active_target, threads=threads)
+        self.gui.log_to_terminal("  [!] Attack Running (Check target status manually)\n", "[danger] ")
+        self.gui.log_to_terminal("Stress complete. Check server health.\n", "[info] ")
+        self.gui.update_roadmap_check(6)
 
     def _run_cloud_module(self):
         if not self.active_target:
@@ -252,11 +269,13 @@ class ApexOmega:
             self.gui.log_to_terminal(f"  [+] Port {p} is OPEN\n", "[success] ")
         self.gui.log_to_terminal("Port scan complete.\n")
 
-    def _run_recon_module(self):
+    def _run_recon_module(self, args=[]):
         if not self.active_target:
             self.gui.log_to_terminal("Recon: Target not set.\n", "[error] ")
             return
-        self.gui.log_to_terminal(f"[*] INITIATING RECONNAISSANCE: {self.active_target}\n", "[init] ")
+        
+        mode = args[0] if args else "quick"
+        self.gui.log_to_terminal(f"[*] INITIATING {mode.upper()} RECON: {self.active_target}\n", "[init] ")
         
         try:
             # 1. IP & DNS Info
@@ -276,20 +295,31 @@ class ApexOmega:
         except Exception as e:
             self.gui.log_to_terminal(f"Recon Error: {str(e)}\n", "[error] ")
 
-    def _run_nmap_module(self):
+    def _run_nmap_module(self, args=[]):
         if not self.active_target:
             self.gui.log_to_terminal("Nmap: Target not set.\n", "[error] ")
             return
-        self.gui.log_to_terminal(f"[*] NMAP INFRA SCAN: {self.active_target}\n", "[init] ")
-        self.gui.log_to_terminal("  [*] Scanning Common Web Ports (80, 443, 8080, 3306, etc)...\n")
+            
+        custom_ports = args[0].split(",") if args else None
+        port_msg = f"Ports: {args[0]}" if custom_ports else "Common Web Ports"
+        
+        self.gui.log_to_terminal(f"[*] NMAP INFRA SCAN ({port_msg}): {self.active_target}\n", "[init] ")
         
         try:
-            res = self.discovery.scanWebPorts(self.active_target)
+            if custom_ports:
+                # * Logic for custom ports
+                res = []
+                for p in custom_ports:
+                    if self.discovery._scan_single_port(self.active_target, int(p)):
+                        res.append(p)
+            else:
+                res = self.discovery.scanWebPorts(self.active_target)
+                
             if res:
                 for p in res:
                     self.gui.log_to_terminal(f"  [!] PORT {p} is OPEN\n", "[success] ")
             else:
-                self.gui.log_to_terminal("  [-] No common ports found open.\n", "[warning] ")
+                self.gui.log_to_terminal("  [-] No target ports open.\n", "[warning] ")
                 
             self.gui.log_to_terminal("Nmap Infrastructure Scan Complete.\n", "[info] ")
             self.gui.update_roadmap_check(2)
