@@ -116,20 +116,16 @@ class InterfaceDesktop(ctk.CTk):
         self._append_system("[root@shell] ENTER TARGET IP/URL >> ", "prompt")
         self._set_input_mark()
 
-    # * Tulis teks system yang terproteksi (Thread-Safe v5.7)
+    # * Tulis teks system yang terproteksi (Internal - No After)
     def _append_system(self, text, tag="sysText"):
-        def _exec():
-            self._tw.insert("end", text, tag)
-            self._tw.see("end")
-        self.after(0, _exec)
+        self._tw.insert("end", text, tag)
+        self._tw.see("end")
 
-    # * Set input mark setelah output baru (Thread-Safe v5.7)
+    # * Set input mark setelah output baru (Internal - No After)
     def _set_input_mark(self):
-        def _exec():
-            self._tw.mark_set("inputStart", "end-1c")
-            self._tw.mark_gravity("inputStart", "left")
-            self._tw.see("end")
-        self.after(0, _exec)
+        self._tw.mark_set("inputStart", "end-1c")
+        self._tw.mark_gravity("inputStart", "left")
+        self._tw.see("end")
 
     # * Blokir penghapusan teks sebelum inputStart
     def _on_backspace(self, event):
@@ -211,15 +207,16 @@ class InterfaceDesktop(ctk.CTk):
             def quick_recon():
                 try:
                     import socket
+                    socket.setdefaulttimeout(5) # * Anti-Stuck DNS
                     self.core.set_active_target(target)
                     self._append_system(f"[*] Reconnaissance for {target} started in background...\n", "info")
                     
                     # * Resolve IP dasar (Silent)
                     pure_domain = target.replace("http://", "").replace("https://", "").split("/")[0]
                     ip = socket.gethostbyname(pure_domain)
-                    self._append_system(f"  [+] TARGET IP DISCOVERED: {ip}\n", "success")
+                    self.log_to_terminal(f"  [+] TARGET IP DISCOVERED: {ip}\n", "success")
                 except Exception:
-                    pass # Silent failure to keep UI clean
+                    pass
             
             threading.Thread(target=quick_recon, daemon=True).start()
         
