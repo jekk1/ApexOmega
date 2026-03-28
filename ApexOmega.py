@@ -19,12 +19,16 @@ from Modules.GuidedAssistant import GuidedAssistant
 from Modules.WordPressScanner import WordPressScanner
 from Modules.PayloadGen import PayloadGen
 from Modules.WebDiscovery import WebDiscovery
+from Modules.VulnAtlas import VulnAtlas
+from Modules.ApiAuditor import ApiAuditor
+from Modules.CloudAudit import CloudAudit
 import requests
+import time
 from tkinter import messagebox
 
-# * Inisialisasi framework Apex Omega Shell v4.8 (Web-Nitro Edition)
+# * Inisialisasi framework Apex Omega Shell v4.9 (Web-Nitro Ultra Edition)
 class ApexOmega:
-    VERSION = "4.8"
+    VERSION = "4.9"
     def __init__(self, mode="gui"):
         self.ui_mode = mode
         self.isRunning = True
@@ -43,6 +47,9 @@ class ApexOmega:
         self.guided = GuidedAssistant()
         self.payload_gen = PayloadGen()
         self.discovery = WebDiscovery()
+        self.atlas = VulnAtlas()
+        self.api_auditor = ApiAuditor()
+        self.cloud_audit = CloudAudit()
         
         # * GUI Handle
         if self.ui_mode == "gui":
@@ -116,6 +123,15 @@ class ApexOmega:
                 elif tool_name in ["webports", "ports"]:
                     self.current_module = "discovery"
                     self._run_webports_module()
+                elif tool_name in ["vuln", "atlas"]:
+                    self.current_module = "vulnerability"
+                    self._run_vuln_module()
+                elif tool_name in ["api"]:
+                    self.current_module = "api"
+                    self._run_api_module()
+                elif tool_name in ["cloud"]:
+                    self.current_module = "cloud"
+                    self._run_cloud_module()
                 elif tool_name == "help":
                     self.gui.tabview.set("How to Use")
                 else:
@@ -124,6 +140,67 @@ class ApexOmega:
         threading.Thread(target=thread_task, daemon=True).start()
 
     # -- Module Automated Runners --
+
+    def _run_vuln_module(self):
+        if not self.active_target:
+            self.gui.log_to_terminal("Vuln: No target set.\n", "[error] ")
+            return
+        target = self.active_target
+        if not target.startswith('http'): target = f"http://{target}"
+        
+        self.gui.log_to_terminal(f"Starting VULN ATLAS on: {target}\n", "[init] ")
+        
+        # 1. Host Injection
+        self.gui.log_to_terminal("  [*] Testing Host Header Injection...\n")
+        host_vuln = self.atlas.checkHostInjection(target)
+        if host_vuln: self.gui.log_to_terminal(f"  [!] HOST INJECTION VULNERABLE: {host_vuln}\n", "[danger] ")
+        
+        # 2. CORS Audit
+        self.gui.log_to_terminal("  [*] Auditing CORS configuration...\n")
+        cors = self.atlas.auditCors(target)
+        if cors: self.gui.log_to_terminal(f"  [!] CORS MISCONFIGURED: {cors}\n", "[warning] ")
+        
+        # 3. Path Fuzzing (Extreme)
+        self.gui.log_to_terminal("  [*] Fuzzing 50+ Sensitive Paths (config, backup, dev)...\n")
+        paths = self.atlas.fuzzSensitivePaths(target)
+        for p, code in paths:
+            self.gui.log_to_terminal(f"  [+] FOUND PATH: {p:25} (HTTP {code})\n", "[success] ")
+        
+        self.gui.log_to_terminal("Vuln Scan Complete. Type !exit to switch.\n")
+
+    def _run_api_module(self):
+        if not self.active_target:
+            self.gui.log_to_terminal("API: No target set.\n", "[error] ")
+            return
+        target = self.active_target
+        if not target.startswith('http'): target = f"http://{target}"
+        
+        self.gui.log_to_terminal(f"API AUDITOR: Scanning {target}...\n", "[init] ")
+        
+        # 1. API Fuzz
+        self.gui.log_to_terminal("  [*] Fuzzing API Endpoints (v1, v2, graphql, rest)...\n")
+        res = self.api_auditor.fuzzEndpoints(target)
+        for e in res:
+            self.gui.log_to_terminal(f"  [+] API ENDPOINT: {e}\n", "[success] ")
+            
+        # 2. Method Check
+        self.gui.log_to_terminal("  [*] Testing HTTP Methods (PUT, DELETE, PATCH)...\n")
+        m_res = self.api_auditor.checkAllowedMethods(target)
+        self.gui.log_to_terminal(f"  [+] ALLOWED: {', '.join(m_res)}\n")
+        
+        self.gui.log_to_terminal("API Audit Complete.\n")
+
+    def _run_cloud_module(self):
+        if not self.active_target:
+            self.gui.log_to_terminal("Cloud: No target set.\n", "[error] ")
+            return
+        self.gui.log_to_terminal(f"CLOUD HUNTER: Searching for Buckets for {self.active_target}...\n", "[init] ")
+        res = self.cloud_audit.findCloudBuckets(self.active_target)
+        for b in res:
+            self.gui.log_to_terminal(f"  [!] PUBLIC BUCKET FOUND: {b}\n", "[danger] ")
+        if not res:
+            self.gui.log_to_terminal("  [-] No public buckets found.\n")
+        self.gui.log_to_terminal("Cloud Hunt complete.\n")
 
     def _run_payload_module(self):
         if not self.active_target:
@@ -219,8 +296,8 @@ class ApexOmega:
         def task():
             self.gui.log_to_terminal("Checking GitHub for updates (jekk1/ApexOmega)...")
             try:
-                # * Path version.txt sekarang di root repo (Software data as root)
-                versionUrl = "https://raw.githubusercontent.com/jekk1/ApexOmega/main/version.txt"
+                # * Cache Buster: Tambahkan timestamp ke URL biar gak kena cache GitHub
+                versionUrl = f"https://raw.githubusercontent.com/jekk1/ApexOmega/main/version.txt?t={int(time.time())}"
                 response = requests.get(versionUrl, timeout=5)
                 if response.status_code != 200:
                     self.gui.log_to_terminal(f"Failed to check updates (HTTP {response.status_code})")

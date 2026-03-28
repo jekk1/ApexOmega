@@ -15,6 +15,9 @@ class GuidedAssistant:
             "sub": "Alias untuk subdomain discovery engine.",
             "vhost": "Virtual Host Finder: Mencari konfigurasi vhost tersembunyi lewat modifikasi host header. CARA PAKAI: Ketik !vhost.",
             "webports": "Web Port Scanner: Scan port khusus layanan web (80, 443, 8080, dll). CARA PAKAI: Ketik !webports.",
+            "vuln": "Vuln Atlas v4.9: Audit kerentanan tingkat lanjut (CORS, SSRF, Host Header Injection, & 50+ Sensitive Paths). CARA PAKAI: Ketik !vuln.",
+            "api": "API Auditor: Mencari endpoint API tersembunyi dan melakukan pengetesan HTTP methods (IDOR check). CARA PAKAI: Ketik !api.",
+            "cloud": "Cloud Hunter: Mencari public storage (S3 Buckets, Firebase, GCP) yang terekspos berdasarkan nama domain. CARA PAKAI: Ketik !cloud.",
             "wordpress": "Spesialis audit situs berbasis WordPress. CARA PAKAI: Ketik !wordpress.",
             "wp": "Alias untuk wordpress scanner modul.",
             "sqlmap": "Otomatisasi deteksi dan eksploitasi celah SQL Injection di database.",
@@ -38,7 +41,8 @@ class GuidedAssistant:
             "v4.0: Console Edition.",
             "v4.5: Interactive Shell Edition (Mode !tool & !exit).",
             "v4.7: Zero-to-Hero Edition (Beginner Roadmap & Color Aesthetics).",
-            "v4.8: Web-Nitro Edition (Advanced Web Discovery & Pentesting Powerhouse)."
+            "v4.8: Web-Nitro Edition (Advanced Web Discovery & Pentesting Powerhouse).",
+            "v4.9: Web-Nitro Ultra Edition (Vuln Atlas, API Auditor, Cloud Hunter, & Sidebar UI Categories)."
         ]
 
     def getSteps(self):

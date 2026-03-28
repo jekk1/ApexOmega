@@ -10,7 +10,7 @@ class InterfaceDesktop(ctk.CTk):
     def __init__(self, app_core):
         super().__init__()
         self.core = app_core
-        self.title("ApexOmega Shell v4.6")
+        self.title("ApexOmega Shell v4.9 (Web-Nitro Ultra)")
         self.geometry("1100x700")
         
         # * Standard Resizable Window
@@ -53,7 +53,11 @@ class InterfaceDesktop(ctk.CTk):
         self.tabview.pack(fill="both", expand=True)
         
         self.tab_console = self.tabview.add("Zaqi Shell")
+        self.tab_roadmap = self.tabview.add("Roadmap")
         self.tab_tutorial = self.tabview.add("How to Use")
+        
+        # * Populate Roadmap Tab
+        self._setup_roadmap_tab()
 
         # * Akses internal textbox dari CTkTextbox buat kontrol granular
         self.terminal = ctk.CTkTextbox(self.tab_console, font=("Consolas", 13), text_color="#cccccc", border_width=0, border_spacing=20, fg_color="#050505")
@@ -76,8 +80,8 @@ class InterfaceDesktop(ctk.CTk):
         self._tw.bind("<Control-a>", self._block_select_all)
         
         # * Startup header
-        self._tw.insert("end", "ApexOmega Console [Version: 4.6]\n", "dimText")
-        self._tw.insert("end", "Zaqi Interactive Shell Edition\n\n", "dimText")
+        self._tw.insert("end", "ApexOmega Console [Version: 4.9]\n", "dimText")
+        self._tw.insert("end", "Web-Nitro Ultra Edition\n\n", "dimText")
         
         # * Mark posisi awal input (semua sebelumnya protected)
         self._tw.mark_set("inputStart", "end-1c")
@@ -223,10 +227,40 @@ class InterfaceDesktop(ctk.CTk):
         for widget in self.tools_frame.winfo_children():
             widget.destroy()
         
-        tools = self.core.guided.helpDatabase.keys()
-        for t in sorted(tools):
-            btn = ctk.CTkButton(self.tools_frame, text=t.upper(), anchor="w", fg_color="transparent", text_color="#777777", hover_color="#1a1a1a", height=30, command=lambda x=t: self._show_how_to(x))
-            btn.pack(fill="x", pady=1)
+        # * Categorized Tools Listing (Kali Linux Style)
+        categories = {
+            "RECON / INFO": ["nmap", "recon", "webaudit"],
+            "DISCOVERY": ["subdomain", "vhost", "webports"],
+            "VULNERABILITY": ["vuln", "wordpress", "wp"],
+            "API / CLOUD": ["api", "cloud"],
+            "EXPLOITATION": ["payload", "sqlmap"]
+        }
+        
+        for cat, tools in categories.items():
+            # -- Category Header --
+            lbl = ctk.CTkLabel(self.tools_frame, text=cat, font=("Roboto", 11, "bold"), text_color="#444444", anchor="w")
+            lbl.pack(fill="x", pady=(10, 2), padx=5)
+            
+            for t in sorted(tools):
+                btn = ctk.CTkButton(self.tools_frame, text=t.upper(), anchor="w", fg_color="transparent", text_color="#777777", hover_color="#1a1a1a", height=28, command=lambda x=t: self._show_how_to(x))
+                btn.pack(fill="x", pady=0)
+
+    # * Setup Roadmap Tab Content
+    def _setup_roadmap_tab(self):
+        lbl_title = ctk.CTkLabel(self.tab_roadmap, text="SYSTEM ROADMAP", font=("Roboto", 24, "bold"), text_color="#00cc66")
+        lbl_title.pack(pady=30)
+        
+        roadmap_frame = ctk.CTkFrame(self.tab_roadmap, fg_color="transparent")
+        roadmap_frame.pack(fill="both", expand=True, padx=50)
+        
+        for entry in self.core.guided.roadmap:
+            ver, desc = entry.split(':', 1)
+            row = ctk.CTkFrame(roadmap_frame, fg_color="#121212", corner_radius=5)
+            row.pack(fill="x", pady=5)
+            
+            ctk.CTkLabel(row, text=ver, font=("Roboto", 13, "bold"), text_color="cyan", width=80).pack(side="left", padx=15, pady=10)
+            ctk.CTkLabel(row, text=desc, font=("Roboto", 13), text_color="#cccccc").pack(side="left", padx=5)
+
 
     def _show_how_to(self, tool_name):
         self.tabview.set("How to Use")
