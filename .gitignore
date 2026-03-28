@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Build
+build/
+dist/
+*.spec
+*.exe
+
+# Logs
+*.log
+
+# Native
+*.dll
+*.pyd
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Software (build output folder)
+Software/
