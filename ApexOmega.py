@@ -51,7 +51,7 @@ from urllib.parse import urljoin
 
 # * Inisialisasi framework Apex Omega Shell v5.1 (Auto-Pilot Edition)
 class ApexOmega:
-    VERSION = "5.8.11"
+    VERSION = "5.8.12"
     def __init__(self, mode="gui"):
         socket.setdefaulttimeout(3) # * Anti-Stuck Globally
         self.stop_requested = False
@@ -316,8 +316,14 @@ class ApexOmega:
             while time.time() - start_wait < duration:
                 if self.stop_requested or not self.isRunning:
                     break
-                time.sleep(0.5)
-            self.gui.log_to_terminal("[*] Attack Duration Finished.\n", "[info] ")
+                
+                # * Live Status v5.8.12 (Zaqi Debug Edition)
+                s = self.special.stats
+                curr_status = f"  [*] PROGRESS: [success .{s['success']}x] [blocked .{s['blocked']}x] [redirect .{s['redirect']}x] [error .{s['error']}x]"
+                self.gui.log_to_terminal(f"\r{curr_status}", "[info] ")
+                
+                time.sleep(1.0)
+            self.gui.log_to_terminal("\n[*] Attack Duration Finished.\n", "[info] ")
         else:
             self.gui.log_to_terminal(f"  [!] Infinite Attack Running (Press ESC or !stop to terminate)\n", "[danger] ")
         
