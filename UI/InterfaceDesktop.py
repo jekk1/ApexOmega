@@ -179,16 +179,18 @@ class InterfaceDesktop(ctk.CTk):
         markPos = self._tw.index("inputStart")
         userInput = self._tw.get(markPos, "end-1c").strip()
         
-        # * 1. Tambah newline seketika
+        # --- NUCLEAR SYNC RESET v5.7.5 ---
+        # Kita lakukan update UI secara sinkron seketika biar gak ada race condition
         self._tw.insert("end", "\n")
         
-        # * 2. SYNC RESET (Anti-Duplicate v5.7.4)
-        # Langsung pindahin mark ke akhir biar input sebelumnya gak kebaca lagi
+        target_display = self.core.active_target or "none"
+        prompt_text = f"\n[root@shell:{target_display}] >> "
+        
+        # Cetak prompt dan kunci kursor dalam satu nafas
+        self._tw.insert("end", prompt_text, "prompt")
         self._tw.mark_set("inputStart", "end-1c")
         self._tw.mark_gravity("inputStart", "left")
-        
-        # * 3. Tampilkan prompt baru secepat kilat
-        self.show_prompt()
+        self._tw.see("end")
 
         if not userInput:
             return "break"
