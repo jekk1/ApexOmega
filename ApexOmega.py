@@ -73,7 +73,7 @@ class ApexOmega:
         if self.ui_mode == "cli":
             console.clear()
             self.ui.showBanner()
-            self.ui.logStatus("Memeriksa mesin Apex v4.7...", "info")
+            self.ui.logStatus("Memeriksa mesin Apex v5.5...", "info")
             time.sleep(0.5)
             
             if self.bridge.startNativeSession():
