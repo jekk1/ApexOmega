@@ -173,8 +173,8 @@ class ApexOmega:
         def task():
             self.gui.log_to_terminal("Checking GitHub for updates (jekk1/ApexOmega)...")
             try:
-                # * Path version.txt sekarang di dalam Software/
-                versionUrl = "https://raw.githubusercontent.com/jekk1/ApexOmega/main/Software/version.txt"
+                # * Path version.txt sekarang di root repo (Software data as root)
+                versionUrl = "https://raw.githubusercontent.com/jekk1/ApexOmega/main/version.txt"
                 response = requests.get(versionUrl, timeout=5)
                 if response.status_code != 200:
                     self.gui.log_to_terminal(f"Failed to check updates (HTTP {response.status_code})")
@@ -230,13 +230,12 @@ class ApexOmega:
                 self.gui.log_to_terminal("ERROR: Empty archive.")
                 return
             
-            # * Repo root di ZIP: ApexOmega-main/
+            # * Repo root di ZIP: ApexOmega-main/ (Sekarang isinya langsung data Software)
             sourceRepoRoot = os.path.join(tempDir, extractedFolders[0])
-            # * Source Software: ApexOmega-main/Software/
-            sourceSoftwareDir = os.path.join(sourceRepoRoot, "Software")
+            sourceSoftwareDir = sourceRepoRoot
             
-            if not os.path.exists(sourceSoftwareDir):
-                self.gui.log_to_terminal("ERROR: Software folder not found in update.")
+            if not os.path.exists(os.path.join(sourceSoftwareDir, "ApexOmega.py")):
+                self.gui.log_to_terminal("ERROR: Main script not found in update.")
                 return
 
             self.gui.log_to_terminal("Replacing files...")
