@@ -27,7 +27,7 @@ from tkinter import messagebox
 
 # * Inisialisasi framework Apex Omega Shell v5.1 (Auto-Pilot Edition)
 class ApexOmega:
-    VERSION = "5.5"
+    VERSION = "5.6"
     def __init__(self, mode="gui"):
         self.stop_requested = False
         self.ui_mode = mode
@@ -200,27 +200,35 @@ class ApexOmega:
         # 1. Host Injection
         self.gui.log_to_terminal("  [*] Testing Host Header Injection...\n")
         host_vuln = self.atlas.checkHostInjection(target)
-        if host_vuln: self.gui.log_to_terminal(f"  [!] HOST INJECTION VULNERABLE: {host_vuln}\n", "[danger] ")
+        if host_vuln: 
+            self.gui.log_to_terminal(f"  [!] HOST INJECTION VULNERABLE: {host_vuln}\n", "[danger] ")
+            self.gui.log_to_found(f"[VULN] Host Header Injection at {target} (Host: {host_vuln})")
         
         # 2. CORS Audit
         self.gui.log_to_terminal("  [*] Auditing CORS configuration...\n")
         cors = self.atlas.auditCors(target)
-        if cors: self.gui.log_to_terminal(f"  [!] CORS MISCONFIGURED: {cors}\n", "[warning] ")
+        if cors: 
+            self.gui.log_to_terminal(f"  [!] CORS MISCONFIGURED: {cors}\n", "[warning] ")
+            self.gui.log_to_found(f"[VULN] CORS Misconfig at {target} ({cors})")
         
         # 4. SSTI Check (v5.4 New)
         self.gui.log_to_terminal("  [*] Testing Server-Side Template Injection (SSTI)...\n")
         ssti = self.atlas.checkSsti(target)
-        if ssti: self.gui.log_to_terminal(f"  [!!!] SSTI VULNERABLE: Found echo with payload {ssti}\n", "[danger] ")
+        if ssti: 
+            self.gui.log_to_terminal(f"  [!!!] SSTI VULNERABLE: Found echo with payload {ssti}\n", "[danger] ")
+            self.gui.log_to_found(f"[VULN] SSTI Detected at {target} (Payload: {ssti})")
 
         # 5. File Upload Detection (v5.4 New)
         self.gui.log_to_terminal("  [*] Searching for File Upload vectors...\n")
         if self.atlas.checkUpload(target):
             self.gui.log_to_terminal("  [!] FILE UPLOAD DETECTED: Found upload form on page\n", "[warning] ")
+            self.gui.log_to_found(f"[INTERESTING] File Upload Form Found at {target}")
 
         # 6. CRLF Injection (v5.4 New)
         self.gui.log_to_terminal("  [*] Testing CRLF Injection (HTTP Splitting)...\n")
         if self.atlas.checkCrlf(target):
             self.gui.log_to_terminal("  [!] CRLF INJECTION VULNERABLE: Header injection possible\n", "[danger] ")
+            self.gui.log_to_found(f"[VULN] CRLF Injection Vulnerability at {target}")
 
         # 7. Path Fuzzing (Extreme 100+ Paths)
         self.gui.log_to_terminal("  [*] Fuzzing 100+ Sensitive Paths (config, backup, dev, git)...\n")
@@ -282,6 +290,7 @@ class ApexOmega:
             if code:
                 tag = "[success]" if code == 200 else "[warning]"
                 self.gui.log_to_terminal(f"  [+] /{d:20} (HTTP {code})\n", tag)
+                self.gui.log_to_found(f"[DIR] Found path: {baseUrl}/{d} (HTTP {code})")
         self.gui.log_to_terminal("Dirb complete.\n", "[info] ")
 
     def _run_headers_module(self, args=[]):
@@ -366,6 +375,7 @@ class ApexOmega:
         res = self.discovery.bruteSubdomain(self.active_target)
         for host, ip in res:
             self.gui.log_to_terminal(f"  [+] {host:20} -> {ip}\n", "[success] ")
+            self.gui.log_to_found(f"[SUBDOMAIN] Found host: {host} ({ip})")
         self.gui.log_to_terminal(f"Scan complete. Found {len(res)} subdomains.\n")
 
     def _run_vhost_module(self):

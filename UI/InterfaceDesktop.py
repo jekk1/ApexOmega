@@ -10,7 +10,7 @@ class InterfaceDesktop(ctk.CTk):
     def __init__(self, app_core):
         super().__init__()
         self.core = app_core
-        self.title("ApexOmega Shell v5.5 (Nitro-Auto Restart Edition)")
+        self.title("ApexOmega Shell v5.6 (Treasure-Box Edition)")
         self.geometry("1100x700")
         
         # * Standard Resizable Window
@@ -57,6 +57,7 @@ class InterfaceDesktop(ctk.CTk):
         
         self.tab_console = self.tabview.add("Terminal")
         self.tab_roadmap = self.tabview.add("Roadmap")
+        self.tab_found = self.tabview.add("Found")
         self.tab_tutorial = self.tabview.add("How to Use")
         
         # * Populate Roadmap Tab
@@ -95,12 +96,20 @@ class InterfaceDesktop(ctk.CTk):
         self._tw.bind("<<Cut>>", self._block_cut)
         self._tw.bind("<Control-a>", self._block_select_all)
         
-        self._tw.insert("end", "ApexOmega Console [Version: 5.5]\n", "dimText")
-        self._tw.insert("end", "Nitro-Auto Restart Edition (Full Sync)\n\n", "dimText")
+        self._tw.insert("end", "ApexOmega Console [Version: 5.6]\n", "dimText")
+        self._tw.insert("end", "Treasure-Box Edition (Harta Karun Sync)\n\n", "dimText")
         
         # * Mark posisi awal input (semua sebelumnya protected)
         self._tw.mark_set("inputStart", "end-1c")
         self._tw.mark_gravity("inputStart", "left")
+
+        # * --- Setup Tab Found (Harta Karun) ---
+        self.found_box = ctk.CTkTextbox(self.tab_found, font=("Consolas", 13), text_color="#00ff00", fg_color="#050505", border_width=0, border_spacing=20)
+        self.found_box.pack(fill="both", expand=True)
+        self.found_box.insert("end", "[*] HARTA KARUN SYSTEM (v5.6)\n", "success")
+        self.found_box.insert("end", "[*] Hasil scouting penting bakal dicatet di sini otomatis.\n", "dimText")
+        self.found_box.insert("end", "-"*50 + "\n\n")
+        self.found_box.configure(state="disabled")
 
     # * Prompt awal minta target
     def _initial_prompt(self):
@@ -233,6 +242,13 @@ class InterfaceDesktop(ctk.CTk):
         self._tw.insert("end", f"{message}", clean_tag)
         self._tw.see("end")
         self._set_input_mark()
+
+    # * Log ke tab Found (Harta Karun v5.6)
+    def log_to_found(self, message):
+        self.found_box.configure(state="normal")
+        self.found_box.insert("end", f"{message}\n")
+        self.found_box.see("end")
+        self.found_box.configure(state="disabled")
 
     def _toggle_tools(self):
         if not self.tools_visible:
