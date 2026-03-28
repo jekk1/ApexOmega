@@ -27,7 +27,7 @@ from tkinter import messagebox
 
 # * Inisialisasi framework Apex Omega Shell v5.1 (Auto-Pilot Edition)
 class ApexOmega:
-    VERSION = "5.1"
+    VERSION = "5.2"
     def __init__(self, mode="gui"):
         self.ui_mode = mode
         self.isRunning = True
@@ -98,10 +98,13 @@ class ApexOmega:
                 tool_name = command[1:] # Hapus tanda seru
                 
                 # -- Verifikasi Tool --
-                if tool_name in ["nmap", "nethub", "recon"]:
+                if tool_name in ["recon", "info"]:
+                    self.current_module = "recon"
+                    self._run_recon_module()
+                elif tool_name in ["nmap", "scan"]:
                     self.current_module = "nmap"
                     self._run_nmap_module()
-                elif tool_name in ["webaudit", "web", "scan"]:
+                elif tool_name in ["webaudit", "web"]:
                     self.current_module = "webaudit"
                     self._run_web_module()
                 elif tool_name in ["wordpress", "wp"]:
@@ -249,16 +252,49 @@ class ApexOmega:
             self.gui.log_to_terminal(f"  [+] Port {p} is OPEN\n", "[success] ")
         self.gui.log_to_terminal("Port scan complete.\n")
 
+    def _run_recon_module(self):
+        if not self.active_target:
+            self.gui.log_to_terminal("Recon: Target not set.\n", "[error] ")
+            return
+        self.gui.log_to_terminal(f"[*] INITIATING RECONNAISSANCE: {self.active_target}\n", "[init] ")
+        
+        try:
+            # 1. IP & DNS Info
+            self.gui.log_to_terminal("  [*] Fetching DNS & IP Records...\n")
+            records = self.net.getDnsInfo(self.active_target)
+            for k, v in records.items():
+                self.gui.log_to_terminal(f"  [+] {k:10}: {v}\n", "[success] ")
+            
+            # 2. Tech Detection
+            self.gui.log_to_terminal("  [*] Detecting Web Technologies...\n")
+            target_url = f"http://{self.active_target}" if not self.active_target.startswith("http") else self.active_target
+            tech = self.web.detectTech(target_url)
+            self.gui.log_to_terminal(f"  [+] Server: {tech.get('server', ['Unknown'])[0]}\n", "[success] ")
+            
+            self.gui.log_to_terminal("Recon Complete. Step 1 Finished.\n", "[info] ")
+            self.gui.update_roadmap_check(1)
+        except Exception as e:
+            self.gui.log_to_terminal(f"Recon Error: {str(e)}\n", "[error] ")
+
     def _run_nmap_module(self):
         if not self.active_target:
             self.gui.log_to_terminal("Nmap: Target not set.\n", "[error] ")
             return
-        self.gui.log_to_terminal(f"NMAP SCAN: SYN stealth scan on {self.active_target}\n", "[inspect] ")
-        records = self.net.getAllDnsRecords(self.active_target)
-        for k, v in records.items():
-            self.gui.log_to_terminal(f"  {k}: {v}\n", "[success] ")
-        self.gui.log_to_terminal("Nmap Scan Complete.\n")
-        self.gui.update_roadmap_check(1)
+        self.gui.log_to_terminal(f"[*] NMAP INFRA SCAN: {self.active_target}\n", "[init] ")
+        self.gui.log_to_terminal("  [*] Scanning Common Web Ports (80, 443, 8080, 3306, etc)...\n")
+        
+        try:
+            res = self.discovery.scanWebPorts(self.active_target)
+            if res:
+                for p in res:
+                    self.gui.log_to_terminal(f"  [!] PORT {p} is OPEN\n", "[success] ")
+            else:
+                self.gui.log_to_terminal("  [-] No common ports found open.\n", "[warning] ")
+                
+            self.gui.log_to_terminal("Nmap Infrastructure Scan Complete.\n", "[info] ")
+            self.gui.update_roadmap_check(2)
+        except Exception as e:
+            self.gui.log_to_terminal(f"Nmap Error: {str(e)}\n", "[error] ")
 
     def _run_web_module(self):
         if not self.active_target:

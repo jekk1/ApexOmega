@@ -67,13 +67,21 @@ class InterfaceDesktop(ctk.CTk):
         self.terminal.pack(fill="both", expand=True)
         self._tw = self.terminal._textbox
         
-        # * Tag warna untuk output system (Gray for system, Green for results)
-        self._tw.tag_config("sysText", foreground="#555555")
+        # * Tag warna untuk output v5.2 (Hacker Colors)
+        self._tw.tag_config("sysText", foreground="#666666")
         self._tw.tag_config("dimText", foreground="#333333")
-        self._tw.tag_config("cyanText", foreground="#00cc66")
-        self._tw.tag_config("greenText", foreground="#00cc66")
-        self._tw.tag_config("prompt", foreground="#444444")
-        self._tw.tag_config("inspect", foreground="#666666") # * Console Inspect Style
+        self._tw.tag_config("prompt", foreground="#555555")
+        self._tw.tag_config("inspect", foreground="#888888")
+        
+        # * Pentest Colors (Success, Error, Info, Warning)
+        self._tw.tag_config("success", foreground="#00ff00") # * Ijo Terang
+        self._tw.tag_config("greenText", foreground="#00ff00")
+        self._tw.tag_config("error", foreground="#ff3333")   # * Merah Terang
+        self._tw.tag_config("danger", foreground="#ff3333")
+        self._tw.tag_config("warning", foreground="#ffcc00") # * Kuning/Orange
+        self._tw.tag_config("info", foreground="#5dade2")    # * Blueish
+        self._tw.tag_config("cyanText", foreground="#00ffff")
+        self._tw.tag_config("init", foreground="#aaaaaa")
         
         # * Bind event untuk proteksi teks dan handle input
         self._tw.bind("<Return>", self._on_enter)
@@ -84,8 +92,8 @@ class InterfaceDesktop(ctk.CTk):
         self._tw.bind("<Control-a>", self._block_select_all)
         
         # * Startup header
-        self._tw.insert("end", "ApexOmega Console [Version: 5.1]\n", "dimText")
-        self._tw.insert("end", "Auto-Pilot Update Edition\n\n", "dimText")
+        self._tw.insert("end", "ApexOmega Console [Version: 5.2]\n", "dimText")
+        self._tw.insert("end", "Pentest-Nitro Pro Edition (High Voltage)\n\n", "dimText")
         
         # * Mark posisi awal input (semua sebelumnya protected)
         self._tw.mark_set("inputStart", "end-1c")
@@ -212,9 +220,13 @@ class InterfaceDesktop(ctk.CTk):
         self._append_system(f"[root@shell:{target}] >> ", "prompt")
         self._set_input_mark()
 
-    # * Log output ke terminal (dipanggil dari luar class)
-    def log_to_terminal(self, message, prefix="[root@shell] "):
-        self._append_system(f"{prefix}{message}\n", "sysText")
+    # * Log output ke terminal (v5.2 Tag-Supported)
+    def log_to_terminal(self, message, tag="sysText"):
+        # Check if the message contains its own prefix, if not add it.
+        # This allows raw logs from modules to be colored perfectly.
+        clean_tag = tag.replace("[", "").replace("]", "").strip()
+        self._tw.insert("end", f"{message}", clean_tag)
+        self._tw.see("end")
         self._set_input_mark()
 
     def _toggle_tools(self):
