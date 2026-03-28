@@ -51,7 +51,7 @@ from urllib.parse import urljoin
 
 # * Inisialisasi framework Apex Omega Shell v5.1 (Auto-Pilot Edition)
 class ApexOmega:
-    VERSION = "5.8.12"
+    VERSION = "5.8.13"
     def __init__(self, mode="gui"):
         socket.setdefaulttimeout(3) # * Anti-Stuck Globally
         self.stop_requested = False
@@ -591,7 +591,6 @@ class ApexOmega:
                 # Trigger Create Shortcuts on check
                 if getattr(sys, 'frozen', False):
                     self.gui._create_shortcuts()
-
                 
                 remoteVer = response.text.strip()
                 
@@ -696,20 +695,20 @@ class ApexOmega:
             # * Update isi Software/
             for item in os.listdir(sourceSoftwareDir):
                 if item in {".git", "__pycache__", "_update_temp", "_update.zip"}:
-                  # Find Icon Path (v5.8.13 Sync)
-            if getattr(sys, 'frozen', False):
-                icon_path = os.path.join(sys._MEIPASS, 'app_icon.ico')
-            else:
-                icon_path = os.path.abspath('app_icon.ico')
-
-            for shortcut_path in targets:
+                    continue
+                
+                srcPath = os.path.join(sourceSoftwareDir, item)
+                dstPath = os.path.join(softwareDir, item)
+                
+                try:
+                    if os.path.isdir(srcPath):
                         if os.path.exists(dstPath):
                             shutil.rmtree(dstPath, ignore_errors=True)
                         shutil.copytree(srcPath, dstPath)
                     else:
                         shutil.copy2(srcPath, dstPath)
                     updatedCount += 1
-                except Exception as e:
+                except Exception:
                     self.gui.log_to_terminal(f"  [!] Skipped: {item} (File in use?)")
             
             # * Cleanup
