@@ -252,9 +252,6 @@ class ApexOmega:
 
     def _run_nmap_module(self):
         if not self.active_target:
-            self.gui.log_to_terminal("ERROR: Target not set. Please type target first.")
-            return
-        self.gui.log_to_terminal(f"Modul Nmap Aktif. Scanning {self.active_target}...")
         records = self.net.getAllDnsRecords(self.active_target)
         for k, v in records.items():
             self.gui.log_to_terminal(f"{k}: {v}")

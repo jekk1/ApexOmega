@@ -10,19 +10,22 @@ class InterfaceDesktop(ctk.CTk):
     def __init__(self, app_core):
         super().__init__()
         self.core = app_core
-        self.title("ApexOmega Shell v4.9 (Web-Nitro Ultra)")
+        self.title("ApexOmega Shell v5.0 (Pentest-Nitro Edition)")
         self.geometry("1100x700")
         
         # * Standard Resizable Window
         self.attributes("-topmost", True)
         self.attributes("-alpha", 0.98)
         
-        self.tools_visible = False
+        self.tools_visible = True # * Auto-Open Sidebar v5.0
         self.waitingTarget = True
         self._setup_ui()
         
         # * Auto-Prompt Target on Startup
         self.after(500, self._initial_prompt)
+        # * Auto-Open Tools Sidebar on Startup
+        self._populate_tools()
+        self.tools_frame.pack(fill="both", expand=True, padx=5, pady=5)
 
     def _setup_ui(self):
         # * --- Main Container ---
@@ -70,6 +73,7 @@ class InterfaceDesktop(ctk.CTk):
         self._tw.tag_config("cyanText", foreground="#00cc66")
         self._tw.tag_config("greenText", foreground="#00cc66")
         self._tw.tag_config("prompt", foreground="#444444")
+        self._tw.tag_config("inspect", foreground="#666666") # * Console Inspect Style
         
         # * Bind event untuk proteksi teks dan handle input
         self._tw.bind("<Return>", self._on_enter)
@@ -80,8 +84,8 @@ class InterfaceDesktop(ctk.CTk):
         self._tw.bind("<Control-a>", self._block_select_all)
         
         # * Startup header
-        self._tw.insert("end", "ApexOmega Console [Version: 4.9]\n", "dimText")
-        self._tw.insert("end", "Web-Nitro Ultra Edition\n\n", "dimText")
+        self._tw.insert("end", "ApexOmega Console [Version: 5.0]\n", "dimText")
+        self._tw.insert("end", "Pentest-Nitro Edition (The Real Tool)\n\n", "dimText")
         
         # * Mark posisi awal input (semua sebelumnya protected)
         self._tw.mark_set("inputStart", "end-1c")
@@ -245,21 +249,46 @@ class InterfaceDesktop(ctk.CTk):
                 btn = ctk.CTkButton(self.tools_frame, text=t.upper(), anchor="w", fg_color="transparent", text_color="#777777", hover_color="#1a1a1a", height=28, command=lambda x=t: self._show_how_to(x))
                 btn.pack(fill="x", pady=0)
 
-    # * Setup Roadmap Tab Content
+    # * Setup Roadmap Tab: Menjadi Misi Penaklukan (Checklist)
     def _setup_roadmap_tab(self):
-        lbl_title = ctk.CTkLabel(self.tab_roadmap, text="SYSTEM ROADMAP", font=("Roboto", 24, "bold"), text_color="#00cc66")
-        lbl_title.pack(pady=30)
+        # * Clear existing if reload
+        for widget in self.tab_roadmap.winfo_children():
+            widget.destroy()
+
+        lbl_title = ctk.CTkLabel(self.tab_roadmap, text="MISI PENAKLUKAN WEBSITE", font=("Roboto", 24, "bold"), text_color="#00cc66")
+        lbl_title.pack(pady=(30, 5))
         
-        roadmap_frame = ctk.CTkFrame(self.tab_roadmap, fg_color="transparent")
-        roadmap_frame.pack(fill="both", expand=True, padx=50)
+        lbl_sub = ctk.CTkLabel(self.tab_roadmap, text="Langkah demi langkah menuju akses penuh (Beginner-Nitro Guide)", font=("Roboto", 13), text_color="#555555")
+        lbl_sub.pack(pady=(0, 20))
         
-        for entry in self.core.guided.roadmap:
-            ver, desc = entry.split(':', 1)
-            row = ctk.CTkFrame(roadmap_frame, fg_color="#121212", corner_radius=5)
-            row.pack(fill="x", pady=5)
-            
-            ctk.CTkLabel(row, text=ver, font=("Roboto", 13, "bold"), text_color="cyan", width=80).pack(side="left", padx=15, pady=10)
-            ctk.CTkLabel(row, text=desc, font=("Roboto", 13), text_color="#cccccc").pack(side="left", padx=5)
+        self.roadmap_checks = []
+        roadmap_frame = ctk.CTkFrame(self.tab_roadmap, fg_color="#0a0a0a", border_width=1, border_color="#222222")
+        roadmap_frame.pack(fill="both", expand=True, padx=80, pady=20)
+        
+        # * Daftar checklist (Berdasarkan GuidedAssistant)
+        steps = [
+            "1. Information Gathering (!recon)",
+            "2. Infrastructure Scan (!nmap)",
+            "3. Subdomain Discovery (!subdomain)",
+            "4. Vulnerability Audit (!webaudit / !vuln)",
+            "5. API & Cloud Hunting (!api / !cloud)",
+            "6. Stress Testing (!stress)"
+        ]
+        
+        for i, s in enumerate(steps):
+            cb = ctk.CTkCheckBox(roadmap_frame, text=s, font=("Roboto", 15), text_color="#cccccc", fg_color="#00cc66", hover_color="#00aa55", border_color="#333333")
+            cb.pack(anchor="w", padx=40, pady=15)
+            self.roadmap_checks.append(cb)
+
+    # * Tandai misi selesai dari luar (Auto-Checkbox v5.0)
+    def update_roadmap_check(self, step_idx):
+        if 0 <= step_idx < len(self.roadmap_checks):
+            self.roadmap_checks[step_idx].select()
+
+    # * Reset semua misi pas ganti target (!exit)
+    def reset_roadmap(self):
+        for cb in self.roadmap_checks:
+            cb.deselect()
 
 
     def _show_how_to(self, tool_name):
