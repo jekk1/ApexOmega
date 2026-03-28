@@ -47,6 +47,7 @@ from Modules.CloudAudit import CloudAudit
 import requests
 import socket
 from tkinter import messagebox
+from urllib.parse import urljoin
 
 # * Inisialisasi framework Apex Omega Shell v5.1 (Auto-Pilot Edition)
 class ApexOmega:
@@ -159,6 +160,9 @@ class ApexOmega:
                 self._dispatch_module(tool_name, args)
             except Exception as e:
                 self.gui.log_to_terminal(f"Error executing {tool_name}: {e}\n", "error")
+            finally:
+                if self.gui:
+                    self.gui.show_prompt()
 
         threading.Thread(target=thread_task, daemon=True).start()
 
@@ -184,7 +188,15 @@ class ApexOmega:
             "wordpress": self._run_wp_module,
             "chaos": self._run_chaos_module,
             "nitro": self._run_stress_module,
-            "payload": self._run_payload_module
+            "stress": self._run_stress_module,
+            "payload": self._run_payload_module,
+            "webaudit": self._run_web_module,
+            "subdomain": self._run_subdomain_module,
+            "vhost": self._run_vhost_module,
+            "webport": self._run_webports_module,
+            "webports": self._run_webports_module,
+            "sqlmap": self._run_web_module,
+            "aoi": self._run_web_module
         }
         
         if tool_name in mapping:
@@ -246,7 +258,7 @@ class ApexOmega:
         
         self.gui.log_to_terminal("Vuln Scan Complete. Type !exit to switch.\n")
 
-    def _run_api_module(self):
+    def _run_api_module(self, args=[]):
         if not self.active_target:
             self.gui.log_to_terminal("API: No target set.\n", "[error] ")
             return
@@ -350,7 +362,7 @@ class ApexOmega:
             self.gui.log_to_terminal(f"  [!!!] CRITICAL EXPOSURE: {f}\n", "[danger] ")
         if not res: self.gui.log_to_terminal("  [-] No public .git repository found.\n")
 
-    def _run_cloud_module(self):
+    def _run_cloud_module(self, args=[]):
         if not self.active_target:
             self.gui.log_to_terminal("Cloud: No target set.\n", "[error] ")
             return
@@ -362,7 +374,7 @@ class ApexOmega:
             self.gui.log_to_terminal("  [-] No public buckets found.\n")
         self.gui.log_to_terminal("Cloud Hunt complete.\n")
 
-    def _run_payload_module(self):
+    def _run_payload_module(self, args=[]):
         if not self.active_target:
             self.gui.log_to_terminal("Payload Gen: No target set, using generic payload.\n", "[info] ")
         
@@ -375,7 +387,7 @@ class ApexOmega:
             self.gui.log_to_terminal(f"  {fmt}: {val}\n", "[+] ")
         self.gui.log_to_terminal("Payloads ready. Type !exit to switch.\n")
 
-    def _run_subdomain_module(self):
+    def _run_subdomain_module(self, args=[]):
         if not self.active_target:
             self.gui.log_to_terminal("Discovery: No target set.\n", "[error] ")
             return
@@ -386,7 +398,7 @@ class ApexOmega:
             self.gui.log_to_found(f"[SUBDOMAIN] Found host: {host} ({ip})")
         self.gui.log_to_terminal(f"Scan complete. Found {len(res)} subdomains.\n")
 
-    def _run_vhost_module(self):
+    def _run_vhost_module(self, args=[]):
         if not self.active_target:
             self.gui.log_to_terminal("Discovery: No target set.\n", "[error] ")
             return
@@ -401,7 +413,7 @@ class ApexOmega:
         except:
             self.gui.log_to_terminal("Error: Could not resolve target IP for VHost scan.\n")
 
-    def _run_webports_module(self):
+    def _run_webports_module(self, args=[]):
         if not self.active_target:
             self.gui.log_to_terminal("Discovery: No target set.\n", "[error] ")
             return
@@ -468,7 +480,7 @@ class ApexOmega:
         except Exception as e:
             self.gui.log_to_terminal(f"Nmap Error: {str(e)}\n", "[error] ")
 
-    def _run_web_module(self):
+    def _run_web_module(self, args=[]):
         if not self.active_target:
             self.gui.log_to_terminal("ERROR: Target not set.")
             return
@@ -479,7 +491,7 @@ class ApexOmega:
         if sqli: self.gui.log_to_terminal(f"SQLi Found: {len(sqli)} targets!")
         self.gui.log_to_terminal("Web Audit Complete. Type !exit to switch.")
 
-    def _run_wp_module(self):
+    def _run_wp_module(self, args=[]):
         if not self.active_target:
             self.gui.log_to_terminal("ERROR: Target not set.")
             return
@@ -488,7 +500,7 @@ class ApexOmega:
         self._tw.insert("end", "ApexOmega Console [Version: 5.8.6]\n", "dimText")
         self._tw.insert("end", "Titanium Absolute (Global DLL & Tcl Lock)\n\n", "dimText")
 
-    def _run_chaos_module(self):
+    def _run_chaos_module(self, args=[]):
         if not self.active_target:
             self.gui.log_to_terminal("ERROR: Target not set.")
             return
