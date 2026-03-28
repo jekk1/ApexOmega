@@ -26,6 +26,74 @@ class InterfaceDesktop(ctk.CTk):
         # * Auto-Open Tools Sidebar on Startup
         self._populate_tools()
         self.tools_frame.pack(fill="both", expand=True, padx=5, pady=5)
+        
+        # * Set Window Icon v5.8.11 (Taskbar Sync)
+        self.after(200, self._set_window_icon)
+        # * Auto-Create Shortcuts v5.8.9 (Desktop + Start Menu for Search)
+        self._create_shortcuts()
+
+    def _create_shortcuts(self):
+        try:
+            import os, sys, subprocess, secrets
+            # Path Desktop
+            desktop = os.path.join(os.environ.get("USERPROFILE"), "Desktop")
+            # Path Start Menu Programs (Biar muncul di Windows Search)
+            start_menu = os.path.join(os.environ.get("APPDATA"), "Microsoft", "Windows", "Start Menu", "Programs")
+            
+            # Kita namain 'apexomega.exe' biar user gampang nyarinya pas ngetik di Windows
+            shortcut_name = "apexomega.exe.lnk"
+            
+            targets = [
+                os.path.join(desktop, shortcut_name),
+                os.path.join(start_menu, shortcut_name)
+            ]
+
+            target_exe = sys.executable
+            work_dir = os.path.dirname(sys.executable)
+            
+            # Find Icon Path (v5.8.11 Sync)
+            import customtkinter
+            icon_path = os.path.join(os.path.dirname(customtkinter.__file__), 'assets', 'icons', 'CustomTkinter_icon_Windows.ico')
+
+            for shortcut_path in targets:
+                if os.path.exists(shortcut_path): continue
+                
+                vbs_code = f"""
+Set oWS = WScript.CreateObject("WScript.Shell")
+sLinkFile = "{shortcut_path}"
+Set oLink = oWS.CreateShortcut(sLinkFile)
+oLink.TargetPath = "{target_exe}"
+oLink.WorkingDirectory = "{work_dir}"
+oLink.IconLocation = "{icon_path},0"
+oLink.Description = "Apex Omega Pentest Framework"
+oLink.Save
+"""
+                vbs_path = os.path.join(os.environ.get("TEMP"), f"ao_short_{secrets.token_hex(2)}.vbs")
+                with open(vbs_path, "w") as f:
+                    f.write(vbs_code)
+                
+                subprocess.run(["cscript", "//nologo", vbs_path], capture_output=True, creationflags=subprocess.CREATE_NO_WINDOW if hasattr(subprocess, 'CREATE_NO_WINDOW') else 0)
+                os.remove(vbs_path)
+            
+            self.core.log_to_terminal("[+] Shortcuts (apexomega.exe) created on Desktop & Start Menu.\n", "[info] ")
+        except Exception:
+            pass
+
+    def _set_window_icon(self):
+        try:
+            import os, sys
+            # Cari icon di folder customtkinter assets (udah di-bundle PyInstaller)
+            if getattr(sys, 'frozen', False):
+                base_path = sys._MEIPASS
+            else:
+                import customtkinter
+                base_path = os.path.dirname(customtkinter.__file__)
+            
+            icon_path = os.path.join(base_path, 'assets', 'icons', 'CustomTkinter_icon_Windows.ico')
+            if os.path.exists(icon_path):
+                self.iconbitmap(icon_path)
+        except Exception:
+            pass
 
     def _setup_ui(self):
         # * --- Main Container ---

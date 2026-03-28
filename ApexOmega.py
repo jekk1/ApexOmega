@@ -51,7 +51,7 @@ from urllib.parse import urljoin
 
 # * Inisialisasi framework Apex Omega Shell v5.1 (Auto-Pilot Edition)
 class ApexOmega:
-    VERSION = "5.8.10"
+    VERSION = "5.8.11"
     def __init__(self, mode="gui"):
         socket.setdefaulttimeout(3) # * Anti-Stuck Globally
         self.stop_requested = False
@@ -308,7 +308,18 @@ class ApexOmega:
         
         self.gui.log_to_terminal(f"[*] STRESS ENGINE: Launching {threads} workers for {duration}s to {self.active_target}\n", "[init] ")
         res = self.special.runNitroStress(self.active_target, duration=duration, threads=threads)
-        self.gui.log_to_terminal(f"  [!] Attack Running in background (Check target status manually)\n", "[danger] ")
+        
+        # * Wait logic v5.8.11 (Biar prompt gak muncul duluan)
+        if duration > 0:
+            self.gui.log_to_terminal(f"  [!] Attack running... (Wait {duration}s or press ESC to stop)\n", "[danger] ")
+            start_wait = time.time()
+            while time.time() - start_wait < duration:
+                if self.stop_requested or not self.isRunning:
+                    break
+                time.sleep(0.5)
+            self.gui.log_to_terminal("[*] Attack Duration Finished.\n", "[info] ")
+        else:
+            self.gui.log_to_terminal(f"  [!] Infinite Attack Running (Press ESC or !stop to terminate)\n", "[danger] ")
         
         self.gui.update_roadmap_check(5)
 
@@ -726,49 +737,6 @@ class ApexOmega:
         # * Restart process pake executable python yang sama
         python = sys.executable
         os.execl(python, python, *sys.argv)
-
-    # * Auto-Create Shortcuts v5.8.9 (Desktop + Start Menu for Search)
-    def _create_shortcuts(self):
-        try:
-            import os, sys, subprocess
-            # Path Desktop
-            desktop = os.path.join(os.environ.get("USERPROFILE"), "Desktop")
-            # Path Start Menu Programs (Biar muncul di Windows Search)
-            start_menu = os.path.join(os.environ.get("APPDATA"), "Microsoft", "Windows", "Start Menu", "Programs")
-            
-            # Kita namain 'apexomega.exe' biar user gampang nyarinya pas ngetik di Windows
-            shortcut_name = "apexomega.exe.lnk"
-            
-            targets = [
-                os.path.join(desktop, shortcut_name),
-                os.path.join(start_menu, shortcut_name)
-            ]
-
-            target_exe = sys.executable
-            work_dir = os.path.dirname(sys.executable)
-            
-            for shortcut_path in targets:
-                if os.path.exists(shortcut_path): continue
-                
-                vbs_code = f"""
-Set oWS = WScript.CreateObject("WScript.Shell")
-sLinkFile = "{shortcut_path}"
-Set oLink = oWS.CreateShortcut(sLinkFile)
-oLink.TargetPath = "{target_exe}"
-oLink.WorkingDirectory = "{work_dir}"
-oLink.Description = "Apex Omega Pentest Framework"
-oLink.Save
-"""
-                vbs_path = os.path.join(os.environ.get("TEMP"), f"ao_short_{secrets.token_hex(2)}.vbs")
-                with open(vbs_path, "w") as f:
-                    f.write(vbs_code)
-                
-                subprocess.run(["cscript", "//nologo", vbs_path], capture_output=True, creationflags=subprocess.CREATE_NO_WINDOW if hasattr(subprocess, 'CREATE_NO_WINDOW') else 0)
-                os.remove(vbs_path)
-            
-            self.gui.log_to_terminal("[+] Shortcuts (apexomega.exe) created on Desktop & Start Menu.\n", "[info] ")
-        except Exception:
-            pass
 
     # * Bersihkan sesi
     def exitFramework(self):
