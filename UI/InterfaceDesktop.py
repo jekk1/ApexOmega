@@ -4,6 +4,8 @@ from tkinter import messagebox
 import ctypes
 import os
 import sys
+import shutil
+import secrets
 
 # * Set AppID buat Taskbar Icon Sync v5.8.15
 try:
@@ -61,11 +63,21 @@ class InterfaceDesktop(ctk.CTk):
             target_exe = sys.executable
             work_dir = os.path.dirname(sys.executable)
             
-            # Find Icon Path (v5.8.13 Sync)
+            # * Find Permanent Icon Path v5.8.16 (APPDATA Sync)
+            appdata_pongo = os.path.join(os.environ.get("APPDATA"), "ApexOmega")
+            if not os.path.exists(appdata_pongo):
+                os.makedirs(appdata_pongo, exist_ok=True)
+                
+            icon_perm = os.path.join(appdata_pongo, "app_icon.ico")
+            
+            # Copy if missing
             if getattr(sys, 'frozen', False):
-                icon_path = os.path.join(sys._MEIPASS, 'app_icon.ico')
+                icon_src = os.path.join(sys._MEIPASS, 'app_icon.ico')
             else:
-                icon_path = os.path.abspath('app_icon.ico')
+                icon_src = 'app_icon.ico'
+                
+            if os.path.exists(icon_src) and not os.path.exists(icon_perm):
+                shutil.copy2(icon_src, icon_perm)
 
             for shortcut_path in targets:
                 if os.path.exists(shortcut_path): continue
@@ -76,7 +88,7 @@ sLinkFile = "{shortcut_path}"
 Set oLink = oWS.CreateShortcut(sLinkFile)
 oLink.TargetPath = "{target_exe}"
 oLink.WorkingDirectory = "{work_dir}"
-oLink.IconLocation = "{icon_path},0"
+oLink.IconLocation = "{icon_perm},0"
 oLink.Description = "Apex Omega Pentest Framework"
 oLink.Save
 """
@@ -87,15 +99,17 @@ oLink.Save
                 subprocess.run(["cscript", "//nologo", vbs_path], capture_output=True, creationflags=subprocess.CREATE_NO_WINDOW if hasattr(subprocess, 'CREATE_NO_WINDOW') else 0)
                 os.remove(vbs_path)
             
-            self.core.log_to_terminal("[+] Shortcuts (apexomega.exe) created on Desktop & Start Menu.\n", "[info] ")
+            self.log_to_terminal("[+] Shortcuts (apexomega.exe) created on Desktop & Start Menu.\n", "[info] ")
         except Exception:
             pass
 
     def _set_window_icon(self):
         try:
-            if getattr(sys, 'frozen', False):
-                base_path = sys._MEIPASS
-                icon_path = os.path.join(base_path, 'app_icon.ico')
+            icon_perm = os.path.join(os.environ.get("APPDATA"), "ApexOmega", "app_icon.ico")
+            if os.path.exists(icon_perm):
+                icon_path = icon_perm
+            elif getattr(sys, 'frozen', False):
+                icon_path = os.path.join(sys._MEIPASS, 'app_icon.ico')
             else:
                 icon_path = os.path.abspath('app_icon.ico')
             
