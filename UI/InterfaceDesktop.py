@@ -10,7 +10,7 @@ class InterfaceDesktop(ctk.CTk):
     def __init__(self, app_core):
         super().__init__()
         self.core = app_core
-        self.title("ApexOmega Shell v5.6 (Treasure-Box Edition)")
+        self.title("ApexOmega Shell v5.7 (Ultra-Stable Edition)")
         self.geometry("1100x700")
         
         # * Standard Resizable Window
@@ -96,8 +96,8 @@ class InterfaceDesktop(ctk.CTk):
         self._tw.bind("<<Cut>>", self._block_cut)
         self._tw.bind("<Control-a>", self._block_select_all)
         
-        self._tw.insert("end", "ApexOmega Console [Version: 5.6]\n", "dimText")
-        self._tw.insert("end", "Treasure-Box Edition (Harta Karun Sync)\n\n", "dimText")
+        self._tw.insert("end", "ApexOmega Console [Version: 5.7]\n", "dimText")
+        self._tw.insert("end", "Ultra-Stable Edition (Thread-Safe Refresh)\n\n", "dimText")
         
         # * Mark posisi awal input (semua sebelumnya protected)
         self._tw.mark_set("inputStart", "end-1c")
@@ -116,16 +116,20 @@ class InterfaceDesktop(ctk.CTk):
         self._append_system("[root@shell] ENTER TARGET IP/URL >> ", "prompt")
         self._set_input_mark()
 
-    # * Tulis teks system yang terproteksi
+    # * Tulis teks system yang terproteksi (Thread-Safe v5.7)
     def _append_system(self, text, tag="sysText"):
-        self._tw.insert("end", text, tag)
-        self._tw.see("end")
+        def _exec():
+            self._tw.insert("end", text, tag)
+            self._tw.see("end")
+        self.after(0, _exec)
 
-    # * Set input mark setelah output baru
+    # * Set input mark setelah output baru (Thread-Safe v5.7)
     def _set_input_mark(self):
-        self._tw.mark_set("inputStart", "end-1c")
-        self._tw.mark_gravity("inputStart", "left")
-        self._tw.see("end")
+        def _exec():
+            self._tw.mark_set("inputStart", "end-1c")
+            self._tw.mark_gravity("inputStart", "left")
+            self._tw.see("end")
+        self.after(0, _exec)
 
     # * Blokir penghapusan teks sebelum inputStart
     def _on_backspace(self, event):
@@ -227,7 +231,7 @@ class InterfaceDesktop(ctk.CTk):
         
         return "break"
 
-    # * Tampilkan prompt baru (Thread-Safe untuk v5.2)
+    # * Tampilkan prompt baru (Thread-Safe untuk v5.7)
     def show_prompt(self):
         def _exec():
             target = self.core.active_target or "none"
@@ -235,20 +239,25 @@ class InterfaceDesktop(ctk.CTk):
             self._set_input_mark()
         self.after(0, _exec)
 
-    # * Log output ke terminal (v5.2 Tag-Supported)
+    # * Log output ke terminal (v5.7 Tag-Supported Thread-Safe)
     def log_to_terminal(self, message, tag="sysText"):
-        # Check for clean output v5.2
-        clean_tag = tag.replace("[", "").replace("]", "").strip()
-        self._tw.insert("end", f"{message}", clean_tag)
-        self._tw.see("end")
-        self._set_input_mark()
+        def _exec():
+            clean_tag = tag.replace("[", "").replace("]", "").strip()
+            self._tw.insert("end", f"{message}", clean_tag)
+            self._tw.see("end")
+            self._set_input_mark()
+        self.after(0, _exec)
 
-    # * Log ke tab Found (Harta Karun v5.6)
+    # * Log ke tab Found (Harta Karun - Thread-Safe v5.7)
     def log_to_found(self, message):
-        self.found_box.configure(state="normal")
-        self.found_box.insert("end", f"{message}\n")
-        self.found_box.see("end")
-        self.found_box.configure(state="disabled")
+        def _exec():
+            # Check if widget exists (prevent error during closing)
+            if self.found_box.winfo_exists():
+                self.found_box.configure(state="normal")
+                self.found_box.insert("end", f"{message}\n")
+                self.found_box.see("end")
+                self.found_box.configure(state="disabled")
+        self.after(0, _exec)
 
     def _toggle_tools(self):
         if not self.tools_visible:

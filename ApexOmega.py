@@ -27,7 +27,7 @@ from tkinter import messagebox
 
 # * Inisialisasi framework Apex Omega Shell v5.1 (Auto-Pilot Edition)
 class ApexOmega:
-    VERSION = "5.6"
+    VERSION = "5.7"
     def __init__(self, mode="gui"):
         self.stop_requested = False
         self.ui_mode = mode
