@@ -166,9 +166,15 @@ class InterfaceDesktop(ctk.CTk):
 
     # * Handle Enter (submit command/target)
     def _on_enter(self, event):
+        # * Ambil input dari mark inputStart sampe akhir
         markPos = self._tw.index("inputStart")
         userInput = self._tw.get(markPos, "end-1c").strip()
         
+        # * Jika kosong, coba ambil baris terakhir (antisipasi mark lari karena log background)
+        if not userInput:
+            lastLine = self._tw.get("end-2l", "end-1c").split(">>")[-1].strip()
+            if lastLine: userInput = lastLine
+
         # * Tambah newline setelah input
         self._tw.insert("end", "\n")
         
@@ -189,17 +195,23 @@ class InterfaceDesktop(ctk.CTk):
             # -- Quick real recon --
             def quick_recon():
                 try:
-                    records = self.core.net.getDnsInfo(target)
-                    ip = records.get('IP', 'Unknown')
-                    self._append_system(f"[+] PRIMARY IP: {ip}\n", "greenText")
+                    import socket
+                    self.core.set_active_target(target)
+                    self._append_system(f"[*] Switching Target to: {target}\n", "info")
                     
-                    tech = self.core.web.detectTech(f"http://{target}" if not target.startswith("http") else target)
+                    # * Resolve IP dasar
+                    pure_domain = target.replace("http://", "").replace("https://", "").split("/")[0]
+                    ip = socket.gethostbyname(pure_domain)
+                    self._append_system(f"  [+] PRIMARY IP: {ip}\n", "greenText")
+                    
+                    tech = self.core.web.detectTech(target if "://" in target else f"http://{target}")
                     server = tech.get('server', ['Unknown'])[0]
-                    self._append_system(f"[+] SERVER TECH: {server}\n", "greenText")
+                    self._append_system(f"  [+] SERVER TECH: {server}\n", "greenText")
                     
-                    self._append_system(f"\n[root@shell] TARGET LOCKED: {target}\n", "success")
-                except Exception:
-                    self._append_system("[-] Recon limited (target specific restriction)\n", "dimText")
+                    self._append_system(f"\n[root@shell] TARGET LOCKED. Ready for exploitation.\n", "success")
+                except Exception as e:
+                    self._append_system(f"[-] Recon status: Limited connectivity to {target}\n", "dimText")
+                
                 self.show_prompt()
 
             threading.Thread(target=quick_recon, daemon=True).start()
