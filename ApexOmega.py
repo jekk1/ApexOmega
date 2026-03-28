@@ -532,18 +532,21 @@ class ApexOmega:
                         self.gui.log_to_terminal("Update dibatalkan oleh user.")
                         return
 
-                self.gui.log_to_terminal("[*] Downloading updates from GitHub (Git Pull)...\n", "[info] ")
+                self.gui.log_to_terminal("[*] Downloading updates from GitHub (Auto-Sync)...\n", "[info] ")
                 try:
+                    # * Coba pake Git dulu (Lebih cepet & ringan)
                     result = subprocess.run(["git", "pull", "origin", "main"], capture_output=True, text=True, timeout=30)
                     if result.returncode == 0:
-                        self.gui.log_to_terminal("[+] Update downloaded successfully!\n", "[success] ")
+                        self.gui.log_to_terminal("[+] Update downloaded successfully via Git!\n", "[success] ")
                         self.gui.log_to_terminal("[*] Restarting application in 3s...\n", "[info] ")
                         time.sleep(3)
                         self.restart_app()
                     else:
-                        self.gui.log_to_terminal(f"[-] Git Pull Error: {result.stderr}\n", "[error] ")
-                except Exception as e:
-                    self.gui.log_to_terminal(f"[-] Update Failed: {str(e)}\n", "[error] ")
+                        raise Exception(f"Git Pull failed: {result.stderr}")
+                except (FileNotFoundError, Exception) as e:
+                    # * FALLBACK: Kalo git gak ada (WinError 2) atau bermasalah, pake ZIP Download
+                    self.gui.log_to_terminal("[!] Git not detected or failed. Falling back to Direct Download (ZIP)...\n", "[warning] ")
+                    self._performUpdate(remoteVer)
                     
             except Exception as e:
                 self.gui.log_to_terminal(f"Update Error: {str(e)}")
