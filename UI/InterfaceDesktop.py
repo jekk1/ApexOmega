@@ -10,7 +10,7 @@ class InterfaceDesktop(ctk.CTk):
     def __init__(self, app_core):
         super().__init__()
         self.core = app_core
-        self.title("ApexOmega Shell v5.7 (Ultra-Stable Edition)")
+        self.title(f"ApexOmega Shell v{self.core.VERSION} (Nitro-Stable Edition)")
         self.geometry("1100x700")
         
         # * Standard Resizable Window
