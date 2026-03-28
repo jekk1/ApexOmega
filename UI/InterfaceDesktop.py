@@ -179,17 +179,26 @@ class InterfaceDesktop(ctk.CTk):
         markPos = self._tw.index("inputStart")
         userInput = self._tw.get(markPos, "end-1c").strip()
         
-        # --- NUCLEAR SYNC RESET v5.7.5 ---
-        # Kita lakukan update UI secara sinkron seketika biar gak ada race condition
+        if not userInput:
+            # * FAILSAFE v5.7.6: Ambil dari baris terakhir manual kalau markPos bermasalah
+            last_line_content = self._tw.get("end-2l", "end-1c")
+            if ">>" in last_line_content:
+                userInput = last_line_content.split(">>")[-1].strip()
+
+        # --- NUCLEAR SYNC RESET v5.7.6 ---
+        # Bersihkan newline ganda dan pasang prompt baru
         self._tw.insert("end", "\n")
         
         target_display = self.core.active_target or "none"
-        prompt_text = f"\n[root@shell:{target_display}] >> "
+        prompt_text = f"[root@shell:{target_display}] >> " # Hilangkan \n awal biar gak double
         
-        # Cetak prompt dan kunci kursor dalam satu nafas
+        # Cetak prompt dan kunci kursor
         self._tw.insert("end", prompt_text, "prompt")
         self._tw.mark_set("inputStart", "end-1c")
         self._tw.mark_gravity("inputStart", "left")
+        
+        # Pastikan kursor ngetik ada di posisi input baru
+        self._tw.mark_set("insert", "end-1c")
         self._tw.see("end")
 
         if not userInput:
