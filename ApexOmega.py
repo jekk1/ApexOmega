@@ -18,12 +18,13 @@ import threading
 from Modules.GuidedAssistant import GuidedAssistant
 from Modules.WordPressScanner import WordPressScanner
 from Modules.PayloadGen import PayloadGen
+from Modules.WebDiscovery import WebDiscovery
 import requests
 from tkinter import messagebox
 
-# * Inisialisasi framework Apex Omega Shell v4.7 (Zaqi Interactive Edition)
+# * Inisialisasi framework Apex Omega Shell v4.8 (Web-Nitro Edition)
 class ApexOmega:
-    VERSION = "4.7"
+    VERSION = "4.8"
     def __init__(self, mode="gui"):
         self.ui_mode = mode
         self.isRunning = True
@@ -41,6 +42,7 @@ class ApexOmega:
         self.edu = EduModule()
         self.guided = GuidedAssistant()
         self.payload_gen = PayloadGen()
+        self.discovery = WebDiscovery()
         
         # * GUI Handle
         if self.ui_mode == "gui":
@@ -105,6 +107,15 @@ class ApexOmega:
                 elif tool_name in ["payload"]:
                     self.current_module = "payload"
                     self._run_payload_module()
+                elif tool_name in ["subdomain", "sub"]:
+                    self.current_module = "discovery"
+                    self._run_subdomain_module()
+                elif tool_name in ["vhost"]:
+                    self.current_module = "discovery"
+                    self._run_vhost_module()
+                elif tool_name in ["webports", "ports"]:
+                    self.current_module = "discovery"
+                    self._run_webports_module()
                 elif tool_name == "help":
                     self.gui.tabview.set("How to Use")
                 else:
@@ -126,6 +137,41 @@ class ApexOmega:
         for fmt, val in res.items():
             self.gui.log_to_terminal(f"  {fmt}: {val}\n", "[+] ")
         self.gui.log_to_terminal("Payloads ready. Type !exit to switch.\n")
+
+    def _run_subdomain_module(self):
+        if not self.active_target:
+            self.gui.log_to_terminal("Discovery: No target set.\n", "[error] ")
+            return
+        self.gui.log_to_terminal(f"Bruteforcing Subdomains for: {self.active_target}\n", "[info] ")
+        res = self.discovery.bruteSubdomain(self.active_target)
+        for host, ip in res:
+            self.gui.log_to_terminal(f"  [+] {host:20} -> {ip}\n", "[success] ")
+        self.gui.log_to_terminal(f"Scan complete. Found {len(res)} subdomains.\n")
+
+    def _run_vhost_module(self):
+        if not self.active_target:
+            self.gui.log_to_terminal("Discovery: No target set.\n", "[error] ")
+            return
+        # * VHost butuh IP aslinya kalau targetnya domain
+        try:
+            ip = socket.gethostbyname(self.active_target)
+            self.gui.log_to_terminal(f"Hunting VHosts on {ip} for {self.active_target}...\n", "[info] ")
+            res = self.discovery.findVHosts(ip, self.active_target)
+            for v, code in res:
+                self.gui.log_to_terminal(f"  [+] {v:25} (HTTP {code})\n", "[success] ")
+            self.gui.log_to_terminal("VHost scan complete.\n")
+        except:
+            self.gui.log_to_terminal("Error: Could not resolve target IP for VHost scan.\n")
+
+    def _run_webports_module(self):
+        if not self.active_target:
+            self.gui.log_to_terminal("Discovery: No target set.\n", "[error] ")
+            return
+        self.gui.log_to_terminal(f"Scanning Web Ports for: {self.active_target}\n", "[info] ")
+        res = self.discovery.scanWebPorts(self.active_target)
+        for p in res:
+            self.gui.log_to_terminal(f"  [+] Port {p} is OPEN\n", "[success] ")
+        self.gui.log_to_terminal("Port scan complete.\n")
 
     def _run_nmap_module(self):
         if not self.active_target:

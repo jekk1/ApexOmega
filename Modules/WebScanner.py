@@ -8,8 +8,15 @@ import concurrent.futures
 class WebScanner:
     def __init__(self):
         self.session = requests.Session()
-        self.headers = {'User-Agent': 'ApexOmega/3.0.0 (Windows NT 10.0)'}
+        self.headers = {'User-Agent': 'ApexOmega/4.8 (X11; Linux x86_64)'} # Kali Linux Style UA
         self.discovered = set()
+        self.waf_signatures = {
+            "Cloudflare": ["cf-ray", "__cfduid", "cloudflare"],
+            "Akamai": ["akamai-ghost", "akamai-edge"],
+            "Imperva": ["incap_ses", "visid_incap"],
+            "ModSecurity": ["mod_security", "noisiest"],
+            "Nginx Generic": ["nginx"]
+        }
 
     # * Jelajahi endpoint yang tersedia pada domain target
     def crawlEndpoint(self, baseUrl, maxDepth=3, currentDepth=0):
@@ -46,11 +53,17 @@ class WebScanner:
 
     # * Deteksi teknologi detail (JS Frameworks, Analytics, WAF)
     def detectTech(self, url):
-        tech_stack = {"framework": [], "cms": [], "analytics": [], "server": []}
+        tech_stack = {"framework": [], "cms": [], "analytics": [], "server": [], "waf": []}
         try:
             response = self.session.get(url, headers=self.headers, timeout=5)
             html = response.text.lower()
             headers = response.headers
+            
+            # -- WAF Detection --
+            for waf, sigs in self.waf_signatures.items():
+                for sig in sigs:
+                    if sig in str(headers).lower() or sig in html:
+                        if waf not in tech_stack["waf"]: tech_stack["waf"].append(waf)
             
             # -- Server --
             if 'Server' in headers: tech_stack["server"].append(headers['Server'])
@@ -60,9 +73,14 @@ class WebScanner:
             if "vue" in html: tech_stack["framework"].append("Vue.js")
             if "angular" in html: tech_stack["framework"].append("Angular")
             
-            # -- CMS --
-            if "wp-content" in html: tech_stack["cms"].append("WordPress")
+            # -- Deep CMS Detection --
+            if "wp-content" in html or "wordpress" in html: tech_stack["cms"].append("WordPress")
             if "laravel" in html: tech_stack["cms"].append("Laravel")
+            if "joomla" in html or "option=com_" in html: tech_stack["cms"].append("Joomla")
+            if "drupal" in html or "sites/all" in html: tech_stack["cms"].append("Drupal")
+            if "magento" in html or "mage-cache" in html: tech_stack["cms"].append("Magento")
+            if "prestashop" in html: tech_stack["cms"].append("PrestaShop")
+            if "shopify" in html or "cdn.shopify.com" in html: tech_stack["cms"].append("Shopify")
             
             # -- Analytics ID --
             ua_match = re.search(r"ua-\d+-\d+", html)
@@ -235,6 +253,47 @@ class WebScanner:
             return audit
         except Exception:
             return {}
+
+    # * EKSTRA PENTESTING WEB: Scrape JS Endpoint & Secrets
+    def scrapeJsInfo(self, baseUrl, html_content):
+        # * Cari semua file .js di HTML
+        js_files = re.findall(r'src=["\']([^"\']+\.js)', html_content)
+        endpoints = set()
+        secrets = []
+        
+        for js in js_files[:5]: # Batasi 5 file biar gak hang
+            js_url = urljoin(baseUrl, js)
+            try:
+                res = self.session.get(js_url, timeout=3)
+                # * Cari URL (Endpoint)
+                found_urls = re.findall(r'https?://[a-zA-Z0-9./?=_-]+', res.text)
+                endpoints.update(found_urls)
+                # * Cari API Keys (Simple Regex)
+                if "key" in res.text.lower() or "secret" in res.text.lower():
+                    matches = re.findall(r'[a-zA-Z0-9]{32,}', res.text)
+                    if matches: secrets.extend(matches)
+            except Exception:
+                pass
+        return list(endpoints)[:10], secrets[:3]
+
+    # * ANALISA FILE SENSITIF WEB: Robots & Sitemap
+    def analyzeWebConfig(self, baseUrl):
+        configs = {"robots": [], "sitemap": []}
+        try:
+            # -- Robots.txt --
+            r_res = self.session.get(urljoin(baseUrl, "/robots.txt"), timeout=3)
+            if r_res.status_code == 200:
+                disallow = re.findall(r'Disallow: (.+)', r_res.text)
+                configs["robots"].extend(disallow)
+            
+            # -- Sitemap.xml --
+            s_res = self.session.get(urljoin(baseUrl, "/sitemap.xml"), timeout=3)
+            if s_res.status_code == 200:
+                locs = re.findall(r'<loc>(.+)</loc>', s_res.text)
+                configs["sitemap"].extend(locs[:5])
+        except Exception:
+            pass
+        return configs
 
     # * Generator Payload XSS/SQLi Dasar buat Pemula
     def getPayloadList(self, vulnType="xss"):

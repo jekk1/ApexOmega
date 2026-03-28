@@ -9,8 +9,12 @@ class GuidedAssistant:
             "wireshark": "Penganalisis protokol jaringan (packet sniffer) paling populer di dunia.",
             "recon": "Reconnaissance: Tahap awal pengumpulan informasi target. CARA PAKAI: Ketik !recon di shell.",
             
-            # -- Web Audit Tools --
-            "webaudit": "Mesin audit web internal Apex (Zaqi Brutal Engine). CARA PAKAI: Ketik !webaudit.",
+            # -- Web Audit Tools (WEB-NITRO) --
+            "webaudit": "Nitro Web Audit v4.8: Pemindaian brutal SQLi, XSS, WAF detection, & JS scraper. CARA PAKAI: Ketik !webaudit.",
+            "subdomain": "Subdomain Bruter: Mencari subdomain aktif dari domain target secara massal. CARA PAKAI: Ketik !subdomain.",
+            "sub": "Alias untuk subdomain discovery engine.",
+            "vhost": "Virtual Host Finder: Mencari konfigurasi vhost tersembunyi lewat modifikasi host header. CARA PAKAI: Ketik !vhost.",
+            "webports": "Web Port Scanner: Scan port khusus layanan web (80, 443, 8080, dll). CARA PAKAI: Ketik !webports.",
             "wordpress": "Spesialis audit situs berbasis WordPress. CARA PAKAI: Ketik !wordpress.",
             "wp": "Alias untuk wordpress scanner modul.",
             "sqlmap": "Otomatisasi deteksi dan eksploitasi celah SQL Injection di database.",
@@ -33,7 +37,8 @@ class GuidedAssistant:
             "v1.0-v3.x: Desktop UI Dasar.",
             "v4.0: Console Edition.",
             "v4.5: Interactive Shell Edition (Mode !tool & !exit).",
-            "v4.7: Zero-to-Hero Edition (Beginner Roadmap & Color Aesthetics)."
+            "v4.7: Zero-to-Hero Edition (Beginner Roadmap & Color Aesthetics).",
+            "v4.8: Web-Nitro Edition (Advanced Web Discovery & Pentesting Powerhouse)."
         ]
 
     def getSteps(self):
