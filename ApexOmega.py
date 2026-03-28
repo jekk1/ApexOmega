@@ -12,6 +12,7 @@ from Modules.NetworkScanner import NetworkScanner
 from Modules.CryptoTools import CryptoTools
 from Modules.SpecialTools import SpecialTools
 from Modules.EduModule import EduModule
+from Modules.HeadsCheck import HeadsCheck
 
 from UI.InterfaceDesktop import InterfaceDesktop
 import threading
@@ -29,7 +30,7 @@ from tkinter import messagebox
 
 # * Inisialisasi framework Apex Omega Shell v5.1 (Auto-Pilot Edition)
 class ApexOmega:
-    VERSION = "5.7"
+    VERSION = "5.8"
     def __init__(self, mode="gui"):
         socket.setdefaulttimeout(3) # * Anti-Stuck Globally
         self.stop_requested = False
@@ -649,6 +650,12 @@ class ApexOmega:
             shutil.rmtree(tempDir, ignore_errors=True)
             if os.path.exists(zipPath):
                 os.remove(zipPath)
+
+    # * Run Headers Check v5.8
+    def _run_headers_module(self, args):
+        self.gui.log_to_terminal(f"\n[*] INITIATING HEADS-CHECK (SECURITY HEADERS AUDIT)...\n", "cyanText")
+        scanner = HeadsCheck(self)
+        scanner.scan()
 
     # * Restart aplikasi otomatis (v5.5)
     def restart_app(self):

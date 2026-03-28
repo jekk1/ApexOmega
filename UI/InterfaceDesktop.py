@@ -91,13 +91,15 @@ class InterfaceDesktop(ctk.CTk):
         lbl_info = ctk.CTkLabel(self.tab_console, text="[!] CTRL+C TO STOP | !EXIT TO ROOT | !HELP FOR MANUAL", font=("Roboto", 10), text_color="#444444")
         lbl_info.pack(side="bottom", pady=5)
         self._tw.bind("<Key>", self._on_key)
+        self._tw.bind("<Button-1>", self._on_click) # * Magnet Kursor
+        self._tw.bind("<Return>", self._on_enter, add=False) # * Eksklusif
         self._tw.bind("<BackSpace>", self._on_backspace)
         self._tw.bind("<Delete>", self._on_delete)
         self._tw.bind("<<Cut>>", self._block_cut)
         self._tw.bind("<Control-a>", self._block_select_all)
         
-        self._tw.insert("end", "ApexOmega Console [Version: 5.7]\n", "dimText")
-        self._tw.insert("end", "Ultra-Stable Edition (Thread-Safe Refresh)\n\n", "dimText")
+        self._tw.insert("end", "ApexOmega Console [Version: 5.8]\n", "dimText")
+        self._tw.insert("end", "Turbo-Nova Edition (Ultra-Stability)\n\n", "dimText")
         
         # * Mark posisi awal input (semua sebelumnya protected)
         self._tw.mark_set("inputStart", "end-1c")
@@ -143,12 +145,17 @@ class InterfaceDesktop(ctk.CTk):
             return "break"
         return None
 
+    # * Magnet Kursor: Paksa kursor ke area input v5.8
+    def _on_click(self, event):
+        self.after(10, lambda: self._tw.mark_set("insert", "end-1c"))
+
     # * Blokir ketikan di area protected
     def _on_key(self, event):
         if event.keysym in ("Return", "BackSpace", "Delete", "Left", "Right", "Up", "Down", "Home", "End"):
+            # Paksa posisi insert ke akhir setiap kali navigasi
+            self._tw.mark_set("insert", "end-1c")
             return None
-        if event.state & 0x4:
-            return None
+            
         cursorPos = self._tw.index("insert")
         markPos = self._tw.index("inputStart")
         if self._tw.compare(cursorPos, "<", markPos):
@@ -173,27 +180,28 @@ class InterfaceDesktop(ctk.CTk):
         self._tw.tag_add("sel", markPos, "end-1c")
         return "break"
 
-    # * Handle Enter (submit command/target)
+    # * Handle Enter (Exclusively Bound v5.8)
     def _on_enter(self, event):
         try:
-            # * DUAL-CHECK INPUT EXTRACTION v5.7.7
-            # Cara 1: Pake Mark (Primary)
-            markPos = self._tw.index("inputStart")
-            userInput = self._tw.get(markPos, "end-1c").strip()
+            # * DUAL-CHECK INPUT EXTRACTION v5.8
+            # Cara 1: Line-Based Offset (Most Robust)
+            last_line = self._tw.get("end-2l", "end-1c")
+            userInput = ""
+            if ">>" in last_line:
+                userInput = last_line.split(">>")[-1].strip()
             
-            # Cara 2: Failsafe Baris Terakhir (Secondary)
+            # Cara 2: Mark-Based Fallback
             if not userInput:
-                last_line = self._tw.get("end-2l", "end-1c")
-                if ">>" in last_line:
-                    userInput = last_line.split(">>")[-1].strip()
+                markPos = self._tw.index("inputStart")
+                userInput = self._tw.get(markPos, "end-1c").strip()
 
-            # --- ATOMIC UI RESET v5.7.7 ---
+            # --- TURBO SYNC RESET v5.8 ---
             self._tw.insert("end", "\n")
             
             target_display = self.core.active_target or "none"
             prompt_header = f"[root@shell:{target_display}] >> "
             
-            # Cetak prompt dan posisikan kursor secara instan
+            # Sinkronisasi instan
             self._tw.insert("end", prompt_header, "prompt")
             self._tw.mark_set("inputStart", "end-1c")
             self._tw.mark_gravity("inputStart", "left")
@@ -203,31 +211,21 @@ class InterfaceDesktop(ctk.CTk):
             if not userInput:
                 return "break"
             
-            # * Mode command
+            # * Execute Dispatch
             if userInput.startswith("!"):
                 self.core.execute_shell_command(userInput)
             else:
                 target = userInput
                 self.core.set_active_target(target)
-                self._append_system(f"\n[*] Target synchronized to: {target}\n", "cyanText")
-                
-                # -- Silent Recon (Isolated Thread) --
-                def silent_recon():
-                    try:
-                        import socket
-                        socket.setdefaulttimeout(3)
-                        pure_domain = target.replace("http://", "").replace("https://", "").split("/")[0]
-                        ip = socket.gethostbyname(pure_domain)
-                        self.log_to_terminal(f"  [+] IP IDENTIFIED: {ip}\n", "success")
-                    except Exception: pass
-                threading.Thread(target=silent_recon, daemon=True).start()
+                self._append_system(f"\n[*] Target identified: {target}\n", "cyanText")
+                # -- Silent Recon --
+                threading.Thread(target=lambda: self.core._run_recon_module([]), daemon=True).start()
 
         except Exception as e:
-            # * Emergency Feedback
-            self._tw.insert("end", f"\n[!] UI Error: {str(e)}\n", "error")
+            self._tw.insert("end", f"\n[!] UI Error: {str(e)}\n")
             self.show_prompt()
         
-        return "break"
+        return "break" # * Penting: Stop default behavior
         
         return "break"
 
