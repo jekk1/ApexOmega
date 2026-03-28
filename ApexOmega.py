@@ -497,8 +497,10 @@ class ApexOmega:
             return
         self.gui.log_to_terminal(f"WP Specialized Module: Checking {self.active_target}...")
         ver = self.wp.detectVersion(self.active_target)
-        self._tw.insert("end", "ApexOmega Console [Version: 5.8.6]\n", "dimText")
-        self._tw.insert("end", "Titanium Absolute (Global DLL & Tcl Lock)\n\n", "dimText")
+        if ver:
+             self.gui.log_to_terminal(f"WP Version Detected: {ver}\n", "[success] ")
+        else:
+             self.gui.log_to_terminal(f"Failed to detect WP version.\n", "[error] ")
 
     def _run_chaos_module(self, args=[]):
         if not self.active_target:

@@ -3,6 +3,7 @@ import re
 from urllib.parse import urljoin, urlparse
 from bs4 import BeautifulSoup
 import concurrent.futures
+import unicodedata
 
 # * Mesin pemindai kerentanan aplikasi web
 class WebScanner:
@@ -53,6 +54,16 @@ class WebScanner:
             except Exception:
                 pass
         return found
+        
+    # * Alias untuk mengecek HTTP path secara spesifik untuk fuzzer/dirb (v5.8)
+    def checkPath(self, url):
+        try:
+            res = self.session.head(url, headers=self.headers, timeout=3, allow_redirects=False)
+            if res.status_code in [200, 301, 302, 401, 403]:
+                return res.status_code
+            return None
+        except Exception:
+            return None
 
     # * Audit HTTP Security Headers (v5.3 New)
     def auditSecurityHeaders(self, url):
