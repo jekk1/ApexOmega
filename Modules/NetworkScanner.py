@@ -32,10 +32,15 @@ class NetworkScanner:
     # * Ambil informasi DNS record (A, MX, NS)
     def getDnsInfo(self, domain: str) -> Dict:
         results = {}
+        from urllib.parse import urlparse
+        clean_domain = urlparse(domain).netloc if domain.startswith('http') else domain
+        clean_domain = clean_domain.split(':')[0].strip('/')
+        if not clean_domain: clean_domain = domain
+        
         try:
-            results['IP'] = socket.gethostbyname(domain)
+            results['IP'] = socket.gethostbyname(clean_domain)
             # * Dapatkan hostname tambahan jika ada
-            results['Aliases'] = socket.gethostbyname_ex(domain)[1]
+            results['Aliases'] = socket.gethostbyname_ex(clean_domain)[1]
         except Exception as e:
             results['Error'] = str(e)
         return results

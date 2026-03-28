@@ -193,6 +193,15 @@ class InterfaceDesktop(ctk.CTk):
                 markPos = self._tw.index("inputStart")
                 userInput = self._tw.get(markPos, "end-1c").strip()
 
+            # * FILTER LOG (Jangan sampe log sistem disangka input)
+            if not userInput or any(p in userInput for p in ["[*]", "[!]", "[+]", "[-]"]):
+                return "break"
+                
+            # * Pre-check target assignment (biar prompt visual langsung update target baru)
+            is_new_target = not userInput.startswith("!") and not (" " in userInput or len(userInput) > 100)
+            if is_new_target:
+                self.core.set_active_target(userInput)
+
             # --- TITANIUM SYNC RESET v5.8.2 ---
             # Kita kunci prompt BARU dulu sebelum eksekusi logic command
             self._tw.insert("end", "\n")
@@ -204,22 +213,18 @@ class InterfaceDesktop(ctk.CTk):
             self._tw.mark_set("insert", "end-1c")
             self._tw.see("end")
 
-            # * FILTER LOG (Jangan sampe log sistem disangka input)
-            if not userInput or any(p in userInput for p in ["[*]", "[!]", "[+]", "[-]"]):
-                return "break"
-            
             # * Execute Dispatch
             if userInput.startswith("!"):
                 self.core.execute_shell_command(userInput)
             else:
                 target = userInput
-                # Re-validate if target is accidentally a log line
-                if " " in target or len(target) > 100:
-                    return "break"
-                    
-                self.core.set_active_target(target)
+                if " " in target or len(target) > 100: return "break"
+                
                 self._append_system(f"\n[*] New Target Set: {target}\n", "cyanText")
-                threading.Thread(target=lambda: self.core._run_recon_module([]), daemon=True).start()
+                def recon_start():
+                    self.core._run_recon_module([])
+                    self.show_prompt()
+                threading.Thread(target=recon_start, daemon=True).start()
 
         except Exception as e:
             self.log_to_terminal(f"\n[!] UI Logic Error: {str(e)}\n", "error")

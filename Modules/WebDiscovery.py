@@ -63,9 +63,28 @@ class WebDiscovery:
     # * Scan port layanan web yang aktif
     def scanWebPorts(self, host):
         active = []
+        domain = urlparse(host).netloc if host.startswith('http') else host
+        domain = domain.split(':')[0].strip('/')
+        if not domain: domain = host
+        
         for port in self.webPorts:
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 s.settimeout(0.5)
-                if s.connect_ex((host, port)) == 0:
-                    active.append(port)
+                try:
+                    if s.connect_ex((domain, port)) == 0:
+                        active.append(port)
+                except Exception:
+                    pass
         return active
+
+    # * Cek port spesifik (v5.8.6 new alias)
+    def _scan_single_port(self, host, port):
+        domain = urlparse(host).netloc if host.startswith('http') else host
+        domain = domain.split(':')[0].strip('/')
+        if not domain: domain = host
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.settimeout(0.5)
+            try:
+                return s.connect_ex((domain, port)) == 0
+            except Exception:
+                return False
