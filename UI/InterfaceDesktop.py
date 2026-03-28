@@ -170,18 +170,18 @@ class InterfaceDesktop(ctk.CTk):
         self._tw.insert("end", "\n")
         
         if not userInput:
-            self._append_prompt()
+            self.show_prompt()
             return "break"
         
-        # * Mode target input
-        if self.waitingTarget:
-            self.waitingTarget = False
+        # * Mode command
+        if userInput.startswith("!"):
+            self.core.execute_shell_command(userInput)
+        else:
+            # * Cek apakah user mau ganti target
             target = userInput
             self.core.set_active_target(target)
             
             self._append_system(f"\n[root@shell] [INITIATING AUTOMATED RECON ON: {target}]\n", "cyanText")
-            self._append_system("[*] Checking connectivity... CONNECTED\n", "sysText")
-            self._append_system("[*] Resolving DNS infrastructure...\n", "sysText")
             
             # -- Quick real recon --
             def quick_recon():
@@ -193,32 +193,23 @@ class InterfaceDesktop(ctk.CTk):
                     tech = self.core.web.detectTech(f"http://{target}" if not target.startswith("http") else target)
                     server = tech.get('server', ['Unknown'])[0]
                     self._append_system(f"[+] SERVER TECH: {server}\n", "greenText")
+                    
+                    self._append_system(f"\n[root@shell] TARGET LOCKED: {target}\n", "success")
                 except Exception:
                     self._append_system("[-] Recon limited (target specific restriction)\n", "dimText")
-                
-                self._append_system(f"\n[root@shell] TARGET LOCKED: {target}\n", "greenText")
-                self._append_system("[root@shell] Commands: !nmap, !webaudit, !wordpress, !chaos, !help, !exit\n\n", "cyanText")
-                self._append_prompt()
+                self.show_prompt()
 
             threading.Thread(target=quick_recon, daemon=True).start()
-            return "break"
         
-        # * Mode command
-        if userInput.startswith("!"):
-            self.core.execute_shell_command(userInput)
-        else:
-            # * Cek apakah user mau ganti target
-            self.core.set_active_target(userInput)
-            self._append_system(f"[root@shell] TARGET CHANGED: {userInput}\n", "greenText")
-        
-        self._append_prompt()
         return "break"
 
-    # * Tampilkan prompt baru dan set input mark
-    def _append_prompt(self):
-        target = self.core.active_target or "none"
-        self._append_system(f"[root@shell:{target}] >> ", "prompt")
-        self._set_input_mark()
+    # * Tampilkan prompt baru (Thread-Safe untuk v5.2)
+    def show_prompt(self):
+        def _exec():
+            target = self.core.active_target or "none"
+            self._append_system(f"\n[root@shell:{target}] >> ", "prompt")
+            self._set_input_mark()
+        self.after(0, _exec)
 
     # * Log output ke terminal (v5.2 Tag-Supported)
     def log_to_terminal(self, message, tag="sysText"):

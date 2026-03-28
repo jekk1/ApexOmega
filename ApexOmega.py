@@ -139,7 +139,10 @@ class ApexOmega:
                 elif tool_name == "help":
                     self.gui.tabview.set("How to Use")
                 else:
-                    self.gui.log_to_terminal(f"Error: Unknown tool '{tool_name}'.")
+                    self.gui.log_to_terminal(f"Error: Unknown tool '{tool_name}'.\n")
+            
+            # * Auto-show prompt after process completion v5.2
+            self.gui.show_prompt()
 
         threading.Thread(target=thread_task, daemon=True).start()
 
