@@ -27,7 +27,7 @@ from tkinter import messagebox
 
 # * Inisialisasi framework Apex Omega Shell v5.1 (Auto-Pilot Edition)
 class ApexOmega:
-    VERSION = "5.4"
+    VERSION = "5.5"
     def __init__(self, mode="gui"):
         self.stop_requested = False
         self.ui_mode = mode
@@ -603,8 +603,12 @@ class ApexOmega:
             if os.path.exists(zipPath):
                 os.remove(zipPath)
             
-            self.gui.log_to_terminal(f"Update complete! {updatedCount} items updated to v{remoteVer}.")
-            messagebox.showinfo("Update Complete", f"Updated to v{remoteVer}.\nPlease restart the application.")
+            self.gui.log_to_terminal(f"Update complete! {updatedCount} items updated to v{remoteVer}.\n")
+            self.gui.log_to_terminal("[!] AUTO-RESTARTING SYSTEM TO APPLY CHANGES...\n", "[danger] ")
+            
+            # * Kasih jeda dikit biar user sempet baca log
+            time.sleep(2)
+            self.restart_app()
             
         except Exception as e:
             self.gui.log_to_terminal(f"Update Error: {str(e)}")
@@ -615,6 +619,15 @@ class ApexOmega:
             shutil.rmtree(tempDir, ignore_errors=True)
             if os.path.exists(zipPath):
                 os.remove(zipPath)
+
+    # * Restart aplikasi otomatis (v5.5)
+    def restart_app(self):
+        self.gui.log_to_terminal("\n[!] RESTARTING APEXOMEGA v5.5...\n", "[init] ")
+        self.bridge.stopNativeSession()
+        
+        # * Restart process pake executable python yang sama
+        python = sys.executable
+        os.execl(python, python, *sys.argv)
 
     # * Bersihkan sesi
     def exitFramework(self):
