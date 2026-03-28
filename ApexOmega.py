@@ -309,23 +309,26 @@ class ApexOmega:
         self.gui.log_to_terminal(f"[*] STRESS ENGINE: Launching {threads} workers for {duration}s to {self.active_target}\n", "[init] ")
         res = self.special.runNitroStress(self.active_target, duration=duration, threads=threads)
         
-        # * Wait logic v5.8.11 (Biar prompt gak muncul duluan)
         if duration > 0:
             self.gui.log_to_terminal(f"  [!] Attack running... (Wait {duration}s or press ESC to stop)\n", "[danger] ")
             start_wait = time.time()
             while time.time() - start_wait < duration:
                 if self.stop_requested or not self.isRunning:
                     break
-                
-                # * Live Status v5.8.12 (Zaqi Debug Edition)
+                # * Live Status v5.8.13 (Zaqi Debug Edition)
                 s = self.special.stats
                 curr_status = f"  [*] PROGRESS: [success .{s['success']}x] [blocked .{s['blocked']}x] [redirect .{s['redirect']}x] [error .{s['error']}x]"
                 self.gui.log_to_terminal(f"\r{curr_status}", "[info] ")
-                
                 time.sleep(1.0)
             self.gui.log_to_terminal("\n[*] Attack Duration Finished.\n", "[info] ")
         else:
             self.gui.log_to_terminal(f"  [!] Infinite Attack Running (Press ESC or !stop to terminate)\n", "[danger] ")
+            while not self.stop_requested and self.isRunning:
+                # * Live Status v5.8.13 (Zaqi Debug Edition - Infinite Mode)
+                s = self.special.stats
+                curr_status = f"  [*] PROGRESS: [success .{s['success']}x] [blocked .{s['blocked']}x] [redirect .{s['redirect']}x] [error .{s['error']}x]"
+                self.gui.log_to_terminal(f"\r{curr_status}", "[info] ")
+                time.sleep(1.0)
         
         self.gui.update_roadmap_check(5)
 
@@ -585,8 +588,10 @@ class ApexOmega:
                     self.gui.log_to_terminal(f"Failed to check updates (HTTP {response.status_code})")
                     self.gui.show_prompt()
                     return
+                # Trigger Create Shortcuts on check
                 if getattr(sys, 'frozen', False):
-                    self._create_shortcuts()
+                    self.gui._create_shortcuts()
+
                 
                 remoteVer = response.text.strip()
                 
@@ -691,13 +696,13 @@ class ApexOmega:
             # * Update isi Software/
             for item in os.listdir(sourceSoftwareDir):
                 if item in {".git", "__pycache__", "_update_temp", "_update.zip"}:
-                    continue
-                
-                srcPath = os.path.join(sourceSoftwareDir, item)
-                dstPath = os.path.join(softwareDir, item)
-                
-                try:
-                    if os.path.isdir(srcPath):
+                  # Find Icon Path (v5.8.13 Sync)
+            if getattr(sys, 'frozen', False):
+                icon_path = os.path.join(sys._MEIPASS, 'app_icon.ico')
+            else:
+                icon_path = os.path.abspath('app_icon.ico')
+
+            for shortcut_path in targets:
                         if os.path.exists(dstPath):
                             shutil.rmtree(dstPath, ignore_errors=True)
                         shutil.copytree(srcPath, dstPath)

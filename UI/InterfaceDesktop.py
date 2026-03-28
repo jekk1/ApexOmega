@@ -51,9 +51,11 @@ class InterfaceDesktop(ctk.CTk):
             target_exe = sys.executable
             work_dir = os.path.dirname(sys.executable)
             
-            # Find Icon Path (v5.8.11 Sync)
-            import customtkinter
-            icon_path = os.path.join(os.path.dirname(customtkinter.__file__), 'assets', 'icons', 'CustomTkinter_icon_Windows.ico')
+            # Find Icon Path (v5.8.13 Sync)
+            if getattr(sys, 'frozen', False):
+                icon_path = os.path.join(sys._MEIPASS, 'app_icon.ico')
+            else:
+                icon_path = os.path.abspath('app_icon.ico')
 
             for shortcut_path in targets:
                 if os.path.exists(shortcut_path): continue
@@ -82,14 +84,12 @@ oLink.Save
     def _set_window_icon(self):
         try:
             import os, sys
-            # Cari icon di folder customtkinter assets (udah di-bundle PyInstaller)
             if getattr(sys, 'frozen', False):
                 base_path = sys._MEIPASS
+                icon_path = os.path.join(base_path, 'app_icon.ico')
             else:
-                import customtkinter
-                base_path = os.path.dirname(customtkinter.__file__)
+                icon_path = 'app_icon.ico'
             
-            icon_path = os.path.join(base_path, 'assets', 'icons', 'CustomTkinter_icon_Windows.ico')
             if os.path.exists(icon_path):
                 self.iconbitmap(icon_path)
         except Exception:
