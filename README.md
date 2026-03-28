@@ -1,15 +1,15 @@
-# ApexOmega Shell v5.8.11 (Nitro-Stable Edition)
+# ApexOmega Shell v5.8.16 (Nitro-Ultimate Edition)
 
 Advanced Web Pentesting Framework - Zaqi Nitro Edition.
 Modular, automated, and easy to use.
 
-## 🚀 Fitur Baru v5.8.11 (Stability & Design)
+## 🚀 Fitur Baru v5.8.16 (Stealth & Overwrite)
 
-- **ESC Key Panic Stop** -- Pencet ESC di keyboard buat stop paksa semua serangan/scan seketika.
-- **Auto-Searchable Shortcuts** -- Otomatis bikin shortcut `apexomega.exe` di Desktop & Start Menu biar gampang dicari.
-- **Nitro Stress Optimized** -- Engine stress test yang lebih ringan di CPU tapi tetep galak ke target.
-- **Custom Icon Branding** -- Ikon kotak biru CustomTkinter yang sinkron di Taskbar & Start Menu.
-- **Auto-Download & Update** -- Klik "CHECK FOR UPDATES" dan sistem bakal langsung lakuin sync otomatis.
+- **Terminal Overwrite Statistics** -- Progress bar stress test sekarang lebih rapi di satu baris (Carriage Return support).
+- **Vercel/WAF Stealth Bypass** -- Header `X-Requested-With` & `Sec-Ch-Ua` buat nipu firewall enterprise.
+- **Session Rotation Engine** -- Otomatis ganti identitas tiap 500 request biar gak gampang di-ban IP.
+- **Permanent Icon Persistence** -- Ikon biru kotak sekarang stay permanen di Start Menu & Taskbar (APPDATA Sync).
+- **ESC Key Panic Stop** -- Pencet ESC di keyboard buat stop paksa semua serangan seketika.
 
 ## 🛠️ Langkah Penaklukan Website
 

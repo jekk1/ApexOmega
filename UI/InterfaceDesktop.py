@@ -143,7 +143,7 @@ oLink.Save
         self.btn_update = ctk.CTkButton(self.sidebar, text="CHECK FOR UPDATES", font=("Roboto", 11, "bold"), fg_color="#1a1a1a", text_color="#555555", hover_color="#222222", height=30, command=self.core.check_updates)
         self.btn_update.pack(side="bottom", pady=5)
 
-        self.credit_label = ctk.CTkLabel(self.sidebar, text="Credits to Zaqi", font=("Roboto", 11, "italic"), text_color="dim gray")
+        self.credit_label = ctk.CTkLabel(self.sidebar, text="By Zaqi", font=("Roboto", 11, "italic"), text_color="dim gray")
         self.credit_label.pack(side="bottom", pady=(10, 20))
 
         # * --- Content Area (Full Shell) ---
