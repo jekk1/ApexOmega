@@ -22,12 +22,12 @@ class InterfaceManager:
             " ╚═╝  ╚═╝╚═╝     ╚══════╝╚═╝  ╚═╝      ╚═════╝ "
         ]
         for line in bannerLines:
-            bannerText.append(line + "\n", style="bold cyan")
+            bannerText.append(line + "\n", style="bold green")
         
         bannerPanel = Panel(
             bannerText,
-            subtitle="[bold white]Version 3.0.0 | Developed by Zaqi[/]",
-            border_style="bright_magenta",
+            subtitle="[bold green]Version 4.6 | Developed by Zaqi[/]",
+            border_style="green",
             padding=(1, 2)
         )
         console.print(bannerPanel)
@@ -35,10 +35,10 @@ class InterfaceManager:
     # * Menampilkan menu utama untuk pemilihan tool
     @staticmethod
     def showMainMenu():
-        table = Table(title="[bold cyan]Main Modules[/]", show_header=True, header_style="bold green", box=None)
+        table = Table(title="[bold green]Main Modules[/]", show_header=True, header_style="bold green", box=None)
         table.add_column("No", style="dim", width=4)
-        table.add_column("Module Name", style="bold white")
-        table.add_column("Description", style="italic gray62")
+        table.add_column("Module Name", style="bold green")
+        table.add_column("Description", style="italic green")
 
         table.add_row("01", "Network Hub", "Port Scanning, DNS, Whois, & Subdomains")
         table.add_row("02", "Web Auditor", "Vulnerability, CMS, Admin Finder, SSL")
@@ -55,8 +55,8 @@ class InterfaceManager:
     def showScanProgress(taskName):
         return Progress(
             SpinnerColumn(),
-            TextColumn(f"[bold cyan]{taskName}[/] - [progress.description]{{task.description}}"),
-            BarColumn(bar_width=40, style="bright_black", complete_style="bold cyan"),
+            TextColumn(f"[bold green]{taskName}[/] - [progress.description]{{task.description}}"),
+            BarColumn(bar_width=40, style="green", complete_style="bold green"),
             TextColumn("[progress.percentage]{task.percentage:>3.0f}%"),
             console=console
         )
@@ -64,9 +64,9 @@ class InterfaceManager:
     # * Menampilkan tabel hasil scan yang rapi
     @staticmethod
     def showResultTable(title, columns, rows):
-        table = Table(title=f"[bold green]{title}[/]", show_header=True, header_style="bold white")
+        table = Table(title=f"[bold green]{title}[/]", show_header=True, header_style="bold green")
         for col in columns:
-            table.add_column(col)
+            table.add_column(col, style="green")
         for row in rows:
             table.add_row(*row)
         console.print(table)
@@ -83,13 +83,13 @@ class InterfaceManager:
             "09": "Otomatisasi! Masukin target, biarin sistem yang kerja buat lu."
         }
         msg = helpData.get(moduleName, "Pilih menu lewat angka buat mulai.")
-        console.print(Panel(Text(msg, style="italic"), title="Guide", border_style="bold blue"))
+        console.print(Panel(Text(msg, style="italic green"), title="Guide", border_style="bold green"))
 
     # * Mencetak log status dengan format yang rapi
     @staticmethod
     def logStatus(message, type="info"):
         styles = {
-            "info": "bold blue",
+            "info": "bold green",
             "success": "bold green",
             "error": "bold red",
             "warning": "bold yellow"
