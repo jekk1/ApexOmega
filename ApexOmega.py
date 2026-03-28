@@ -293,16 +293,24 @@ class ApexOmega:
         if not self.active_target:
             self.gui.log_to_terminal("Stress: No target set.\n", "[error] ")
             return
+            
+        if len(args) < 2:
+            self.gui.log_to_terminal("Usage: !stress <threads/workers> <duration_seconds>\n", "[warning] ")
+            self.gui.log_to_terminal("Example: !stress 200 30\n", "[info] ")
+            return
+            
+        try:
+            threads = int(args[0])
+            duration = int(args[1])
+        except ValueError:
+            self.gui.log_to_terminal("[!] Invalid input. Harus angka: !stress <threads> <duration>\n", "[error] ")
+            return
         
-        threads = int(args[0]) if args else 50
-        self.gui.log_to_terminal(f"[*] STRESS ENGINE: Launching {threads} threads to {self.active_target} (Nitro-Flood)\n", "[init] ")
+        self.gui.log_to_terminal(f"[*] STRESS ENGINE: Launching {threads} workers for {duration}s to {self.active_target}\n", "[init] ")
+        res = self.special.runNitroStress(self.active_target, duration=duration, threads=threads)
+        self.gui.log_to_terminal(f"  [!] Attack Running in background (Check target status manually)\n", "[danger] ")
         
-        # Simulasi serangan asinkron dengan support stop flag v5.4
-        self.special.runNitroStress(self.active_target, threads=threads)
-        self.gui.log_to_terminal("  [!] Attack Running (Check target status manually)\n", "[danger] ")
-        
-        self.gui.log_to_terminal("Stress complete. Check server health.\n", "[info] ")
-        self.gui.update_roadmap_check(6)
+        self.gui.update_roadmap_check(5)
 
     def _run_dirb_module(self, args=[]):
         if not self.active_target:

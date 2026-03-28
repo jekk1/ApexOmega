@@ -35,6 +35,8 @@ class SpecialTools:
             session = requests.Session()
             
             while time.time() < timeout and self.isFlooding:
+                if hasattr(self, 'core') and self.core and self.core.stop_requested:
+                    break
                 try:
                     # -- Stealth & Bypass Logic --
                     random_str = secrets.token_hex(4)
