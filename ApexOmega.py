@@ -25,6 +25,7 @@ from Modules.ApiAuditor import ApiAuditor
 from Modules.CloudAudit import CloudAudit
 import requests
 import socket
+from tkinter import messagebox
 
 # * Inisialisasi framework Apex Omega Shell v5.1 (Auto-Pilot Edition)
 class ApexOmega:

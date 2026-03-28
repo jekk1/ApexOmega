@@ -179,16 +179,15 @@ class InterfaceDesktop(ctk.CTk):
         markPos = self._tw.index("inputStart")
         userInput = self._tw.get(markPos, "end-1c").strip()
         
-        # * Jika kosong, coba ambil baris terakhir (antisipasi mark lari karena log background)
-        if not userInput:
-            lastLine = self._tw.get("end-2l", "end-1c").split(">>")[-1].strip()
-            if lastLine: userInput = lastLine
-
-        # * Tambah newline setelah input
+        # * 1. Tambah newline seketika
         self._tw.insert("end", "\n")
         
-        # * --- INSTANT FEEDBACK v5.7.3 ---
-        # Langsung kasih prompt baru biar gak 'stuck' nunggu proses background
+        # * 2. SYNC RESET (Anti-Duplicate v5.7.4)
+        # Langsung pindahin mark ke akhir biar input sebelumnya gak kebaca lagi
+        self._tw.mark_set("inputStart", "end-1c")
+        self._tw.mark_gravity("inputStart", "left")
+        
+        # * 3. Tampilkan prompt baru secepat kilat
         self.show_prompt()
 
         if not userInput:
