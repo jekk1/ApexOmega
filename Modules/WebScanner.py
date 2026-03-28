@@ -35,21 +35,73 @@ class WebScanner:
         except Exception:
             pass
 
-    # * Lakukan brute force direktori menggunakan wordlist internal
+    # * Lakukan brute force direktori menggunakan wordlist internal v5.3
     def bruteDir(self, baseUrl, customList=None):
-        commonDirs = ["admin", "login", "config", "api", "v1", "backup", ".env", "phpinfo.php", ".git"]
+        commonDirs = ["admin", "login", "config", "api", "v1", "v2", "backup", ".env", "phpinfo.php", ".git", "wp-admin", "administrator", "dev", "test", "private", "shell.php", "cmd.php"]
         if customList: commonDirs += customList
         
         found = []
         for d in commonDirs:
             target = urljoin(baseUrl, d)
             try:
-                response = self.session.get(target, headers=self.headers, timeout=3)
+                # * Kita pake HEAD biar kenceng (v5.3 Optimize)
+                response = self.session.head(target, headers=self.headers, timeout=3, allow_redirects=False)
                 if response.status_code in [200, 301, 302, 403]:
                     found.append((d, response.status_code))
             except Exception:
                 pass
         return found
+
+    # * Audit HTTP Security Headers (v5.3 New)
+    def auditSecurityHeaders(self, url):
+        required = ["Content-Security-Policy", "X-Frame-Options", "X-Content-Type-Options", "Strict-Transport-Security", "Referrer-Policy"]
+        findings = []
+        try:
+            response = self.session.get(url, headers=self.headers, timeout=5)
+            headers = response.headers
+            for h in required:
+                if h not in headers:
+                    findings.append(f"MISSING: {h}")
+                else:
+                    findings.append(f"PRESENT: {h} ({headers[h][:30]}...)")
+            return findings
+        except Exception:
+            return ["Error fetching headers."]
+
+    # * Audit Form Parameters (v5.3 New)
+    def auditForms(self, url):
+        findings = []
+        try:
+            response = self.session.get(url, headers=self.headers, timeout=5)
+            soup = BeautifulSoup(response.text, 'html.parser')
+            forms = soup.find_all('form')
+            for i, f in enumerate(forms):
+                method = f.get('method', 'GET').upper()
+                action = f.get('action', '')
+                inputs = [inp.get('name') for inp in f.find_all(['input', 'textarea']) if inp.get('name')]
+                findings.append({
+                    "id": i+1,
+                    "method": method,
+                    "action": action,
+                    "inputs": inputs
+                })
+            return findings
+        except Exception:
+            return []
+
+    # * Cek apakah folder .git terbuka ke publik (v5.3 New)
+    def checkGitExposed(self, baseUrl):
+        critical_files = [".git/config", ".git/HEAD", ".git/index"]
+        leaks = []
+        for f in critical_files:
+            target = urljoin(baseUrl, f)
+            try:
+                res = self.session.get(target, headers=self.headers, timeout=4)
+                if res.status_code == 200 and ("[core]" in res.text or "ref: refs/" in res.text or len(res.content) > 10):
+                    leaks.append(f)
+            except Exception:
+                pass
+        return leaks
 
     # * Deteksi teknologi detail (JS Frameworks, Analytics, WAF)
     def detectTech(self, url):

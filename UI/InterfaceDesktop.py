@@ -235,11 +235,11 @@ class InterfaceDesktop(ctk.CTk):
         
         # * Categorized Tools Listing (Kali Linux Style)
         categories = {
-            "RECON / INFO": ["nmap", "recon", "webaudit"],
-            "DISCOVERY": ["subdomain", "vhost", "webports"],
-            "VULNERABILITY": ["vuln", "wordpress", "wp"],
+            "RECON / INFO": ["nmap", "recon", "webaudit", "headers", "cookie"],
+            "DISCOVERY": ["subdomain", "vhost", "webports", "dirb", "git"],
+            "VULNERABILITY": ["vuln", "wordpress", "wp", "form"],
             "API / CLOUD": ["api", "cloud"],
-            "EXPLOITATION": ["payload", "sqlmap"]
+            "EXPLOITATION": ["payload", "sqlmap", "stress"]
         }
         
         for cat, tools in categories.items():
@@ -305,7 +305,7 @@ class InterfaceDesktop(ctk.CTk):
         txt_body = ctk.CTkTextbox(self.tab_tutorial, font=("Roboto", 13), wrap="word", fg_color="transparent")
         txt_body.pack(fill="both", expand=True, padx=40, pady=10)
         txt_body.insert("end", f"{info}\n\n")
-        txt_body.insert("end", f"TO RUN:\nType '!{tool_name}' in the Zaqi Shell.\nType '!exit' to close the module.")
+        txt_body.insert("end", f"TO RUN:\nType '!{tool_name}' in the Terminal.\nType '!exit' to close the module.")
         txt_body.configure(state="disabled")
 
     def _on_close(self):

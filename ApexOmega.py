@@ -27,7 +27,7 @@ from tkinter import messagebox
 
 # * Inisialisasi framework Apex Omega Shell v5.1 (Auto-Pilot Edition)
 class ApexOmega:
-    VERSION = "5.2"
+    VERSION = "5.3"
     def __init__(self, mode="gui"):
         self.ui_mode = mode
         self.isRunning = True
@@ -136,6 +136,21 @@ class ApexOmega:
                 elif tool_name in ["cloud"]:
                     self.current_module = "cloud"
                     self._run_cloud_module(args)
+                elif tool_name in ["dirb", "directory"]:
+                    self.current_module = "webaudit"
+                    self._run_dirb_module(args)
+                elif tool_name in ["headers", "security"]:
+                    self.current_module = "webaudit"
+                    self._run_headers_module(args)
+                elif tool_name in ["form", "auditform"]:
+                    self.current_module = "webaudit"
+                    self._run_form_module(args)
+                elif tool_name in ["cookie", "cookies"]:
+                    self.current_module = "webaudit"
+                    self._run_cookie_module(args)
+                elif tool_name in ["git"]:
+                    self.current_module = "webaudit"
+                    self._run_git_module(args)
                 elif tool_name == "help":
                     self.gui.tabview.set("How to Use")
                 else:
@@ -211,6 +226,67 @@ class ApexOmega:
         self.gui.log_to_terminal("  [!] Attack Running (Check target status manually)\n", "[danger] ")
         self.gui.log_to_terminal("Stress complete. Check server health.\n", "[info] ")
         self.gui.update_roadmap_check(6)
+
+    def _run_dirb_module(self, args=[]):
+        if not self.active_target:
+            self.gui.log_to_terminal("Dirb: No target set.\n", "[error] ")
+            return
+        target = f"http://{self.active_target}" if not self.active_target.startswith("http") else self.active_target
+        self.gui.log_to_terminal(f"[*] DIRB: Brute-forcing directories on {target}\n", "[init] ")
+        res = self.web.bruteDir(target)
+        for d, code in res:
+            tag = "[success]" if code == 200 else "[warning]"
+            self.gui.log_to_terminal(f"  [+] /{d:20} (HTTP {code})\n", tag)
+        self.gui.log_to_terminal("Dirb complete.\n", "[info] ")
+
+    def _run_headers_module(self, args=[]):
+        if not self.active_target:
+            self.gui.log_to_terminal("Headers: No target set.\n", "[error] ")
+            return
+        target = f"http://{self.active_target}" if not self.active_target.startswith("http") else self.active_target
+        self.gui.log_to_terminal(f"[*] HEADERS: Auditing Security Headers on {target}\n", "[init] ")
+        res = self.web.auditSecurityHeaders(target)
+        for line in res:
+            tag = "[success]" if "PRESENT" in line else "[error]"
+            self.gui.log_to_terminal(f"  {line}\n", tag)
+
+    def _run_form_module(self, args=[]):
+        if not self.active_target:
+            self.gui.log_to_terminal("Forms: No target set.\n", "[error] ")
+            return
+        target = f"http://{self.active_target}" if not self.active_target.startswith("http") else self.active_target
+        self.gui.log_to_terminal(f"[*] FORMS: Auditing HTML Forms on {target}\n", "[init] ")
+        res = self.web.auditForms(target)
+        for f in res:
+            self.gui.log_to_terminal(f"  [!] Form #{f['id']} | Action: {f['action']} | Method: {f['method']}\n", "[warning] ")
+            if f['inputs']: self.gui.log_to_terminal(f"      Inputs: {', '.join(f['inputs'])}\n")
+        if not res: self.gui.log_to_terminal("  [-] No forms found on landing page.\n")
+
+    def _run_cookie_module(self, args=[]):
+        if not self.active_target:
+            self.gui.log_to_terminal("Cookie: No target set.\n", "[error] ")
+            return
+        target = f"http://{self.active_target}" if not self.active_target.startswith("http") else self.active_target
+        self.gui.log_to_terminal(f"[*] COOKIE: Auditing Session Cookies on {target}\n", "[init] ")
+        res = self.web.auditCookies(target)
+        for c in res:
+            self.gui.log_to_terminal(f"  [!] Cookie: {c['name']}\n", "[success] ")
+            h_tag = "[success]" if c['httpOnly'] else "[error]"
+            s_tag = "[success]" if c['secure'] else "[error]"
+            self.gui.log_to_terminal(f"      HttpOnly: {c['httpOnly']}\n", h_tag)
+            self.gui.log_to_terminal(f"      Secure:   {c['secure']}\n", s_tag)
+        if not res: self.gui.log_to_terminal("  [-] No cookies received from target.\n")
+
+    def _run_git_module(self, args=[]):
+        if not self.active_target:
+            self.gui.log_to_terminal("Git: No target set.\n", "[error] ")
+            return
+        target = f"http://{self.active_target}" if not self.active_target.startswith("http") else self.active_target
+        self.gui.log_to_terminal(f"[*] GIT: Searching for exposed .git directory on {target}\n", "[init] ")
+        res = self.web.checkGitExposed(target)
+        for f in res:
+            self.gui.log_to_terminal(f"  [!!!] CRITICAL EXPOSURE: {f}\n", "[danger] ")
+        if not res: self.gui.log_to_terminal("  [-] No public .git repository found.\n")
 
     def _run_cloud_module(self):
         if not self.active_target:
@@ -363,18 +439,20 @@ class ApexOmega:
     # * Cek dan download update otomatis dari GitHub
     def check_updates(self):
         def task():
-            self.gui.log_to_terminal("Checking GitHub for updates (jekk1/ApexOmega)...")
+            self.gui.log_to_terminal("[root@shell] Checking GitHub for updates (jekk1/ApexOmega)...\n", "[inspect] ")
             try:
                 # * Cache Buster: Tambahkan timestamp ke URL biar gak kena cache GitHub
                 versionUrl = f"https://raw.githubusercontent.com/jekk1/ApexOmega/main/version.txt?t={int(time.time())}"
                 response = requests.get(versionUrl, timeout=5)
                 if response.status_code != 200:
                     self.gui.log_to_terminal(f"Failed to check updates (HTTP {response.status_code})")
+                    self.gui.show_prompt()
                     return
                 
                 remoteVer = response.text.strip()
                 if remoteVer <= self.VERSION:
-                    self.gui.log_to_terminal(f"System is up-to-date (v{self.VERSION}).")
+                    self.gui.log_to_terminal(f"System is up-to-date (v{self.VERSION}).\n", "[info] ")
+                    self.gui.show_prompt()
                     return
                 
                 # -- Auto-Pilot Update v5.1 --
