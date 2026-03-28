@@ -51,7 +51,7 @@ from urllib.parse import urljoin
 
 # * Inisialisasi framework Apex Omega Shell v5.1 (Auto-Pilot Edition)
 class ApexOmega:
-    VERSION = "5.8.6"
+    VERSION = "5.8.7"
     def __init__(self, mode="gui"):
         socket.setdefaulttimeout(3) # * Anti-Stuck Globally
         self.stop_requested = False
@@ -136,10 +136,18 @@ class ApexOmega:
             
             if command == "!exit":
                 if self.current_module:
-                    self.gui.log_to_terminal(f"Exiting module: {self.current_module}")
+                    self.gui.log_to_terminal(f"Exiting module: {self.current_module}\n", "[info] ")
                     self.current_module = None
+                
+                if self.active_target:
+                    self.gui.log_to_terminal("Returning to global root session...\n", "[warning] ")
+                    self.active_target = None
+                    self.gui.reset_roadmap()
                 else:
-                    self.gui.log_to_terminal("Already at root. Use standard exit to close apps.")
+                    self.gui.log_to_terminal("Already at root. Use standard exit to close apps.\n", "[info] ")
+                
+                # Paksa reset target dan kembalikan ke root prompt
+                self.gui.show_prompt()
                 return
 
             # * Pilih Modul (Format !tool)
@@ -520,7 +528,11 @@ class ApexOmega:
         self.gui.log_to_terminal("\n[!] INITIATING SECRET TEST-ALL-TOOLS SEQUENCE...\n", "[init] ")
         
         # Eksekusi berurutan modul-modul penting untuk testing
-        tools_to_test = ["recon", "headers", "dirb", "vuln", "subdomain", "webport"]
+        tools_to_test = [
+            "recon", "nmap", "cookie", "headers", "git", "form", 
+            "dirb", "vuln", "wp", "subdomain", "vhost", "webports", 
+            "api", "cloud", "payload", "webaudit"
+        ]
         for tool in tools_to_test:
             if self.stop_requested:
                 self.gui.log_to_terminal("\n[!] TEST-ALL-TOOLS dihentikan oleh user.\n", "[warning] ")
