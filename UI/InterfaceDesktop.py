@@ -175,61 +175,59 @@ class InterfaceDesktop(ctk.CTk):
 
     # * Handle Enter (submit command/target)
     def _on_enter(self, event):
-        # * Ambil input dari mark inputStart sampe akhir
-        markPos = self._tw.index("inputStart")
-        userInput = self._tw.get(markPos, "end-1c").strip()
-        
-        if not userInput:
-            # * FAILSAFE v5.7.6: Ambil dari baris terakhir manual kalau markPos bermasalah
-            last_line_content = self._tw.get("end-2l", "end-1c")
-            if ">>" in last_line_content:
-                userInput = last_line_content.split(">>")[-1].strip()
+        try:
+            # * DUAL-CHECK INPUT EXTRACTION v5.7.7
+            # Cara 1: Pake Mark (Primary)
+            markPos = self._tw.index("inputStart")
+            userInput = self._tw.get(markPos, "end-1c").strip()
+            
+            # Cara 2: Failsafe Baris Terakhir (Secondary)
+            if not userInput:
+                last_line = self._tw.get("end-2l", "end-1c")
+                if ">>" in last_line:
+                    userInput = last_line.split(">>")[-1].strip()
 
-        # --- NUCLEAR SYNC RESET v5.7.6 ---
-        # Bersihkan newline ganda dan pasang prompt baru
-        self._tw.insert("end", "\n")
-        
-        target_display = self.core.active_target or "none"
-        prompt_text = f"[root@shell:{target_display}] >> " # Hilangkan \n awal biar gak double
-        
-        # Cetak prompt dan kunci kursor
-        self._tw.insert("end", prompt_text, "prompt")
-        self._tw.mark_set("inputStart", "end-1c")
-        self._tw.mark_gravity("inputStart", "left")
-        
-        # Pastikan kursor ngetik ada di posisi input baru
-        self._tw.mark_set("insert", "end-1c")
-        self._tw.see("end")
+            # --- ATOMIC UI RESET v5.7.7 ---
+            self._tw.insert("end", "\n")
+            
+            target_display = self.core.active_target or "none"
+            prompt_header = f"[root@shell:{target_display}] >> "
+            
+            # Cetak prompt dan posisikan kursor secara instan
+            self._tw.insert("end", prompt_header, "prompt")
+            self._tw.mark_set("inputStart", "end-1c")
+            self._tw.mark_gravity("inputStart", "left")
+            self._tw.mark_set("insert", "end-1c")
+            self._tw.see("end")
 
-        if not userInput:
-            return "break"
+            if not userInput:
+                return "break"
+            
+            # * Mode command
+            if userInput.startswith("!"):
+                self.core.execute_shell_command(userInput)
+            else:
+                target = userInput
+                self.core.set_active_target(target)
+                self._append_system(f"\n[*] Target synchronized to: {target}\n", "cyanText")
+                
+                # -- Silent Recon (Isolated Thread) --
+                def silent_recon():
+                    try:
+                        import socket
+                        socket.setdefaulttimeout(3)
+                        pure_domain = target.replace("http://", "").replace("https://", "").split("/")[0]
+                        ip = socket.gethostbyname(pure_domain)
+                        self.log_to_terminal(f"  [+] IP IDENTIFIED: {ip}\n", "success")
+                    except Exception: pass
+                threading.Thread(target=silent_recon, daemon=True).start()
+
+        except Exception as e:
+            # * Emergency Feedback
+            self._tw.insert("end", f"\n[!] UI Error: {str(e)}\n", "error")
+            self.show_prompt()
         
-        # * Mode command
-        if userInput.startswith("!"):
-            self.core.execute_shell_command(userInput)
-        else:
-            # * Cek apakah user mau ganti target
-            target = userInput
-            self.core.set_active_target(target)
-            
-            self._append_system(f"\n[root@shell] [INITIATING AUTOMATED RECON ON: {target}]\n", "cyanText")
-            
-            # -- Quick real recon v5.7.3 (Full Background) --
-            def quick_recon():
-                try:
-                    import socket
-                    socket.setdefaulttimeout(5) # * Anti-Stuck DNS
-                    self.core.set_active_target(target)
-                    self._append_system(f"[*] Reconnaissance for {target} started in background...\n", "info")
-                    
-                    # * Resolve IP dasar (Silent)
-                    pure_domain = target.replace("http://", "").replace("https://", "").split("/")[0]
-                    ip = socket.gethostbyname(pure_domain)
-                    self.log_to_terminal(f"  [+] TARGET IP DISCOVERED: {ip}\n", "success")
-                except Exception:
-                    pass
-            
-            threading.Thread(target=quick_recon, daemon=True).start()
+        return "break"
         
         return "break"
 
