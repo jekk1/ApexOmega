@@ -23,12 +23,11 @@ from Modules.VulnAtlas import VulnAtlas
 from Modules.ApiAuditor import ApiAuditor
 from Modules.CloudAudit import CloudAudit
 import requests
-import time
 from tkinter import messagebox
 
-# * Inisialisasi framework Apex Omega Shell v4.9 (Web-Nitro Ultra Edition)
+# * Inisialisasi framework Apex Omega Shell v5.1 (Auto-Pilot Edition)
 class ApexOmega:
-    VERSION = "4.9"
+    VERSION = "5.1"
     def __init__(self, mode="gui"):
         self.ui_mode = mode
         self.isRunning = True
@@ -252,10 +251,14 @@ class ApexOmega:
 
     def _run_nmap_module(self):
         if not self.active_target:
+            self.gui.log_to_terminal("Nmap: Target not set.\n", "[error] ")
+            return
+        self.gui.log_to_terminal(f"NMAP SCAN: SYN stealth scan on {self.active_target}\n", "[inspect] ")
         records = self.net.getAllDnsRecords(self.active_target)
         for k, v in records.items():
-            self.gui.log_to_terminal(f"{k}: {v}")
-        self.gui.log_to_terminal("Nmap Scan Complete. Type !exit to switch.")
+            self.gui.log_to_terminal(f"  {k}: {v}\n", "[success] ")
+        self.gui.log_to_terminal("Nmap Scan Complete.\n")
+        self.gui.update_roadmap_check(1)
 
     def _run_web_module(self):
         if not self.active_target:
@@ -305,17 +308,40 @@ class ApexOmega:
                     self.gui.log_to_terminal(f"System is up-to-date (v{self.VERSION}).")
                     return
                 
-                self.gui.log_to_terminal(f"UPDATE AVAILABLE: v{remoteVer} (current: v{self.VERSION})")
-                confirm = messagebox.askyesno("Update Available", f"Version {remoteVer} tersedia.\nDownload dan install sekarang?")
-                if not confirm:
-                    self.gui.log_to_terminal("Update skipped by user.")
+                # -- Auto-Pilot Update v5.1 --
+                self.gui.log_to_terminal(f"\n[!] New version found: v{remoteVer}\n", "[warning] ")
+                confirm = messagebox.askyesno("ApexOmega Update", f"Ada versi baru v{remoteVer}. Mau download & restart otomatis?")
+                if not confirm: 
+                    self.gui.log_to_terminal("Update dibatalkan oleh user.")
                     return
-                
-                self._performUpdate(remoteVer)
+
+                self.gui.log_to_terminal("[*] Downloading updates from GitHub (Git Pull)...\n", "[info] ")
+                try:
+                    result = subprocess.run(["git", "pull", "origin", "main"], capture_output=True, text=True, timeout=30)
+                    if result.returncode == 0:
+                        self.gui.log_to_terminal("[+] Update downloaded successfully!\n", "[success] ")
+                        self.gui.log_to_terminal("[*] Restarting application in 3s...\n", "[info] ")
+                        time.sleep(3)
+                        self.restart_app()
+                    else:
+                        self.gui.log_to_terminal(f"[-] Git Pull Error: {result.stderr}\n", "[error] ")
+                except Exception as e:
+                    self.gui.log_to_terminal(f"[-] Update Failed: {str(e)}\n", "[error] ")
+                    
             except Exception as e:
                 self.gui.log_to_terminal(f"Update Error: {str(e)}")
         
         threading.Thread(target=task, daemon=True).start()
+
+    # * Seamless Restart v5.1
+    def restart_app(self):
+        try:
+            # * Launch instance baru dan exit yang lama secara seamless
+            subprocess.Popen([sys.executable] + sys.argv)
+            os._exit(0)
+        except Exception as e:
+            print(f"Failed to restart: {e}")
+            sys.exit(0)
 
     # * Download ZIP dari GitHub dan replace file project
     def _performUpdate(self, remoteVer):

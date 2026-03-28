@@ -10,7 +10,7 @@ class InterfaceDesktop(ctk.CTk):
     def __init__(self, app_core):
         super().__init__()
         self.core = app_core
-        self.title("ApexOmega Shell v5.0 (Pentest-Nitro Edition)")
+        self.title("ApexOmega Shell v5.1 (Auto-Pilot Edition)")
         self.geometry("1100x700")
         
         # * Standard Resizable Window
@@ -84,8 +84,8 @@ class InterfaceDesktop(ctk.CTk):
         self._tw.bind("<Control-a>", self._block_select_all)
         
         # * Startup header
-        self._tw.insert("end", "ApexOmega Console [Version: 5.0]\n", "dimText")
-        self._tw.insert("end", "Pentest-Nitro Edition (The Real Tool)\n\n", "dimText")
+        self._tw.insert("end", "ApexOmega Console [Version: 5.1]\n", "dimText")
+        self._tw.insert("end", "Auto-Pilot Update Edition\n\n", "dimText")
         
         # * Mark posisi awal input (semua sebelumnya protected)
         self._tw.mark_set("inputStart", "end-1c")
