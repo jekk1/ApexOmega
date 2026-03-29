@@ -188,9 +188,11 @@ oLink.Save
         self._tw.tag_config("success", foreground="#00ff00")
         self._tw.tag_config("greenText", foreground="#00ff00")
         self._tw.tag_config("error", foreground="#ff3333")
+        self._tw.tag_config("errorText", foreground="#ff3333")
         self._tw.tag_config("danger", foreground="#ff3333")
         self._tw.tag_config("warning", foreground="#ffcc00")
         self._tw.tag_config("info", foreground="#5dade2")
+        self._tw.tag_config("blueText", foreground="#3b82f6")
         self._tw.tag_config("cyanText", foreground="#00ffff")
         self._tw.tag_config("init", foreground="#aaaaaa")
         self._tw.tag_config("gen", foreground="#bb86fc")
@@ -210,6 +212,7 @@ oLink.Save
         self._tw.bind("<<Cut>>", self._block_cut)
         self._tw.bind("<Control-a>", self._block_select_all)
         self._tw.bind("<Control-c>", lambda e: self.core.stop_running_tool())
+        self._tw.bind("<Button-3>", self._on_right_click)
         
         # * Global Panic Stop (v5.8.10)
         self.bind_all("<Escape>", self._on_panic_stop)
@@ -628,6 +631,21 @@ oLink.Save
     def stop_hacker_mode(self):
         self.hacker_mode = False
         self.unbind_all("<Escape>")
+
+    # ? Handler klik kanan -> Paste (v6.2.1)
+    def _on_right_click(self, event):
+        try:
+            clipboard = self.clipboard_get()
+            if clipboard:
+                # Pastikan paste cuma bisa di area input (setelah prompt)
+                if self._tw.compare("insert", "<", "inputStart"):
+                    self._tw.mark_set("insert", "end")
+                
+                self._tw.insert("insert", clipboard)
+                self._tw.see("end")
+        except Exception:
+            pass
+        return "break"
 
 
 
