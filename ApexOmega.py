@@ -107,9 +107,9 @@ class ApexOmega:
             if os.path.exists(vPath):
                 with open(vPath, "r") as f:
                     return f.read().strip()
-            return "5.9.4"
+            return "6.1.0"
         except:
-            return "5.9.4"
+            return "6.1.0"
 
     # * Jalankan banner awal dan verifikasi sistem
     def startup(self):
