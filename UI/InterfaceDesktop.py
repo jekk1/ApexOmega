@@ -56,6 +56,17 @@ class InterfaceDesktop(ctk.CTk):
                 os.path.join(start_menu, shortcut_name)
             ]
 
+            # * Clean up old shortcut v5.9
+            old_shortcut_name = "apexomega.exe.lnk"
+            old_targets = [
+                os.path.join(desktop, old_shortcut_name),
+                os.path.join(start_menu, old_shortcut_name)
+            ]
+            for old_p in old_targets:
+                if os.path.exists(old_p):
+                    try: os.remove(old_p)
+                    except: pass
+
             target_exe = sys.executable
             work_dir = os.path.dirname(sys.executable)
             
@@ -75,8 +86,7 @@ class InterfaceDesktop(ctk.CTk):
                 shutil.copy2(icon_src, icon_perm)
 
             for shortcut_path in targets:
-                if os.path.exists(shortcut_path): continue
-                
+                # * Force update shortcut v5.9
                 vbs_code = f"""
 Set oWS = WScript.CreateObject("WScript.Shell")
 sLinkFile = "{shortcut_path}"
@@ -94,7 +104,7 @@ oLink.Save
                 subprocess.run(["cscript", "//nologo", vbs_path], capture_output=True, creationflags=subprocess.CREATE_NO_WINDOW if hasattr(subprocess, 'CREATE_NO_WINDOW') else 0)
                 os.remove(vbs_path)
             
-            self.log_to_terminal("[+] Shortcuts (ApexOmega) created on Desktop & Start Menu.\n", "[info] ")
+            self.log_to_terminal("[+] Shortcuts (ApexOmega) updated on Desktop & Start Menu.\n", "[info] ")
         except Exception:
             pass
 
