@@ -316,10 +316,14 @@ oLink.Save
         item_frame.pack(fill="x", padx=5, pady=1)
         item_frame.pack_propagate(False)
         
-        # * Drag Handle [✥] - Fitur Drag Luar Aplikasi (v5.9.5)
+        # * Drag Handle [✥] - Fitur Drag Luar Aplikasi (v5.9.9 Spectral Mode)
         drag_handle = ctk.CTkLabel(item_frame, text="✥", font=("Roboto", 14), text_color="cyan", width=25, cursor="fleur")
         drag_handle.pack(side="left", padx=(5, 0))
+        
+        # * Bindings Drag Feedback (Ghost Mode)
         drag_handle.bind("<ButtonPress-1>", lambda e: self._on_script_drag_start(e, script))
+        drag_handle.bind("<B1-Motion>", self._on_script_ghost_move)
+        drag_handle.bind("<ButtonRelease-1>", self._on_script_drag_end)
 
         # Risk indicator
         risk_lbl = ctk.CTkLabel(item_frame, text=f"[{script['risk'][:1]}]", font=("Consolas", 11), text_color=risk_color, width=30)
@@ -372,7 +376,9 @@ oLink.Save
 
     # * Kirim script langsung ke terminal
     def _send_script_to_terminal(self, script):
-        self._preview_script(script)
+        self.ghost_window = None
+        self._build_sidebar()
+        self._build_main_terminal()
         self._insert_to_terminal(script["code"])
 
     # * Insert text ke terminal input area
@@ -386,6 +392,79 @@ oLink.Save
     def _on_script_search(self, *args):
         query = self.script_search_var.get().lower().strip()
         self._populate_script_list(filterQuery=query)
+
+    # * Jalankan Windows OLE Drag-and-Drop (External Bridge v5.9.9)
+    def _on_script_drag_start(self, event, script):
+        self._preview_script(script)
+        self.dragging_script = script
+        
+        # 1. Buat Ghost Image (Spectral Label)
+        if self.ghost_window: self.ghost_window.destroy()
+        
+        self.ghost_window = ctk.CTkToplevel(self)
+        self.ghost_window.overrideredirect(True)
+        self.ghost_window.attributes("-topmost", True)
+        self.ghost_window.attributes("-alpha", 0.7) # * Semi-Transparent
+        self.ghost_window.configure(fg_color="#1a1a1a")
+        
+        ghost_lbl = ctk.CTkLabel(
+            self.ghost_window, text=f" ✥ {script['name']} ", 
+            font=("Consolas", 12, "bold"), text_color="cyan",
+            padx=10, pady=5
+        )
+        ghost_lbl.pack()
+        
+        # Update posisi awal
+        self._on_script_ghost_move(event)
+
+    # * Update posisi Ghost Image (v5.9.9)
+    def _on_script_ghost_move(self, event):
+        if self.ghost_window:
+            x = event.x_root + 15
+            y = event.y_root + 15
+            self.ghost_window.geometry(f"+{x}+{y}")
+
+    # * Akhiri Drag dan Trigger OLE File Drop (v5.9.9)
+    def _on_script_drag_end(self, event):
+        if self.ghost_window:
+            self.ghost_window.destroy()
+            self.ghost_window = None
+            
+        script = getattr(self, "dragging_script", None)
+        if not script: return
+        
+        def run_drag():
+            try:
+                # 1. Persiapkan folder temp untuk file drop
+                temp_dir = os.path.join(tempfile.gettempdir(), "ApexOmega_Drops")
+                if not os.path.exists(temp_dir): os.makedirs(temp_dir)
+                
+                # 2. Buat file fisik sesuai ekstensi metadata .js, .html, .img
+                clean_name = "".join([c if c.isalnum() else "_" for c in script["name"]])
+                ext = script.get("ext", ".txt")
+                file_path = os.path.join(temp_dir, f"{clean_name}{ext}")
+                
+                with open(file_path, "w", encoding="utf-8") as f:
+                    f.write(script["code"])
+                
+                # 3. Panggil Windows OLE API via PowerShell Bridge (Reliable)
+                ps_script = f"""
+                $file = "{file_path.replace('\\', '/')}"
+                Add-Type -AssemblyName System.Windows.Forms
+                $data = New-Object System.Windows.Forms.DataObject
+                $files = New-Object System.Collections.Specialized.StringCollection
+                [void]$files.Add($file)
+                $data.SetFileDropList($files)
+                [System.Windows.Forms.DoDragDrop]::DoDragDrop($data, [System.Windows.Forms.DragDropEffects]::Copy)
+                """
+                subprocess.run(["powershell", "-Command", ps_script], 
+                              creationflags=subprocess.CREATE_NO_WINDOW)
+            except Exception as e:
+                print(f"Drag Error: {e}")
+
+        # Jalankan di Thread terpisah
+        threading.Thread(target=run_drag, daemon=True).start()
+        self.dragging_script = None
 
     # * ========== END SCRIPTS TAB ==========
 
