@@ -43,15 +43,40 @@ class WordPressScanner:
             pass
         return users
 
+    # * Cek apakah target beneran situs WordPress (Anti-False Positive)
+    def isWordPress(self, url):
+        signatures = ["wp-login.php", "wp-content/", "wp-includes/", "xmlrpc.php"]
+        found_count = 0
+        for s in signatures:
+            try:
+                target = urljoin(url, s)
+                res = self.session.head(target, timeout=3, allow_redirects=True)
+                # * Kita cari status 200/403/405 (Method Not Allowed buat xmlrpc)
+                if res.status_code in [200, 403, 405]:
+                    found_count += 1
+            except Exception:
+                pass
+        # * Minimal nemu 2 signature buat konfirmasi ini WP
+        return found_count >= 2
+
     # * Pindai plugin yang aktif pada situs target
     def scanPlugins(self, url):
+        if not self.isWordPress(url):
+            return []
+            
         found = []
         def check(p):
             target = urljoin(url, f"wp-content/plugins/{p}/")
             try:
+                # * Tambahin check detail: plugin directory biasanya 403 kalo directory listing off,
+                # * tapi kita cari index.php atau readme.txt di dalemnya buat validasi 200.
                 res = self.session.head(target, timeout=2)
                 if res.status_code in [200, 403]:
-                    return p
+                    # Double check file readme/license buat anti-WAF false positive
+                    chk_file = urljoin(target, "readme.txt")
+                    res2 = self.session.head(chk_file, timeout=2)
+                    if res2.status_code == 200:
+                        return p
             except Exception:
                 pass
             return None

@@ -279,6 +279,7 @@ class ApexOmega:
         res = self.web.advancedWafDetection(target)
         for r in res:
             self.gui.log_to_terminal(f"  [+] {r}\n", "[warning] ")
+            self.gui.log_to_found(f"[WAF] {r} on {self.active_target}")
         if not res: self.gui.log_to_terminal("  [-] WAF not detected or bypassed.\n", "[success] ")
 
     # * Jalankan COMMIX Engine
@@ -290,6 +291,8 @@ class ApexOmega:
         res = self.web.checkCommandInjection(target)
         tag = "[danger] " if "VULN" in res else "[success] "
         self.gui.log_to_terminal(f"  Result: {res}\n", tag)
+        if "VULN" in res:
+            self.gui.log_to_found(f"[VULN] Command Injection detected at {target} ({res})")
 
     # * Jalankan CMSEEK Engine
     def _run_cms_module(self, args=[]):
@@ -297,7 +300,9 @@ class ApexOmega:
         target = f"https://{self.active_target}"
         self.gui.log_to_terminal(f"Deep CMS Scan (Joomla/Drupal) on {target}...\n", "[init] ")
         res = self.web.cmsDeepScan(target)
-        for r in res: self.gui.log_to_terminal(f"  [!] {r}\n", "[danger] ")
+        for r in res: 
+            self.gui.log_to_terminal(f"  [!] {r}\n", "[danger] ")
+            self.gui.log_to_found(f"[CMS] {r} on {target}")
         if not res: self.gui.log_to_terminal("  [-] No other CMS signatures found.\n")
 
     # * Jalankan DAVTEST Engine
@@ -307,6 +312,8 @@ class ApexOmega:
         self.gui.log_to_terminal(f"Testing WebDAV & HTTP Methods on {target}...\n", "[init] ")
         res = self.web.testWebDav(target)
         self.gui.log_to_terminal(f"  Result: {res}\n", "[warning] ")
+        if "VULNERABLE" in res:
+            self.gui.log_to_found(f"[VULN] WebDAV PUT vulnerability detected at {target}")
 
     # * Jalankan NIKTO Engine
     def _run_nikto_module(self, args=[]):
@@ -314,7 +321,9 @@ class ApexOmega:
         target = f"https://{self.active_target}"
         self.gui.log_to_terminal(f"Nikto CGI Scan on {target}...\n", "[init] ")
         res = self.web.runNiktoScan(target)
-        for r in res: self.gui.log_to_terminal(f"  [!] Exposed Path: {r}\n", "[danger] ")
+        for r in res: 
+            self.gui.log_to_terminal(f"  [!] Exposed Path: {r}\n", "[danger] ")
+            self.gui.log_to_found(f"[SERVER] Nikto Found: {r} at {target}")
         if not res: self.gui.log_to_terminal("  [-] Clean.\n")
 
     # * Jalankan URLCRAZY Engine
@@ -322,14 +331,18 @@ class ApexOmega:
         if not self.active_target: return
         self.gui.log_to_terminal(f"Generating Typosquatting for {self.active_target}...\n", "[init] ")
         res = self.web.generateTyposquat(self.active_target)
-        for r in res: self.gui.log_to_terminal(f"  [+] {r}\n", "[info] ")
+        for r in res: 
+            self.gui.log_to_terminal(f"  [+] {r}\n", "[info] ")
+            self.gui.log_to_found(f"[PHISH] Typosquatting variant: {r}")
 
     # * Jalankan WAYBACKPY Engine
     def _run_wayback_module(self, args=[]):
         if not self.active_target: return
         self.gui.log_to_terminal(f"Fetching Wayback OSINT for {self.active_target}...\n", "[init] ")
         res = self.web.scrapeWayback(self.active_target)
-        for r in res: self.gui.log_to_terminal(f"  [+] History: {r}\n", "[success] ")
+        for r in res: 
+            self.gui.log_to_terminal(f"  [+] History: {r}\n", "[success] ")
+            self.gui.log_to_found(f"[URL] Wayback historical endpoint: {r}")
         if not res: self.gui.log_to_terminal("  [-] No history found.\n")
 
     # * Jalankan WEEVELY Engine
@@ -338,6 +351,7 @@ class ApexOmega:
         self.gui.log_to_terminal(f"Generating Weevely PHP Webshell (pass: {pwd})...\n", "[init] ")
         res = self.web.generatePhpWebshell(pwd)
         self.gui.log_to_terminal(f"\n{res}\n\n", "[info] ")
+        self.gui.log_to_found(f"[PAYLOAD] Weevely PHP Webshell generated (pass: {pwd})")
 
     # * Jalankan TESTSSL Engine
     def _run_testssl_module(self, args=[]):
@@ -348,6 +362,7 @@ class ApexOmega:
         if res.get("secure"):
             self.gui.log_to_terminal(f"  [+] Version: {res['version']}\n", "[success] ")
             self.gui.log_to_terminal(f"  [+] Cipher: {res['cipher'][0]}\n", "[success] ")
+            self.gui.log_to_found(f"[SSL] TLS/SSL audit for {target}: {res['version']} ({res['cipher'][0]})")
         else:
             self.gui.log_to_terminal(f"  [X] Failed: {res.get('error')}\n", "[error] ")
 
@@ -357,7 +372,9 @@ class ApexOmega:
         target = f"https://{self.active_target}"
         self.gui.log_to_terminal(f"Hunting Apache /~users on {target}...\n", "[init] ")
         res = self.web.checkApacheUsers(target)
-        for r in res: self.gui.log_to_terminal(f"  [!] User found: {r}\n", "[danger] ")
+        for r in res: 
+            self.gui.log_to_terminal(f"  [!] User found: {r}\n", "[danger] ")
+            self.gui.log_to_found(f"[SERVER] Apache Username Enumerated: {r} at {target}")
         if not res: self.gui.log_to_terminal("  [-] No users found.\n")
 
     # * Jalankan CEWL Engine
@@ -367,13 +384,17 @@ class ApexOmega:
         self.gui.log_to_terminal(f"Generating Wordlist from {target}...\n", "[init] ")
         res = self.web.generateCewlWordlist(target)
         self.gui.log_to_terminal(f"  [+] Found {len(res)} words: {', '.join(res[:10])}...\n", "[success] ")
+        if res:
+            self.gui.log_to_found(f"[INFO] CeWL wordlist generated for {target} ({len(res)} words)")
 
     # * Jalankan GAU Engine
     def _run_gau_module(self, args=[]):
         if not self.active_target: return
         self.gui.log_to_terminal(f"Fetching URLs (AlienVault OTX) for {self.active_target}...\n", "[init] ")
         res = self.web.getAllUrlsFast(self.active_target)
-        for r in res: self.gui.log_to_terminal(f"  [+] Link: {r}\n", "[success] ")
+        for r in res: 
+            self.gui.log_to_terminal(f"  [+] Link: {r}\n", "[success] ")
+            self.gui.log_to_found(f"[URL] Found endpoint via GAU/OTX: {r}")
         if not res: self.gui.log_to_terminal("  [-] No URLs found.\n")
 
     # * Jalankan HTTRACK Engine
@@ -397,7 +418,9 @@ class ApexOmega:
         target = f"https://{self.active_target}"
         self.gui.log_to_terminal(f"Running Mini-Nuclei Templates on {target}...\n", "[init] ")
         res = self.web.runNucleiTemplateScan(target)
-        for r in res: self.gui.log_to_terminal(f"  [!] {r}\n", "[danger] ")
+        for r in res: 
+            self.gui.log_to_terminal(f"  [!] {r}\n", "[danger] ")
+            self.gui.log_to_found(f"[CVE] Nuclei Template Match: {r}")
         if not res: self.gui.log_to_terminal("  [-] Clean.\n")
 
     # * Jalankan PADBUSTER Engine
@@ -407,6 +430,8 @@ class ApexOmega:
         self.gui.log_to_terminal(f"Testing Padding Oracle Crypto on {target}...\n", "[init] ")
         res = self.web.testPaddingOracle(target)
         self.gui.log_to_terminal(f"  Result: {res}\n", "[warning] ")
+        if "Vulnerable" in res:
+            self.gui.log_to_found(f"[VULN] Potential Padding Oracle Vulnerability at {target}")
 
     # * Jalankan SLOWHTTPTEST Engine
     def _run_slowhttp_module(self, args=[]):
@@ -415,6 +440,8 @@ class ApexOmega:
         self.gui.log_to_terminal(f"Launching Slowloris HTTP Test on {target}...\n", "[init] ")
         res = self.web.runSlowlorisTest(target)
         self.gui.log_to_terminal(f"  Result: {res}\n", "[danger] " if "Vulnerable" in res else "[success] ")
+        if "Vulnerable" in res:
+            self.gui.log_to_found(f"[VULN] Target Vulnerable to Slowloris DoS (Layer 7) at {target}")
 
     # * Jalankan WAPITI Engine
     def _run_wapiti_module(self, args=[]):
@@ -422,7 +449,9 @@ class ApexOmega:
         target = f"https://{self.active_target}"
         self.gui.log_to_terminal(f"Wapiti URL Parameter Fuzzer on {target}...\n", "[init] ")
         res = self.web.runWapitiFuzzer(target)
-        for r in res: self.gui.log_to_terminal(f"  [!] {r}\n", "[danger] ")
+        for r in res: 
+            self.gui.log_to_terminal(f"  [!] {r}\n", "[danger] ")
+            self.gui.log_to_found(f"[VULN] Wapiti Injection Found: {r} at {target}")
         if not res: self.gui.log_to_terminal("  [-] No obvious injection found.\n")
 
     # * Jalankan WEBCACHE Engine
@@ -432,6 +461,8 @@ class ApexOmega:
         self.gui.log_to_terminal(f"Checking Web Cache Poisoning on {target}...\n", "[init] ")
         res = self.web.testWebCachePoisoning(target)
         self.gui.log_to_terminal(f"  Result: {res}\n", "[danger] " if "VULN" in res else "[success] ")
+        if "VULN" in res:
+            self.gui.log_to_found(f"[VULN] Web Cache Poisoning found at {target}")
 
     # * Jalankan WEBSPLOIT Engine
     def _run_websploit_module(self, args=[]):
@@ -455,7 +486,9 @@ class ApexOmega:
         target = f"https://{self.active_target}"
         self.gui.log_to_terminal(f"JoomScan active on {target}...\n", "[init] ")
         res = self.web.scanJoomla(target)
-        for r in res: self.gui.log_to_terminal(f"  [+] {r}\n", "[danger] ")
+        for r in res: 
+            self.gui.log_to_terminal(f"  [+] {r}\n", "[danger] ")
+            self.gui.log_to_found(f"[CMS] Joomla Vulnerability: {r} at {target}")
         if not res: self.gui.log_to_terminal("  [-] Not vulnerable.\n")
 
     # * Jalankan WEBACOO Engine
@@ -463,6 +496,7 @@ class ApexOmega:
         self.gui.log_to_terminal(f"Generating Webacoo Cookie Payload...\n", "[init] ")
         res = self.web.generateWebacooShell()
         self.gui.log_to_terminal(f"\n  {res}\n\n", "[danger] ")
+        self.gui.log_to_found(f"[PAYLOAD] Webacoo Cookie-based PHP Backdoor generated")
 
     # * Jalankan FFUF Engine
     def _run_ffuf_module(self, args=[]):
@@ -470,7 +504,9 @@ class ApexOmega:
         target = f"https://{self.active_target}"
         self.gui.log_to_terminal(f"FFUF fast dir fuzzing on {target}...\n", "[init] ")
         res = self.web.runFfufFuzz(target)
-        for r in res: self.gui.log_to_terminal(f"  [+] {r}\n", "[success] ")
+        for r in res: 
+            self.gui.log_to_terminal(f"  [+] {r}\n", "[success] ")
+            self.gui.log_to_found(f"[DIR] FFUF Found: {r} at {target}")
         if not res: self.gui.log_to_terminal("  [-] Clean.\n")
 
     # * Jalankan SKIPFISH Engine
@@ -487,7 +523,9 @@ class ApexOmega:
         target = f"https://{self.active_target}"
         self.gui.log_to_terminal(f"Wfuzz parameter fuzzing on {target}...\n", "[init] ")
         res = self.web.runWfuzz(target)
-        for r in res: self.gui.log_to_terminal(f"  [!] {r}\n", "[danger] ")
+        for r in res: 
+            self.gui.log_to_terminal(f"  [!] {r}\n", "[danger] ")
+            self.gui.log_to_found(f"[VULN] Wfuzz Injection Found: {r} at {target}")
         if not res: self.gui.log_to_terminal("  [-] Clean.\n")
 
     # * Jalankan DNSENUM Engine
@@ -495,7 +533,9 @@ class ApexOmega:
         if not self.active_target: return
         self.gui.log_to_terminal(f"DnsEnum mapping {self.active_target}...\n", "[init] ")
         res = self.web.runDnsEnum(self.active_target)
-        for r in res: self.gui.log_to_terminal(f"  [+] {r}\n", "[success] ")
+        for r in res: 
+            self.gui.log_to_terminal(f"  [+] {r}\n", "[success] ")
+            self.gui.log_to_found(f"[SUBDOMAIN] DNS Enum Discovery: {r}")
         if not res: self.gui.log_to_terminal("  [-] Clean.\n")
 
     # * Jalankan SSLSCAN Engine
@@ -504,21 +544,27 @@ class ApexOmega:
         target = f"https://{self.active_target}"
         self.gui.log_to_terminal(f"SslScan targeting {target}...\n", "[init] ")
         res = self.web.runSslScan(target)
-        for r in res: self.gui.log_to_terminal(f"  [+] {r}\n", "[info] ")
+        for r in res: 
+            self.gui.log_to_terminal(f"  [+] {r}\n", "[info] ")
+            self.gui.log_to_found(f"[SSL] SSL Metadata: {r}")
 
     # * Jalankan FIERCE Engine
     def _run_fierce_module(self, args=[]):
         if not self.active_target: return
         self.gui.log_to_terminal(f"Fierce Zone Transfer on {self.active_target}...\n", "[init] ")
         res = self.web.checkZoneTransfer(self.active_target)
-        for r in res: self.gui.log_to_terminal(f"  [!] {r}\n", "[success] ")
+        for r in res: 
+            self.gui.log_to_terminal(f"  [!] {r}\n", "[success] ")
+            self.gui.log_to_found(f"[SUBDOMAIN] Fierce Found (Zone Transfer): {r}")
 
     # * Jalankan DMITRY Engine
     def _run_dmitry_module(self, args=[]):
         if not self.active_target: return
         self.gui.log_to_terminal(f"Deepmagic Info Gathering on {self.active_target}...\n", "[init] ")
         res = self.web.gatherDmitryInfo(self.active_target)
-        for r in res: self.gui.log_to_terminal(f"  [+] {r}\n", "[danger] ")
+        for r in res: 
+            self.gui.log_to_terminal(f"  [+] {r}\n", "[danger] ")
+            self.gui.log_to_found(f"[INFO] Dmitry Gathering: {r}")
     
     # * Nampilin referensi web pentest tools ke UI console
     def _run_web_tools_module(self, args=[]):
