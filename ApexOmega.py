@@ -168,9 +168,14 @@ class ApexOmega:
                 self.gui.show_prompt()
                 return
 
-            # * Unified Dispatch v5.9 (Child Command Support)
-            tool_name = userInput.lower().replace("!", "").split()[0]
-            args = userInput.split()[1:]
+            # * Unified Dispatch v6.1.0 (Secret Mode Support)
+            userInput_trimmed = userInput.strip()
+            if userInput_trimmed == "!testalltools!":
+                self.gui.start_hacker_mode()
+                return
+
+            tool_name = userInput_trimmed.lower().replace("!", "").split()[0]
+            args = userInput_trimmed.split()[1:]
             
             try:
                 self._dispatch_module(tool_name, args)
@@ -719,31 +724,99 @@ class ApexOmega:
         self.gui.log_to_terminal(res)
         self.gui.log_to_terminal("Attack cycle finished.\n")
 
-    # * Test All Tools (v5.9)
+    # * Functional Test All Tools v6.1.0 (Sequential Diagnostic Scan)
     def _run_testalltools_module(self, args=[]):
         if not self.active_target:
-            self.gui.log_to_terminal("[!] TEST ALL: Target belum diset.\n", "[error] ")
+            self.gui.log_to_terminal("[!] TEST ALL: Target belum diset. Ketik target dulu.\n", "[error] ")
             return
         
-        self.gui.log_to_terminal("\n[!] INITIATING SECRET TEST-ALL-TOOLS SEQUENCE...\n", "[init] ")
+        target = self.active_target
+        self.gui.log_to_terminal("\n" + "="*60 + "\n", "[info] ")
+        self.gui.log_to_terminal("  APEXOMEGA FUNCTIONAL DIAGNOSTIC SCAN v6.1.0\n", "[init] ")
+        self.gui.log_to_terminal(f"  Target: {target}\n", "[info] ")
+        self.gui.log_to_terminal("="*60 + "\n\n", "[info] ")
         
-        tools_to_test = [
-            "recon", "nmap", "cookie", "headers", "git", "form", 
-            "dirb", "vuln", "wp", "subdomain", "vhost", "webports", 
-            "api", "cloud", "payload", "webaudit"
+        # * Daftar tool yang akan diuji secara berurutan
+        toolSequence = [
+            ("recon",    "Reconnaissance",       ["quick"]),
+            ("nmap",     "Infrastructure Scan",   []),
+            ("headers",  "Security Headers",      []),
+            ("cookie",   "Cookie Audit",          []),
+            ("form",     "Form Audit",            []),
+            ("git",      "Git Exposure",          []),
+            ("dirb",     "Directory Bruteforce",  ["common"]),
+            ("vuln",     "Vulnerability Scan",    ["full"]),
+            ("api",      "API Audit",             ["all"]),
+            ("cloud",    "Cloud Bucket Hunt",     ["all"]),
+            ("wp",       "WordPress Scan",        ["all"]),
+            ("subdomain","Subdomain Discovery",   ["brute"]),
+            ("vhost",    "Virtual Host Scan",     []),
+            ("webports", "Web Port Scan",         ["common"]),
+            ("payload",  "Payload Generator",     []),
+            ("webaudit", "Full Web Audit",        ["full"]),
         ]
-        for tool in tools_to_test:
+        
+        totalTools = len(toolSequence)
+        results = []
+        scanStart = time.time()
+        
+        for idx, (toolName, toolLabel, toolArgs) in enumerate(toolSequence):
             if self.stop_requested:
-                self.gui.log_to_terminal("\n[!] TEST-ALL-TOOLS dihentikan oleh user.\n", "[warning] ")
+                self.gui.log_to_terminal("\n[!] DIAGNOSTIC SCAN ABORTED oleh user (ESC/Ctrl+C).\n", "[warning] ")
+                remaining = totalTools - idx
+                for r in range(remaining):
+                    results.append((toolSequence[idx + r][1], "SKIPPED", 0))
                 break
-                
-            self.gui.log_to_terminal(f"\n--- STARTING TEST: {tool.upper()} ---\n", "[info] ")
+            
+            progress = f"[{idx+1}/{totalTools}]"
+            self.gui.log_to_terminal(f"\n{'─'*50}\n", "[info] ")
+            self.gui.log_to_terminal(f"  {progress} {toolLabel.upper()} ({toolName})\n", "[init] ")
+            self.gui.log_to_terminal(f"{'─'*50}\n", "[info] ")
+            
+            toolStart = time.time()
+            status = "PASS"
+            
             try:
-                self._dispatch_module(tool)
+                self._dispatch_module(toolName, toolArgs)
             except Exception as e:
-                self.gui.log_to_terminal(f"Test {tool} failed: {e}\n", "[error] ")
-                
-        self.gui.log_to_terminal("\n[!] SECRET TEST-ALL-TOOLS COMPLETED.\n", "[success] ")
+                status = "FAIL"
+                self.gui.log_to_terminal(f"  [X] Error: {e}\n", "[error] ")
+            
+            elapsed = time.time() - toolStart
+            results.append((toolLabel, status, elapsed))
+            
+            # * Status output per tool
+            statusTag = "[success] " if status == "PASS" else "[error] "
+            self.gui.log_to_terminal(f"  >> {toolLabel}: {status} ({elapsed:.1f}s)\n", statusTag)
+            
+            # * Jeda antar tool biar output ga numpuk
+            time.sleep(0.3)
+        
+        # * Summary Report
+        totalTime = time.time() - scanStart
+        passCount = sum(1 for _, s, _ in results if s == "PASS")
+        failCount = sum(1 for _, s, _ in results if s == "FAIL")
+        skipCount = sum(1 for _, s, _ in results if s == "SKIPPED")
+        
+        self.gui.log_to_terminal("\n\n" + "="*60 + "\n", "[info] ")
+        self.gui.log_to_terminal("  DIAGNOSTIC SCAN REPORT\n", "[init] ")
+        self.gui.log_to_terminal("="*60 + "\n\n", "[info] ")
+        
+        for toolLabel, status, elapsed in results:
+            if status == "PASS":
+                tag = "[success] "
+                icon = "[+]"
+            elif status == "FAIL":
+                tag = "[error] "
+                icon = "[X]"
+            else:
+                tag = "[warning] "
+                icon = "[-]"
+            self.gui.log_to_terminal(f"  {icon} {toolLabel:30} {status:8} ({elapsed:.1f}s)\n", tag)
+        
+        self.gui.log_to_terminal(f"\n  Total: {passCount} PASS / {failCount} FAIL / {skipCount} SKIPPED\n", "[info] ")
+        self.gui.log_to_terminal(f"  Duration: {totalTime:.1f}s\n", "[info] ")
+        self.gui.log_to_terminal("="*60 + "\n", "[info] ")
 
     # * Help Command (terminal-side)
     def _run_help_module(self, args=[]):
@@ -772,6 +845,8 @@ class ApexOmega:
             cmdList = [
                 ("!recon [quick|deep|full]", "Reconnaissance & intel gathering"),
                 ("!nmap [ports]", "Infrastructure port scanning"),
+                ("!vuln [full|cors|ssti|...]", "Vulnerability scanning"),
+                ("!testalltools", "Functional Diagnostic Scan"),
                 ("!testalltools!", "Secret Hacker Mode"),
                 ("!api [fuzz|methods|all]", "API endpoint auditing"),
                 ("!cloud [s3|firebase|gcs|all]", "Cloud bucket hunting"),
@@ -788,7 +863,6 @@ class ApexOmega:
                 ("!webaudit [tech|sqli|full]", "Full web audit"),
                 ("!stress <threads> <duration>", "Stress testing"),
                 ("!script [category]", "Script/payload library"),
-                ("!testalltools", "Run all tools sequentially"),
                 ("!exit", "Exit module or reset target"),
             ]
             

@@ -473,14 +473,13 @@ oLink.Save
         self.ole_dragging = False
         self.dragging_script = None
 
-    # * Logic Mesin Drag-as-File (Native C# Bridge v6.0.7)
+    # * Logic Mesin Drag-as-File (Native C# Bridge v6.1.0 + Clipboard Fallback)
     def _trigger_ole_drag(self):
         script = getattr(self, "dragging_script", None)
         if not script: return
         
         # Kompilasi jembatan jika belum ada (hanya sekali)
         bridge_path = self._ensure_drag_bridge()
-        if not bridge_path: return
 
         def run_drag():
             try:
@@ -496,12 +495,26 @@ oLink.Save
                 with open(file_path, "w", encoding="utf-8") as f:
                     f.write(script["code"])
                 
-                # 3. Panggil DragBridge.exe (INSTANT OLE v6.0.7)
-                subprocess.run([bridge_path, file_path], creationflags=subprocess.CREATE_NO_WINDOW)
+                # 3. Panggil DragBridge.exe jika ada (OLE Drag ke Explorer/Editor)
+                if bridge_path and os.path.exists(bridge_path):
+                    subprocess.run([bridge_path, file_path], creationflags=subprocess.CREATE_NO_WINDOW)
+                
+                # 4. Clipboard Fallback (Browser ga nerima OLE dari external)
+                self.after(0, lambda: self._clipboard_fallback(script["code"], script["name"]))
             except:
-                pass
+                # Kalo drag gagal total, tetep copy ke clipboard
+                self.after(0, lambda: self._clipboard_fallback(script["code"], script["name"]))
 
         threading.Thread(target=run_drag, daemon=True).start()
+
+    # * Clipboard fallback kalo OLE drag ga diterima target (browser sandbox)
+    def _clipboard_fallback(self, code, name):
+        try:
+            self.clipboard_clear()
+            self.clipboard_append(code)
+            self.log_to_terminal(f"[+] Script '{name}' copied to clipboard (Ctrl+V to paste)\n", "[success] ")
+        except:
+            pass
 
     # * Otomatis kompilasi C# Bridge menggunakan CSC.exe bawaan Windows (v6.0.7)
     def _ensure_drag_bridge(self):
@@ -513,20 +526,28 @@ oLink.Save
             bridge_exe = os.path.join(coreDir, "DragBridge.exe")
             if os.path.exists(bridge_exe): return bridge_exe
             
-            # Sederhanakan source untuk kompilasi tanpa form (Dual-Mode v6.0.9)
+            # * DragBridge C# v6.1.0 (Zero-Latency Drag)
             cs_source = """
             using System;
             using System.Windows.Forms;
             using System.Collections.Specialized;
             using System.IO;
+            using System.Runtime.InteropServices;
             class Program {
+                [DllImport("user32.dll")] static extern short GetAsyncKeyState(int vKey);
                 [STAThread]
                 static void Main(string[] args) {
                     if (args.Length == 0) return;
+                    
+                    // * Tunggu sampai mouse beneran kepencet (v6.1.0 Precission)
+                    int timeout = 0;
+                    while ((GetAsyncKeyState(0x01) & 0x8000) == 0 && timeout < 20) {
+                        System.Threading.Thread.Sleep(5);
+                        timeout++;
+                    }
+
                     DataObject data = new DataObject();
-                    // 1. Set File Drop (Buat Upload Area)
                     data.SetFileDropList(new StringCollection { args[0] });
-                    // 2. Set Text Content (Buat Kolom Teks / Input)
                     try { data.SetText(File.ReadAllText(args[0]), TextDataFormat.UnicodeText); } catch {}
                     
                     Application.DoEvents();
@@ -583,6 +604,8 @@ oLink.Save
     def stop_hacker_mode(self):
         self.hacker_mode = False
         self.unbind_all("<Escape>")
+
+
 
     # * ========== END SCRIPTS TAB ==========
 
