@@ -320,18 +320,10 @@ oLink.Save
         item_frame.pack(fill="x", padx=5, pady=1)
         item_frame.pack_propagate(False)
         
-        # * Drag Handle [✥] - Fitur Drag Luar Aplikasi (v5.9.9 Spectral Mode)
-        drag_handle = ctk.CTkLabel(item_frame, text="✥", font=("Roboto", 14), text_color="cyan", width=25, cursor="fleur")
-        drag_handle.pack(side="left", padx=(5, 0))
-        
-        # * Bindings Drag Feedback (Ghost Mode)
-        drag_handle.bind("<ButtonPress-1>", lambda e: self._on_script_drag_start(e, script))
-        drag_handle.bind("<B1-Motion>", self._on_script_ghost_move)
-        drag_handle.bind("<ButtonRelease-1>", self._on_script_drag_end)
-
-        # Risk indicator
-        risk_lbl = ctk.CTkLabel(item_frame, text=f"[{script['risk'][:1]}]", font=("Consolas", 11), text_color=risk_color, width=30)
-        risk_lbl.pack(side="left", padx=(5, 2))
+        # (drag_handle dipindah ke kanan di baris 350+)
+326:         # Risk indicator
+327:         risk_lbl = ctk.CTkLabel(item_frame, text=f"[{script['risk'][:1]}]", font=("Consolas", 11), text_color=risk_color, width=30)
+328:         risk_lbl.pack(side="left", padx=(5, 2))
         
         # Script name (clickable)
         name_lbl = ctk.CTkLabel(item_frame, text=script["name"], font=("Consolas", 12), text_color="#cccccc", anchor="w", cursor="hand2")
@@ -348,6 +340,15 @@ oLink.Save
             command=lambda: self._send_to_terminal(script["code"])
         )
         send_btn.pack(side="right", padx=5)
+
+        # * Drag Handle [✥] - Pindah ke Kanan (Hyper-Ergonomic v6.0.7)
+        drag_handle = ctk.CTkLabel(item_frame, text="✥", font=("Roboto", 16), text_color="cyan", width=30, cursor="fleur")
+        drag_handle.pack(side="right", padx=(0, 5))
+        
+        # * Bindings Drag Feedback
+        drag_handle.bind("<ButtonPress-1>", lambda e, s=script: self._on_script_drag_start(e, s))
+        drag_handle.bind("<B1-Motion>", self._on_script_ghost_move)
+        drag_handle.bind("<ButtonRelease-1>", self._on_script_drag_end)
         
         # * --- Bind events - Preview Only v5.9.5 ---
         name_lbl.bind("<Button-1>", lambda e, s=script: self._preview_script(s))
@@ -471,11 +472,15 @@ oLink.Save
         self.ole_dragging = False
         self.dragging_script = None
 
-    # * Logic Mesin Drag-as-File (OLE Bridge v6.0.3)
+    # * Logic Mesin Drag-as-File (Native C# Bridge v6.0.7)
     def _trigger_ole_drag(self):
         script = getattr(self, "dragging_script", None)
         if not script: return
         
+        # Kompilasi jembatan jika belum ada (hanya sekali)
+        bridge_path = self._ensure_drag_bridge()
+        if not bridge_path: return
+
         def run_drag():
             try:
                 # 1. Persiapkan folder temp
@@ -490,26 +495,56 @@ oLink.Save
                 with open(file_path, "w", encoding="utf-8") as f:
                     f.write(script["code"])
                 
-                # 3. Panggil OLE via PowerShell dengan STA Mode (v6.0.4 - BROWSER STABLE)
-                ps_script = f'''
-                $file = "{file_path.replace('\\', '/')}"
-                $code = {{
-                    Add-Type -AssemblyName System.Windows.Forms
-                    $data = New-Object System.Windows.Forms.DataObject
-                    $files = New-Object System.Collections.Specialized.StringCollection
-                    [void]$files.Add("{file_path.replace('\\', '/')}")
-                    $data.SetFileDropList($files)
-                    [System.Windows.Forms.DoDragDrop]::DoDragDrop($data, [System.Windows.Forms.DragDropEffects]::Copy)
-                }}
-                # * Jalankan dalam STA (Single-Threaded Apartment)
-                powershell -NoProfile -ExecutionPolicy Bypass -STA -Command $code
-                '''
-                subprocess.run(["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", ps_script], 
-                              creationflags=subprocess.CREATE_NO_WINDOW)
+                # 3. Panggil DragBridge.exe (INSTANT OLE v6.0.7)
+                subprocess.run([bridge_path, file_path], creationflags=subprocess.CREATE_NO_WINDOW)
             except:
                 pass
 
         threading.Thread(target=run_drag, daemon=True).start()
+
+    # * Otomatis kompilasi C# Bridge menggunakan CSC.exe bawaan Windows (v6.0.7)
+    def _ensure_drag_bridge(self):
+        try:
+            rootDir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            coreDir = os.path.join(rootDir, "Core")
+            if not os.path.exists(coreDir): os.makedirs(coreDir)
+            
+            bridge_exe = os.path.join(coreDir, "DragBridge.exe")
+            if os.path.exists(bridge_exe): return bridge_exe
+            
+            # Sederhanakan source untuk kompilasi tanpa form
+            cs_source = """
+            using System;
+            using System.Windows.Forms;
+            using System.Collections.Specialized;
+            class Program {
+                [STAThread]
+                static void Main(string[] args) {
+                    if (args.Length == 0) return;
+                    DataObject data = new DataObject();
+                    data.SetFileDropList(new StringCollection { args[0] });
+                    Application.DoEvents();
+                    Control c = new Control();
+                    c.DoDragDrop(data, DragDropEffects.Copy);
+                }
+            }
+            """
+            
+            cs_file = os.path.join(coreDir, "DragBridge.cs")
+            with open(cs_file, "w") as f: f.write(cs_source)
+            
+            # Cari CSC.exe (Compiler)
+            csc_path = r"C:\Windows\Microsoft.NET\Framework\v4.0.30319\csc.exe"
+            if not os.path.exists(csc_path): 
+                csc_path = r"C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe"
+            
+            if os.path.exists(csc_path):
+                subprocess.run([csc_path, "/target:winexe", "/out:" + bridge_exe, cs_file], 
+                              creationflags=subprocess.CREATE_NO_WINDOW)
+                return bridge_exe
+            return None
+        except:
+            return None
 
     # * ========== END SCRIPTS TAB ==========
 
