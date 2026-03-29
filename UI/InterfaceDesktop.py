@@ -428,7 +428,7 @@ oLink.Save
         self.ole_dragging = False
         self._on_script_ghost_move(event)
 
-    # * Update posisi Ghost Image & Trigger OLE (v6.0.4)
+    # * Update posisi Ghost Image & Trigger OLE (v6.0.5 Native Explorer Mode)
     def _on_script_ghost_move(self, event):
         if hasattr(self, "ghost_window") and self.ghost_window:
             # * Beri offset agar tidak menutupi kursor (Drop Target)
@@ -442,8 +442,21 @@ oLink.Save
             if not self.ole_dragging:
                 dx = abs(event.x - self.drag_start_pos[0])
                 dy = abs(event.y - self.drag_start_pos[1])
-                if dx > 10 or dy > 10: 
+                if dx > 12 or dy > 12: 
                     self.ole_dragging = True
+                    
+                    # 1. Lepas kontrol mouse dari Python (CRITICAL!)
+                    try:
+                        ctypes.windll.user32.ReleaseCapture()
+                    except:
+                        pass
+                        
+                    # 2. Hapus Ghost Image lsg biar Windows OLE dapet fokus
+                    if self.ghost_window:
+                        self.ghost_window.destroy()
+                        self.ghost_window = None
+                        
+                    # 3. Tembak OLE Drag
                     self._trigger_ole_drag()
 
     # * Akhiri Drag (v6.0.3)
