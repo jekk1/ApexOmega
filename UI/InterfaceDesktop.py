@@ -869,12 +869,12 @@ oLink.Save
             widget.destroy()
         
         categories = {
-            "RECON / INFO": ["nmap", "recon", "webaudit", "headers", "cookie"],
-            "DISCOVERY": ["subdomain", "vhost", "webports", "dirb", "git"],
-            "VULNERABILITY": ["vuln", "wp", "form"],
-            "API / CLOUD": ["api", "cloud"],
-            "EXPLOITATION": ["payload", "stress"],
-            "UTILITY": ["help", "script"]
+            "RECON / INFO": ["nmap", "recon", "webaudit", "headers", "cookie", "cewl", "dmitry", "sslscan", "testssl", "wayback", "gau"],
+            "DISCOVERY": ["subdomain", "vhost", "webports", "dirb", "git", "dnsenum", "fierce", "nikto", "apacheusers"],
+            "VULNERABILITY": ["vuln", "wp", "form", "waf", "cms", "joomscan", "wapiti", "webcache", "nuclei", "padbuster"],
+            "API / CLOUD": ["api", "cloud", "ffuf", "wfuzz", "skipfish"],
+            "EXPLOITATION": ["payload", "stress", "cmdi", "davtest", "weevely", "webacoo", "laudanum", "slowhttp"],
+            "UTILITY": ["help", "script", "urlcrazy", "gowitness", "webtools", "websploit"]
         }
         
         for cat, tools in categories.items():

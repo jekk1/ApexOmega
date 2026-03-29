@@ -43,7 +43,37 @@ class GuidedAssistant:
 
             "script": "Script Library berisi koleksi payload siap pakai (XSS, SQLi, Clickjacking, dll). Pake !script [kategori] buat list payload di terminal. Atau buka tab Scripts buat drag-and-drop.",
 
-            "help": "Ketik !help buat liat semua tools + syntax. Ketik !help [nama_tool] buat liat detail penggunaan spesifik."
+            "help": "Ketik !help buat liat semua tools + syntax. Ketik !help [nama_tool] buat liat detail penggunaan spesifik.",
+            "cewl": "Tool buat fetch kata-kata dari web target buat wordlist brute-force.",
+            "dmitry": "Deepmagic tool buat ngecek open ports dan info DNS.",
+            "sslscan": "Scanner SSL/TLS ceritificate dan ciphers.",
+            "testssl": "Mirip sslscan, versi alternatif buat audit HTTPS.",
+            "wayback": "Tarik endpoint lawas dari Wayback Machine API.",
+            "gau": "Get All URLs, tarik history link pake AlienVault OTX.",
+            "dnsenum": "Tool enumerasi DNS subdomain otomatis.",
+            "fierce": "Scanner keamanan Zone Transfer pada DNS.",
+            "nikto": "Scanner web server klasik buat cari CGI aneh atau vulnerability umum.",
+            "apacheusers": "Mencari kelemahan module user-dir di server Apache.",
+            "waf": "Scanner khusus WAF (Web Application Firewall).",
+            "cms": "Scanner CMS khusus selain WordPress (kayak Joomla).",
+            "joomscan": "Auditor keamanan khusus untuk CMS Joomla.",
+            "wapiti": "Basic URL fuzzer xss/sqli di parameter.",
+            "webcache": "Auditor kelemahan web cache poisoning (X-Forwarded-Host).",
+            "nuclei": "Scanner CVE cepat pakai template-based payload.",
+            "padbuster": "Mendeteksi kelemahan enkripsi sesi Padding Oracle.",
+            "cmdi": "Automated Command Injection tester.",
+            "davtest": "Audit kelemahan ekstensi HTTP WebDAV upload.",
+            "weevely": "Generator stealth PHP webshell standar.",
+            "webacoo": "Backdoor PHP lewat integrasi Cookie.",
+            "laudanum": "Koleksi referensi standar payload webshell multi-language.",
+            "slowhttp": "Stress Testing level layer-7 (DOS DoS/Slowloris).",
+            "ffuf": "Fuzzing cepat kilat buat URL discovery.",
+            "wfuzz": "Alat injeksi URL param, berguna banget pas webnya statis.",
+            "skipfish": "Mendeteksi heuristic error handling server target.",
+            "urlcrazy": "Typosquatting web tool buat deteksi phising.",
+            "gowitness": "Pengambil cuplikan screenshot secara visual.",
+            "webtools": "Daftar panduan lengkap berbagai web pentest tools referensi.",
+            "websploit": "Framework wrapper buat nge-test module sekunder sekalian."
         }
 
         # * Usage Database v5.9 (Syntax + Contoh per Tool)
@@ -210,7 +240,37 @@ class GuidedAssistant:
                     "tool_name": "Detail penggunaan tool spesifik"
                 },
                 "examples": ["!help", "!help nmap", "!help vuln", "!help stress"]
-            }
+            },
+            "cewl": {"syntax": "!cewl", "modes": {}, "examples": ["!cewl"]},
+            "dmitry": {"syntax": "!dmitry", "modes": {}, "examples": ["!dmitry"]},
+            "sslscan": {"syntax": "!sslscan", "modes": {}, "examples": ["!sslscan"]},
+            "testssl": {"syntax": "!testssl", "modes": {}, "examples": ["!testssl"]},
+            "wayback": {"syntax": "!wayback", "modes": {}, "examples": ["!wayback"]},
+            "gau": {"syntax": "!gau", "modes": {}, "examples": ["!gau"]},
+            "dnsenum": {"syntax": "!dnsenum", "modes": {}, "examples": ["!dnsenum"]},
+            "fierce": {"syntax": "!fierce", "modes": {}, "examples": ["!fierce"]},
+            "nikto": {"syntax": "!nikto", "modes": {}, "examples": ["!nikto"]},
+            "apacheusers": {"syntax": "!apacheusers", "modes": {}, "examples": ["!apacheusers"]},
+            "waf": {"syntax": "!waf", "modes": {}, "examples": ["!waf"]},
+            "cms": {"syntax": "!cms", "modes": {}, "examples": ["!cms"]},
+            "joomscan": {"syntax": "!joomscan", "modes": {}, "examples": ["!joomscan"]},
+            "wapiti": {"syntax": "!wapiti", "modes": {}, "examples": ["!wapiti"]},
+            "webcache": {"syntax": "!webcache", "modes": {}, "examples": ["!webcache"]},
+            "nuclei": {"syntax": "!nuclei", "modes": {}, "examples": ["!nuclei"]},
+            "padbuster": {"syntax": "!padbuster", "modes": {}, "examples": ["!padbuster"]},
+            "cmdi": {"syntax": "!cmdi", "modes": {}, "examples": ["!cmdi"]},
+            "davtest": {"syntax": "!davtest", "modes": {}, "examples": ["!davtest"]},
+            "weevely": {"syntax": "!weevely", "modes": {}, "examples": ["!weevely [password]"]},
+            "webacoo": {"syntax": "!webacoo", "modes": {}, "examples": ["!webacoo"]},
+            "laudanum": {"syntax": "!laudanum", "modes": {}, "examples": ["!laudanum [php|asp|jsp]"]},
+            "slowhttp": {"syntax": "!slowhttp", "modes": {}, "examples": ["!slowhttp"]},
+            "ffuf": {"syntax": "!ffuf", "modes": {}, "examples": ["!ffuf"]},
+            "wfuzz": {"syntax": "!wfuzz", "modes": {}, "examples": ["!wfuzz"]},
+            "skipfish": {"syntax": "!skipfish", "modes": {}, "examples": ["!skipfish"]},
+            "urlcrazy": {"syntax": "!urlcrazy", "modes": {}, "examples": ["!urlcrazy"]},
+            "gowitness": {"syntax": "!gowitness", "modes": {}, "examples": ["!gowitness"]},
+            "webtools": {"syntax": "!webtools", "modes": {}, "examples": ["!webtools"]},
+            "websploit": {"syntax": "!websploit", "modes": {}, "examples": ["!websploit"]}
         }
 
         # * Pentesting Roadmap v5.9 (8 Misi Detail)
