@@ -1026,14 +1026,15 @@ class ApexOmega:
         
         target = self.active_target
         self.gui.log_to_terminal("\n" + "="*60 + "\n", "[info] ")
-        self.gui.log_to_terminal("  APEXOMEGA FUNCTIONAL DIAGNOSTIC SCAN v6.1.0\n", "[init] ")
+        self.gui.log_to_terminal("  APEXOMEGA FUNCTIONAL DIAGNOSTIC SCAN v6.2.3\n", "[init] ")
         self.gui.log_to_terminal(f"  Target: {target}\n", "[info] ")
         self.gui.log_to_terminal("="*60 + "\n\n", "[info] ")
         
-        # * Daftar tool yang akan diuji secara berurutan
+        # * Daftar tool yang akan diuji secara berurutan (v6.2.3 Comprehensive)
         toolSequence = [
             ("recon",    "Reconnaissance",       ["quick"]),
             ("nmap",     "Infrastructure Scan",   []),
+            ("waf",      "WAF Detection",         []),
             ("headers",  "Security Headers",      []),
             ("cookie",   "Cookie Audit",          []),
             ("form",     "Form Audit",            []),
@@ -1043,9 +1044,33 @@ class ApexOmega:
             ("api",      "API Audit",             ["all"]),
             ("cloud",    "Cloud Bucket Hunt",     ["all"]),
             ("wp",       "WordPress Scan",        ["all"]),
+            ("cms",      "CMS Fingerprinting",    []),
+            ("joomscan", "Joomla Security Scan",  []),
+            ("nikto",    "CGI / Server Scan",     []),
             ("subdomain","Subdomain Discovery",   ["brute"]),
             ("vhost",    "Virtual Host Scan",     []),
             ("webports", "Web Port Scan",         ["common"]),
+            ("dnsenum",  "DNS Enumeration",       []),
+            ("fierce",   "DNS Zone Transfer",     []),
+            ("dmitry",   "Quick Port Probe",      []),
+            ("sslscan",  "SSL Certificate Info",  []),
+            ("testssl",  "TLS/SSL Audit",         []),
+            ("wayback",  "Wayback Machine API",   []),
+            ("gau",      "Get All URLs (OTX)",    []),
+            ("ffuf",     "Fast Directory Fuzz",   []),
+            ("wfuzz",    "Parameter Fuzzing",     []),
+            ("nuclei",   "Template-based Scan",   []),
+            ("wapiti",   "Vulnerability Fuzzer",  []),
+            ("cmdi",     "Command Injection",     []),
+            ("padbuster", "Padding Oracle Test",   []),
+            ("webcache", "Cache Poisoning Audit", []),
+            ("davtest",  "WebDAV PUT Audit",      []),
+            ("weevely",  "Weevely Backdoor Gen",  []),
+            ("webacoo",  "Webacoo Cookie Shell",  []),
+            ("laudanum", "Webshell Templates",    []),
+            ("slowhttp", "Slowloris DoS Test",    []),
+            ("urlcrazy", "Typosquatting Gen",     []),
+            ("websploit","System Audit Framework",[]),
             ("payload",  "Payload Generator",     []),
             ("webaudit", "Full Web Audit",        ["full"]),
         ]
