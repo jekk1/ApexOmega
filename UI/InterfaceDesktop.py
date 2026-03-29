@@ -590,20 +590,22 @@ oLink.Save
         def run_hacker():
             while self.hacker_mode:
                 mode = random.random()
+                # * Color Randomizer v6.2.2
+                tag = random.choice(["success", "success", "success", "errorText", "blueText"])
                 
                 if mode < 0.4: # Standard Log
                     tool = random.choice(tools)
                     act = random.choice(actions)
                     addr = f"{random.randint(1,255)}.{random.randint(0,255)}.{random.randint(0,255)}.{random.randint(1,254)}"
                     log = f"[{tool}] {act} Target {addr}... [OK]\n"
-                    self.after(0, lambda m=log: self.log_to_terminal(m, "[success] "))
+                    self.after(0, lambda m=log, t=tag: self.log_to_terminal(m, t))
                     time.sleep(random.uniform(0.05, 0.1))
                 
                 elif mode < 0.6: # Hex Dump
                     offset = secrets.token_hex(4).upper()
                     hex_data = " ".join([secrets.token_hex(1).upper() for _ in range(8)])
                     log = f"0x{offset}: {hex_data}  {secrets.token_urlsafe(8)}\n"
-                    self.after(0, lambda m=log: self.log_to_terminal(m, "[success] "))
+                    self.after(0, lambda m=log, t=tag: self.log_to_terminal(m, t))
                     time.sleep(0.02)
                 
                 elif mode < 0.8: # Progress Bar
@@ -614,14 +616,16 @@ oLink.Save
                         perc = int((i/bar_chars) * 100)
                         bar = "#" * i + "-" * (bar_chars - i)
                         log = f"\r  [*] {label:8} [{bar}] {perc}%"
-                        self.after(0, lambda m=log: self.log_to_terminal(m, "[success] "))
+                        # Bar tetep ijo biar rapi
+                        self.after(0, lambda m=log: self.log_to_terminal(m, "success"))
                         time.sleep(0.01)
-                    self.after(0, lambda: self.log_to_terminal(" [DONE]\n", "[success] "))
+                    self.after(0, lambda: self.log_to_terminal(" [DONE]\n", "success"))
                     time.sleep(0.1)
                 
                 else: # Rapid Hit
-                    hit = f"  >>> HIT: {secrets.token_hex(16).upper()} ... [AUTHORIZED]\n"
-                    self.after(0, lambda m=hit: self.log_to_terminal(m, "[success] "))
+                    status = random.choice(["AUTHORIZED", "GRANTED", "SUCCESS", "BYPASSED"])
+                    hit = f"  >>> HIT: {secrets.token_hex(16).upper()} ... [{status}]\n"
+                    self.after(0, lambda m=hit, t=tag: self.log_to_terminal(m, t))
                     time.sleep(0.01)
                 
             self.after(0, lambda: self.log_to_terminal("\n[!] HACKER MODE TERMINATED BY USER SIGINT.\n", "[warning] "))
