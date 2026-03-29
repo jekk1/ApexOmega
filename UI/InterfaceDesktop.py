@@ -428,20 +428,21 @@ oLink.Save
         self.ole_dragging = False
         self._on_script_ghost_move(event)
 
-    # * Update posisi Ghost Image & Trigger OLE (v6.0.3)
+    # * Update posisi Ghost Image & Trigger OLE (v6.0.4)
     def _on_script_ghost_move(self, event):
         if hasattr(self, "ghost_window") and self.ghost_window:
-            x = event.x_root + 15
-            y = event.y_root + 15
+            # * Beri offset agar tidak menutupi kursor (Drop Target)
+            x = event.x_root + 25
+            y = event.y_root + 25
             self.ghost_window.geometry(f"+{x}+{y}")
             self.ghost_window.lift()
             self.ghost_window.update_idletasks()
             
-            # * Trigger OLE Drag jika sudah geser > 5 pixel (v6.0.3)
+            # * Trigger OLE Drag jika sudah geser > 10 pixel
             if not self.ole_dragging:
                 dx = abs(event.x - self.drag_start_pos[0])
                 dy = abs(event.y - self.drag_start_pos[1])
-                if dx > 8 or dy > 8: # * Threshold drag
+                if dx > 10 or dy > 10: 
                     self.ole_dragging = True
                     self._trigger_ole_drag()
 
@@ -473,17 +474,21 @@ oLink.Save
                 with open(file_path, "w", encoding="utf-8") as f:
                     f.write(script["code"])
                 
-                # 3. Panggil OLE via PowerShell (Background Thread)
-                ps_script = f"""
+                # 3. Panggil OLE via PowerShell dengan STA Mode (v6.0.4 - BROWSER STABLE)
+                ps_script = f'''
                 $file = "{file_path.replace('\\', '/')}"
-                Add-Type -AssemblyName System.Windows.Forms
-                $data = New-Object System.Windows.Forms.DataObject
-                $files = New-Object System.Collections.Specialized.StringCollection
-                [void]$files.Add($file)
-                $data.SetFileDropList($files)
-                [System.Windows.Forms.DoDragDrop]::DoDragDrop($data, [System.Windows.Forms.DragDropEffects]::Copy)
-                """
-                subprocess.run(["powershell", "-Command", ps_script], 
+                $code = {{
+                    Add-Type -AssemblyName System.Windows.Forms
+                    $data = New-Object System.Windows.Forms.DataObject
+                    $files = New-Object System.Collections.Specialized.StringCollection
+                    [void]$files.Add("{file_path.replace('\\', '/')}")
+                    $data.SetFileDropList($files)
+                    [System.Windows.Forms.DoDragDrop]::DoDragDrop($data, [System.Windows.Forms.DragDropEffects]::Copy)
+                }}
+                # * Jalankan dalam STA (Single-Threaded Apartment)
+                powershell -NoProfile -ExecutionPolicy Bypass -STA -Command $code
+                '''
+                subprocess.run(["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", ps_script], 
                               creationflags=subprocess.CREATE_NO_WINDOW)
             except:
                 pass
