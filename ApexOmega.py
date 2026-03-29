@@ -50,7 +50,10 @@ import socket
 from tkinter import messagebox
 from urllib.parse import urljoin
 
-# * Inisialisasi framework Apex Omega Shell v5.9 (Script Section Edition)
+# --- CONFIGURATION (v5.9.8) ---
+VERSION_URL = "https://raw.githubusercontent.com/jekk1/ApexOmega/main/version.txt"
+REPO_ZIP_URL = "https://github.com/jekk1/ApexOmega/archive/refs/heads/main.zip"
+
 class ApexOmega:
     def __init__(self, mode="gui"):
         self.VERSION = self._load_version()
@@ -826,13 +829,20 @@ class ApexOmega:
             self.update_check_in_progress = True
             self.gui.log_to_terminal("[root@shell] Checking GitHub for updates (jekk1/ApexOmega)...\n", "[inspect] ")
             try:
-                # * Fetch remote version with Cache Buster (v5.9.6)
+                # * Fetch remote version with Cache Buster (v5.9.8)
                 try:
                     # Tambah t=[timestamp] biar bypass cache GitHub Raw
                     cache_buster = f"?t={int(time.time())}"
-                    remoteVer = requests.get(VERSION_URL + cache_buster, timeout=5).text.strip()
-                except:
-                    remoteVer = requests.get(VERSION_URL, timeout=5).text.strip()
+                    response = requests.get(VERSION_URL + cache_buster, timeout=5)
+                    if response.status_code != 200:
+                        self.gui.log_to_terminal(f"Failed to check updates (HTTP {response.status_code})\n")
+                        self.show_prompt()
+                        return
+                    remoteVer = response.text.strip()
+                except Exception as e:
+                    self.gui.log_to_terminal(f"Connection Error: {str(e)}\n")
+                    self.show_prompt()
+                    return
                 
                 if remoteVer < self.VERSION:
                     self.gui.log_to_terminal(f"Warning: Remote version (v{remoteVer}) is older than local (v{self.VERSION}).\n", "[warning] ")
