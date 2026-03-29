@@ -52,8 +52,8 @@ from urllib.parse import urljoin
 
 # * Inisialisasi framework Apex Omega Shell v5.9 (Script Section Edition)
 class ApexOmega:
-    VERSION = "5.9.0"
     def __init__(self, mode="gui"):
+        self.VERSION = self._load_version()
         socket.setdefaulttimeout(3) # * Anti-Stuck Globally
         self.stop_requested = False
         self.ui_mode = mode
@@ -95,6 +95,18 @@ class ApexOmega:
             self.gui = InterfaceDesktop(self)
         else:
             self.gui = None
+
+    # ? Load versi secara dinamis dari file (v5.9.4)
+    def _load_version(self):
+        try:
+            rootDir = os.path.dirname(os.path.abspath(__file__))
+            vPath = os.path.join(rootDir, "version.txt")
+            if os.path.exists(vPath):
+                with open(vPath, "r") as f:
+                    return f.read().strip()
+            return "5.9.4"
+        except:
+            return "5.9.4"
 
     # * Jalankan banner awal dan verifikasi sistem
     def startup(self):

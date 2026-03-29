@@ -1,10 +1,14 @@
 import customtkinter as ctk
 import threading
 from tkinter import messagebox
-import ctypes
 import os
 import sys
+import subprocess
+import time
 import shutil
+import tempfile
+import ctypes
+from ctypes import wintypes
 import secrets
 
 # * Set AppID buat Taskbar Icon Sync v5.8.15
@@ -201,6 +205,22 @@ oLink.Save
         
         # * Global Panic Stop (v5.8.10)
         self.bind_all("<Escape>", self._on_panic_stop)
+        # * --- Terminal Text (Dynamic Banner v5.9.4) ---
+        self._tw.insert("end", f"ApexOmega Console [Version: {self.core.VERSION}]\n", "dimText")
+        self._tw.insert("end", "Titanium Absolute (Global DLL & Tcl Lock)\n\n", "dimText")
+        
+        self._tw.mark_set("inputStart", "end-1c")
+        self._tw.mark_gravity("inputStart", "left")
+        self._tw.bind("<Key>", self._on_key)
+        self._tw.bind("<Button-1>", self._on_click)
+        self._tw.bind("<Return>", self._on_enter, add=False)
+        self._tw.bind("<BackSpace>", self._on_backspace)
+        self._tw.bind("<Delete>", self._on_delete)
+        self._tw.bind("<<Cut>>", self._block_cut)
+        self._tw.bind("<Control-a>", self._block_select_all)
+        
+        # * Global Panic Stop (v5.8.10)
+        self.bind_all("<Escape>", self._on_panic_stop)
         
         self._tw.insert("end", f"ApexOmega Console [Version: {self.core.VERSION}]\n", "dimText")
         self._tw.insert("end", "Titanium Absolute (Global DLL & Tcl Lock)\n\n", "dimText")
@@ -327,9 +347,18 @@ oLink.Save
         cat_lbl = ctk.CTkLabel(item_frame, text=script["category"], font=("Roboto", 10), text_color="#333333", width=80)
         cat_lbl.pack(side="right", padx=8)
         
-        # Send button
-        send_btn = ctk.CTkButton(item_frame, text=">>", font=("Consolas", 11, "bold"), fg_color="transparent", text_color="#00ff00", hover_color="#1a3a1a", width=30, height=24, command=lambda s=script: self._send_script_to_terminal(s))
-        send_btn.pack(side="right", padx=2)
+        # * Tombol [>>] untuk kirim manual ke terminal
+        send_btn = ctk.CTkButton(
+            item_frame, text="[>>]", width=35, height=28, 
+            fg_color="#1a1a1a", text_color="cyan", hover_color="#222",
+            command=lambda: self._send_to_terminal(script["code"])
+        )
+        send_btn.pack(side="right", padx=5)
+        
+        # * --- Drag n Drop Logic v5.9.4 (External File Mode) ---
+        # User bisa tarik item script ini keluar aplikasi (misal ke browser/explorer)
+        item_frame.bind("<ButtonPress-1>", lambda e: self._on_script_drag_start(e, script))
+        name_lbl.bind("<ButtonPress-1>", lambda e: self._on_script_drag_start(e, script))
         
         # Bind events
         name_lbl.bind("<Button-1>", lambda e, s=script: self._preview_script(s))
