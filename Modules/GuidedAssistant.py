@@ -236,41 +236,214 @@ class GuidedAssistant:
             "help": {
                 "syntax": "!help [tool_name]",
                 "modes": {
-                    "(tanpa args)": "Tampilkan semua tools + syntax ringkas",
-                    "tool_name": "Detail penggunaan tool spesifik"
+                    "(tanpa args)": "Tampilkan list tool + syntax ringkas",
+                    "tool_name": "Detail penggunaan tool spesifik (detail banget)"
                 },
-                "examples": ["!help", "!help nmap", "!help vuln", "!help stress"]
+                "examples": ["!help", "!help nmap", "!help ffuf"]
             },
-            "cewl": {"syntax": "!cewl", "modes": {}, "examples": ["!cewl"]},
-            "dmitry": {"syntax": "!dmitry", "modes": {}, "examples": ["!dmitry"]},
-            "sslscan": {"syntax": "!sslscan", "modes": {}, "examples": ["!sslscan"]},
-            "testssl": {"syntax": "!testssl", "modes": {}, "examples": ["!testssl"]},
-            "wayback": {"syntax": "!wayback", "modes": {}, "examples": ["!wayback"]},
-            "gau": {"syntax": "!gau", "modes": {}, "examples": ["!gau"]},
-            "dnsenum": {"syntax": "!dnsenum", "modes": {}, "examples": ["!dnsenum"]},
-            "fierce": {"syntax": "!fierce", "modes": {}, "examples": ["!fierce"]},
-            "nikto": {"syntax": "!nikto", "modes": {}, "examples": ["!nikto"]},
-            "apacheusers": {"syntax": "!apacheusers", "modes": {}, "examples": ["!apacheusers"]},
-            "waf": {"syntax": "!waf", "modes": {}, "examples": ["!waf"]},
-            "cms": {"syntax": "!cms", "modes": {}, "examples": ["!cms"]},
-            "joomscan": {"syntax": "!joomscan", "modes": {}, "examples": ["!joomscan"]},
-            "wapiti": {"syntax": "!wapiti", "modes": {}, "examples": ["!wapiti"]},
-            "webcache": {"syntax": "!webcache", "modes": {}, "examples": ["!webcache"]},
-            "nuclei": {"syntax": "!nuclei", "modes": {}, "examples": ["!nuclei"]},
-            "padbuster": {"syntax": "!padbuster", "modes": {}, "examples": ["!padbuster"]},
-            "cmdi": {"syntax": "!cmdi", "modes": {}, "examples": ["!cmdi"]},
-            "davtest": {"syntax": "!davtest", "modes": {}, "examples": ["!davtest"]},
-            "weevely": {"syntax": "!weevely", "modes": {}, "examples": ["!weevely [password]"]},
-            "webacoo": {"syntax": "!webacoo", "modes": {}, "examples": ["!webacoo"]},
-            "laudanum": {"syntax": "!laudanum", "modes": {}, "examples": ["!laudanum [php|asp|jsp]"]},
-            "slowhttp": {"syntax": "!slowhttp", "modes": {}, "examples": ["!slowhttp"]},
-            "ffuf": {"syntax": "!ffuf", "modes": {}, "examples": ["!ffuf"]},
-            "wfuzz": {"syntax": "!wfuzz", "modes": {}, "examples": ["!wfuzz"]},
-            "skipfish": {"syntax": "!skipfish", "modes": {}, "examples": ["!skipfish"]},
-            "urlcrazy": {"syntax": "!urlcrazy", "modes": {}, "examples": ["!urlcrazy"]},
-            "gowitness": {"syntax": "!gowitness", "modes": {}, "examples": ["!gowitness"]},
-            "webtools": {"syntax": "!webtools", "modes": {}, "examples": ["!webtools"]},
-            "websploit": {"syntax": "!websploit", "modes": {}, "examples": ["!websploit"]}
+            "waf": {
+                "syntax": "!waf",
+                "modes": {
+                    "(tanpa args)": "Scanner WAF (Web Application Firewall). Nge-test target pake payload malicious buat liat siapa yang ngeblokir (Cloudflare, Sucuri, Akamai, dsb)."
+                },
+                "examples": ["!waf"]
+            },
+            "cmdi": {
+                "syntax": "!cmdi",
+                "modes": {
+                    "(tanpa args)": "Deteksi OS Command Injection. Ngirim payload 'sleep' (Time-based) ke parameter URL buat ngetes apakah server tereksekusi command system."
+                },
+                "examples": ["!cmdi"]
+            },
+            "cms": {
+                "syntax": "!cms",
+                "modes": {
+                    "(tanpa args)": "CMS Checker (Non-WordPress). Nyari signature buat Joomla, Drupal, Magento, dsb lewat path-path sensitif (/administrator, /CHANGELOG.txt)."
+                },
+                "examples": ["!cms"]
+            },
+            "joomscan": {
+                "syntax": "!joomscan",
+                "modes": {
+                    "(tanpa args)": "Scanner khusus Joomla. Lebih dalem dari !cms, nyari versi spesifik lewat manifest file xml."
+                },
+                "examples": ["!joomscan"]
+            },
+            "nikto": {
+                "syntax": "!nikto",
+                "modes": {
+                    "(tanpa args)": "Web Server Scanner klasik. Nyari file CGI-bin, server-stats, dan file sampah server yang lupa diapus."
+                },
+                "examples": ["!nikto"]
+            },
+            "davtest": {
+                "syntax": "!davtest",
+                "modes": {
+                    "(tanpa args)": "WebDAV Tester. Ngecek apakah HTTP Method PUT diizinin buat upload webshell tanpa login."
+                },
+                "examples": ["!davtest"]
+            },
+            "urlcrazy": {
+                "syntax": "!urlcrazy",
+                "modes": {
+                    "(tanpa args)": "Typosquatting Generator. Bikin list domain plesetan dari target (misal: g0ogle.com) buat analisa Phishing."
+                },
+                "examples": ["!urlcrazy"]
+            },
+            "wayback": {
+                "syntax": "!wayback",
+                "modes": {
+                    "(tanpa args)": "Wayback Machine Scraper. Narik list URL lama yang pernah terekam di Internet Archive buat cari endpoint terpendam."
+                },
+                "examples": ["!wayback"]
+            },
+            "weevely": {
+                "syntax": "!weevely [password]",
+                "modes": {
+                    "password": "Password buat trigger webshell (default: admin123)."
+                },
+                "examples": ["!weevely", "!weevely rahasia123"]
+            },
+            "testssl": {
+                "syntax": "!testssl",
+                "modes": {
+                    "(tanpa args)": "SSL/TLS Auditor. Cek apakah sertifikat aman, protocol versi berapa (TLS 1.2/1.3), dan cipher suites nya kuat atau cupu."
+                },
+                "examples": ["!testssl"]
+            },
+            "apacheusers": {
+                "syntax": "!apacheusers",
+                "modes": {
+                    "(tanpa args)": "Apache User Enumerator. Nyari list username linux di server via fitur mod_userdir (~root, ~admin)."
+                },
+                "examples": ["!apacheusers"]
+            },
+            "cewl": {
+                "syntax": "!cewl",
+                "modes": {
+                    "(tanpa args)": "Wordlist Generator. Ngescan kata-kata unik dari bodi website buat dijadiin bahan brute-force password."
+                },
+                "examples": ["!cewl"]
+            },
+            "gau": {
+                "syntax": "!gau",
+                "modes": {
+                    "(tanpa args)": "Get All URLs. Narik data OSINT dari AlienVault OTX buat list semua link beneran yang pernah aktif di domain itu."
+                },
+                "examples": ["!gau"]
+            },
+            "httrack": {
+                "syntax": "!httrack",
+                "modes": {
+                    "(tanpa args)": "Website Cloner (Basic). Ambil source code HTML mentah halaman target buat lo analisa offline."
+                },
+                "examples": ["!httrack"]
+            },
+            "laudanum": {
+                "syntax": "!laudanum [php|asp|jsp]",
+                "modes": {
+                    "lang": "Tinggal pilih mau webshell bahasa apa (default: php)."
+                },
+                "examples": ["!laudanum php", "!laudanum jsp"]
+            },
+            "nuclei": {
+                "syntax": "!nuclei",
+                "modes": {
+                    "(tanpa args)": "Mini Vulnerability Scanner. Pake logic templates buatan komunitas buat cari bug kritikal (Git leak, config leak, dsb)."
+                },
+                "examples": ["!nuclei"]
+            },
+            "padbuster": {
+                "syntax": "!padbuster",
+                "modes": {
+                    "(tanpa args)": "Padding Oracle Auditor. Ngecek apakah enkripsi cookie/session bisa didekripsi pake serangan Padding Oracle."
+                },
+                "examples": ["!padbuster"]
+            },
+            "slowhttp": {
+                "syntax": "!slowhttp",
+                "modes": {
+                    "(tanpa args)": "Slowloris DoS Test. Ngetes apakah server bakal hang kalo kita kirim req HTTP super lambat (Layer 7)."
+                },
+                "examples": ["!slowhttp"]
+            },
+            "wapiti": {
+                "syntax": "!wapiti",
+                "modes": {
+                    "(tanpa args)": "Parameter Fuzzer. Otomatis ngetes tiap celah di parameter URL buat cari XSS/HTML Injection."
+                },
+                "examples": ["!wapiti"]
+            },
+            "webcache": {
+                "syntax": "!webcache",
+                "modes": {
+                    "(tanpa args)": "Web Cache Poisoning Auditor. Nyisipin header X-Forwarded-Host buat liat apakah cache server bisa diracunin."
+                },
+                "examples": ["!webcache"]
+            },
+            "websploit": {
+                "syntax": "!websploit",
+                "modes": {
+                    "(tanpa args)": "Advanced System Audit. Gabungan dari scan HTTP methods, server fingerprinting, dan info powered-by."
+                },
+                "examples": ["!websploit"]
+            },
+            "ffuf": {
+                "syntax": "!ffuf",
+                "modes": {
+                    "(tanpa args)": "Fast Directory Brute-Force. Pake mode HEAD request biar super ngebut nyari folder yang exist."
+                },
+                "examples": ["!ffuf"]
+            },
+            "wfuzz": {
+                "syntax": "!wfuzz",
+                "modes": {
+                    "(tanpa args)": "SQL Parameter Fuzzer. Nyisipin payload single-quote buat ngetes apakah ada error database terekspos."
+                },
+                "examples": ["!wfuzz"]
+            },
+            "dnsenum": {
+                "syntax": "!dnsenum",
+                "modes": {
+                    "(tanpa args)": "DNS Resolver. Nyari list subdomain murni lewat resolusi DNS socket (Host discovery)."
+                },
+                "examples": ["!dnsenum"]
+            },
+            "sslscan": {
+                "syntax": "!sslscan",
+                "modes": {
+                    "(tanpa args)": "SSL Info Gatherer. Narik info siapa issuer sertifikatnya dan kapan expirednya murni dari handshake."
+                },
+                "examples": ["!sslscan"]
+            },
+            "dmitry": {
+                "syntax": "!dmitry",
+                "modes": {
+                    "(tanpa args)": "Quick Port Probe (Stealth). Cek port vital (80, 443, 21, 22) secara cepet tanpa bikin server curiga."
+                },
+                "examples": ["!dmitry"]
+            },
+            "gowitness": {
+                "syntax": "!gowitness",
+                "modes": {
+                    "(tanpa args)": "Screenshot Information. Kasih tau apa yang dibutuhin buat aktifin visual engine ini."
+                },
+                "examples": ["!gowitness"]
+            },
+            "webacoo": {
+                "syntax": "!webacoo",
+                "modes": {
+                    "(tanpa args)": "Cookie Backdoor Generator. Bikin webshell PHP yang eksekusi perintahnya via cookie HTTP (Low detection)."
+                },
+                "examples": ["!webacoo"]
+            },
+            "fierce": {
+                "syntax": "!fierce",
+                "modes": {
+                    "(tanpa args)": "DNS Zone Transfer Auditor. Nyoba narik data AXFR DNS buat dapet semua list IP subdomain server."
+                },
+                "examples": ["!fierce"]
+            }
         }
 
         # * Pentesting Roadmap v5.9 (8 Misi Detail)
