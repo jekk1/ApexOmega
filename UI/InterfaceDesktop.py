@@ -569,31 +569,59 @@ oLink.Save
         except:
             return None
 
-    # * Secret Sequence: !testalltools! (Hacker Visual Mode v6.0.9)
+    # * Secret Sequence: !testalltools! (Hyper-Real Hacker Visual v6.2.0)
     def start_hacker_mode(self):
         if self.hacker_mode: return
         self.hacker_mode = True
-        self.log_to_terminal("[!] HACKER MODE ACTIVATED - Press ESC to abort\n", "[danger] ")
+        self.log_to_terminal("\n" + "="*60 + "\n", "[success] ")
+        self.log_to_terminal("  [!!!] APEXOMEGA OVERRIDE: HACKER MODE ACTIVATED [!!!]\n", "[danger] ")
+        self.log_to_terminal("="*60 + "\n\n", "[success] ")
         
         # Bind ESC globally
         self.bind_all("<Escape>", lambda e: self.stop_hacker_mode())
         
-        import random, time
-        tools = ["Nmap", "Metasploit", "Dirb", "Ghidra", "BurpSuite", "Wireshark", "Hashcat", "Aircrack-ng", "Sqlmap", "Nikto"]
-        actions = ["SCANNING", "BRUTEFORCING", "EXPLOITING", "INJECTING", "SNIFFING", "DECRYPTING"]
+        import random, time, secrets
+        tools = ["Nmap", "Metasploit", "Dirb", "Ghidra", "BurpSuite", "Wireshark", "Hashcat", "Aircrack-ng", "Sqlmap", "Hydra", "John"]
+        actions = ["SCANNING", "BRUTEFORCING", "EXPLOITING", "INJECTING", "SNIFFING", "DECRYPTING", "BYPASSING", "DUMPING"]
         
         def run_hacker():
             while self.hacker_mode:
-                tool = random.choice(tools)
-                act = random.choice(actions)
-                addr = f"192.168.{random.randint(0,255)}.{random.randint(1,254)}"
-                log = f"[{tool}] {act} Target {addr}... [OK]\n"
+                mode = random.random()
                 
-                # Update UI thread safe
-                self.after(0, lambda m=log: self.log_to_terminal(m, "[info] "))
-                time.sleep(0.05) # Speed hacking
+                if mode < 0.4: # Standard Log
+                    tool = random.choice(tools)
+                    act = random.choice(actions)
+                    addr = f"{random.randint(1,255)}.{random.randint(0,255)}.{random.randint(0,255)}.{random.randint(1,254)}"
+                    log = f"[{tool}] {act} Target {addr}... [OK]\n"
+                    self.after(0, lambda m=log: self.log_to_terminal(m, "[success] "))
+                    time.sleep(random.uniform(0.05, 0.1))
                 
-            self.after(0, lambda: self.log_to_terminal("[!] HACKER MODE TERMINATED.\n", "[warning] "))
+                elif mode < 0.6: # Hex Dump
+                    offset = secrets.token_hex(4).upper()
+                    hex_data = " ".join([secrets.token_hex(1).upper() for _ in range(8)])
+                    log = f"0x{offset}: {hex_data}  {secrets.token_urlsafe(8)}\n"
+                    self.after(0, lambda m=log: self.log_to_terminal(m, "[success] "))
+                    time.sleep(0.02)
+                
+                elif mode < 0.8: # Progress Bar
+                    label = random.choice(["DCRYPT", "UPLOAD", "PWNAGE", "SYNC", "FETCH"])
+                    bar_chars = 20
+                    for i in range(bar_chars + 1):
+                        if not self.hacker_mode: break
+                        perc = int((i/bar_chars) * 100)
+                        bar = "#" * i + "-" * (bar_chars - i)
+                        log = f"\r  [*] {label:8} [{bar}] {perc}%"
+                        self.after(0, lambda m=log: self.log_to_terminal(m, "[success] "))
+                        time.sleep(0.01)
+                    self.after(0, lambda: self.log_to_terminal(" [DONE]\n", "[success] "))
+                    time.sleep(0.1)
+                
+                else: # Rapid Hit
+                    hit = f"  >>> HIT: {secrets.token_hex(16).upper()} ... [AUTHORIZED]\n"
+                    self.after(0, lambda m=hit: self.log_to_terminal(m, "[success] "))
+                    time.sleep(0.01)
+                
+            self.after(0, lambda: self.log_to_terminal("\n[!] HACKER MODE TERMINATED BY USER SIGINT.\n", "[warning] "))
 
         threading.Thread(target=run_hacker, daemon=True).start()
 
