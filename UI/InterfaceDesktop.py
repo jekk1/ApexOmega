@@ -42,8 +42,7 @@ class InterfaceDesktop(ctk.CTk):
         self.hacker_mode = False
         self._setup_ui()
         
-        # * Auto-Prompt Target on Startup
-        self.after(500, self._initial_prompt)
+        # * Auto-Prompt Target on Startup is now handled by _create_shortcuts
         self._populate_tools()
         self.tools_frame.pack(fill="both", expand=True, padx=5, pady=5)
         
@@ -112,7 +111,8 @@ oLink.Save
                 subprocess.run(["cscript", "//nologo", vbs_path], capture_output=True, creationflags=subprocess.CREATE_NO_WINDOW if hasattr(subprocess, 'CREATE_NO_WINDOW') else 0)
                 os.remove(vbs_path)
             
-            self.log_to_terminal("[+] Shortcuts (ApexOmega) updated on Desktop & Start Menu.\n", "[info] ")
+            self.log_to_terminal("\n[+] Shortcuts (ApexOmega) updated on Desktop & Start Menu.\n", "[info] ")
+            self.after(0, self._initial_prompt)
         except Exception:
             pass
 

