@@ -1007,7 +1007,7 @@ class ApexOmega:
             if tech["server"]: self.gui.log_to_terminal(f"Server: {', '.join(tech['server'])}\n", "[success] ")
         
         if mode in ["sqli", "full"]:
-            sqli = self.web.runBrutalSqlScan(target)
+            sqli = self.web.runSqlInjectionScan(target)
             if sqli: self.gui.log_to_terminal(f"SQLi Found: {len(sqli)} targets!\n", "[danger] ")
         
         self.gui.log_to_terminal("Web Audit Complete. Type !exit to switch.\n")
@@ -1468,3 +1468,5 @@ class ApexOmega:
 if __name__ == "__main__":
     app = ApexOmega(mode="gui")
     app.startup()
+
+

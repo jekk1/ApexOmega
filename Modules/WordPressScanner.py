@@ -1,101 +1,186 @@
 import requests
 import re
 from urllib.parse import urljoin
-import concurrent.futures
+from typing import List, Optional
 
-# * Spesialisasi pemindaian keamanan khusus WordPress
+# * Modul Penganalisa Kerentanan Spesifik Platform WordPress
 class WordPressScanner:
     def __init__(self):
         self.session = requests.Session()
-        self.headers = {'User-Agent': 'ApexOmega/3.6.0 (Zaqi Ultimate)'}
-        self.commonPlugins = ["wp-forms", "elementor", "contact-form-7", "woocommerce", "jetpack"]
-        self.commonThemes = ["astra", "oceanwp", "divi", "generatepress"]
+        self.headers = {'User-Agent': 'ApexOmega/5.0 (WP Auditor)'}
+        self.core = None # Will be set by core
+        
+        # Wordlist 50+ Plugin populer & rentan
+        self.commonPlugins = [
+            "wp-forms", "elementor", "contact-form-7", "woocommerce", "jetpack",
+            "akismet", "wordfence", "yoast-seo", "all-in-one-wp-migration", "updraftplus",
+            "classic-editor", "litespeed-cache", "w3-total-cache", "wp-super-cache", "mailchimp-for-wp",
+            "really-simple-ssl", "duplicate-post", "smush", "wp-fastest-cache", "duplicator",
+            "ninja-forms", "advanced-custom-fields", "monsterinsights", "redirection", "wp-mail-smtp",
+            "insert-headers-and-footers", "limit-login-attempts-reloaded", "bbpress", "buddypress", "woo-commerce",
+            "siteorigin-panels", "all-in-one-seo-pack", "autoptimize", "black-studio-tinymce-widget", "loco-translate",
+            "cookie-notice", "slider-revolution", "visual-composer", "revslider", "js_composer",
+            "wp-file-manager", "gravityforms", "easy-digital-downloads", "contact-form-7-datepicker", "wp-db-backup",
+            "seo-by-rank-math", "exactmetrics", "ml-slider", "wp-multibyte-patch", "shortpixel-image-optimiser"
+        ]
 
-    # * Deteksi versi WordPress dari meta generator atau readme
-    def detectVersion(self, url):
-        try:
-            response = self.session.get(url, headers=self.headers, timeout=5)
-            # * Cara 1: Meta Generator
-            match = re.search(r'name="generator" content="WordPress ([\d.]+)"', response.text)
-            if match: return match.group(1)
+    def isWordPress(self, baseUrl: str) -> bool:
+        """Pemeriksaan awal validasi indikator sistem root WordPress.
+        
+        Args:
+            baseUrl: Sasaran domain untuk identifikasi jejak instalasi (*wp-login*, *wp-content*).
             
-            # * Cara 2: Readme file
-            readmeUrl = urljoin(url, "readme.html")
-            res = self.session.get(readmeUrl, timeout=3)
-            if res.status_code == 200:
-                match = re.search(r'<br /> Version ([\d.]+)', res.text)
-                if match: return match.group(1)
-            return "Unknown"
-        except Exception:
-            return "Unknown"
-
-    # * Enumerasi User via WP-JSON API (Celah umum WP)
-    def enumerateUsers(self, url):
-        users = []
+        Returns:
+            Status sah infrastruktur WP (Penghindar salah sasaran deteksi).
+        """
+        signatures = [
+            "/wp-login.php",
+            "/wp-admin/",
+            "/wp-content/themes/",
+            "/wp-includes/"
+        ]
+        score = 0
         try:
-            apiUrl = urljoin(url, "wp-json/wp/v2/users")
-            res = self.session.get(apiUrl, timeout=5)
-            if res.status_code == 200:
-                data = res.json()
-                for user in data:
-                    users.append(user.get('slug', ''))
+            # Uji indeks utama untuk jejak wajar WP generator
+            res = self.session.get(baseUrl, headers=self.headers, timeout=5)
+            if "wp-content" in res.text or "wordpress" in res.text.lower():
+                score += 2
+                
+            # Cek eksistensi struktur bawaan
+            for sig in signatures:
+                target = urljoin(baseUrl, sig)
+                res_sig = self.session.head(target, headers=self.headers, timeout=3, allow_redirects=False)
+                if res_sig.status_code in [200, 301, 302, 401, 403]:
+                    score += 1
+            
+            return score >= 2
         except Exception:
-            pass
-        return users
+            return False
 
-    # * Cek apakah target beneran situs WordPress (Anti-False Positive)
-    def isWordPress(self, url):
-        signatures = ["wp-login.php", "wp-content/", "wp-includes/", "xmlrpc.php"]
-        found_count = 0
-        for s in signatures:
-            try:
-                target = urljoin(url, s)
-                res = self.session.head(target, timeout=3, allow_redirects=True)
-                # * Kita cari status 200/403/405 (Method Not Allowed buat xmlrpc)
-                if res.status_code in [200, 403, 405]:
-                    found_count += 1
-            except Exception:
-                pass
-        # * Minimal nemu 2 signature buat konfirmasi ini WP
-        return found_count >= 2
+    def scanVersion(self, baseUrl: str) -> Optional[str]:
+        """Ekstraksi identitas versi mesin platform WP melalui indeks meta tags.
+        
+        Args:
+            baseUrl: Parameter antarmuka awal halaman indeks web.
+            
+        Returns:
+            Angka versi perangkat (jika dipaparkan).
+        """
+        try:
+            res = self.session.get(baseUrl, headers=self.headers, timeout=5)
+            # Pencari meta generator
+            match = re.search(r'name="generator" content="wordpress (\d+\.\d+(\.\d+)?)"', res.text, re.I)
+            if match:
+                return match.group(1)
+            
+            # Cek parameter antrean aset gaya/skrip
+            st_match = re.search(r'wp-includes/[^\'"]+\?ver=(\d+\.\d+(\.\d+)?)', res.text, re.I)
+            if st_match:
+                return st_match.group(1)
+                
+            return None
+        except Exception:
+            return None
 
-    # * Pindai plugin yang aktif pada situs target
-    def scanPlugins(self, url):
-        if not self.isWordPress(url):
+    def scanPlugins(self, baseUrl: str) -> List[str]:
+        """Enumerasi direktori perluasan (plugin) umum dengan pencocokan status struktur peladen.
+        
+        Args:
+            baseUrl: Alamat utama root sistem web WP.
+            
+        Returns:
+            Nama perluasan/plugin aktif teridentifikasi di peladen.
+        """
+        if not self.isWordPress(baseUrl):
             return []
             
         found = []
-        def check(p):
-            target = urljoin(url, f"wp-content/plugins/{p}/")
+        for p in self.commonPlugins:
+            if self.core and getattr(self.core, 'stop_requested', False):
+                break
+                
+            # Kita uji langsung pemanggilan aset pendukung readme untuk keabsahan (Hindar WAF blok global)
+            target = urljoin(baseUrl, f"/wp-content/plugins/{p}/readme.txt")
             try:
-                # * Tambahin check detail: plugin directory biasanya 403 kalo directory listing off,
-                # * tapi kita cari index.php atau readme.txt di dalemnya buat validasi 200.
-                res = self.session.head(target, timeout=2)
-                if res.status_code in [200, 403]:
-                    # Double check file readme/license buat anti-WAF false positive
-                    chk_file = urljoin(target, "readme.txt")
-                    res2 = self.session.head(chk_file, timeout=2)
-                    if res2.status_code == 200:
-                        return p
+                res = self.session.head(target, headers=self.headers, timeout=3, allow_redirects=False)
+                if res.status_code == 200:
+                    found.append(p)
             except Exception:
                 pass
+        return found
+        
+    def enumerateTheme(self, baseUrl: str) -> Optional[str]:
+        """Mengungkap varian tata visual halaman lewat pemanggilan berkas identitas tema aktif.
+        
+        Args:
+            baseUrl: Sasaran akar domain sistem.
+            
+        Returns:
+            Identitas tema dan rilis versinya jika ditemui (Info: Versi).
+        """
+        if not self.isWordPress(baseUrl):
+            return None
+            
+        try:
+            res = self.session.get(baseUrl, headers=self.headers, timeout=5)
+            # Pencarian path tema di html mentah
+            theme_match = re.search(r'wp-content/themes/([^/]+)/', res.text)
+            if theme_match:
+                theme_name = theme_match.group(1)
+                
+                # Permintaan pengungkapan file spesifikasi style.css
+                style_url = urljoin(baseUrl, f"/wp-content/themes/{theme_name}/style.css")
+                style_res = self.session.get(style_url, headers=self.headers, timeout=3)
+                if style_res.status_code == 200:
+                    ver_match = re.search(r'Version:\s*(\d+\.\d+(\.\d+)?)', style_res.text, re.I)
+                    if ver_match:
+                        return f"{theme_name} (v{ver_match.group(1)})"
+                return theme_name
+            return None
+        except Exception:
             return None
 
-        with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
-            results = executor.map(check, self.commonPlugins)
-            found = [r for r in results if r]
-        return found
+    def enumerateUsers(self, baseUrl: str) -> List[str]:
+        """Pembongkaran kerahasiaan kepemilikan panel administrator menggunakan rute peladen WP-JSON.
+        
+        Args:
+            baseUrl: Direktori rujukan.
+            
+        Returns:
+            Susunan pemilik terdaftar dari jalur terbuka bawaan api antarmuka peladen.
+        """
+        target = urljoin(baseUrl, "/wp-json/wp/v2/users")
+        try:
+            res = self.session.get(target, headers=self.headers, timeout=5)
+            if res.status_code == 200:
+                data = res.json()
+                if isinstance(data, list):
+                    return [f"{u.get('slug')} (ID: {u.get('id')})" for u in data]
+            return []
+        except Exception:
+            return []
 
-    # * Cek file sensitif WordPress yang sering terekspos
-    def checkVulnFiles(self, url):
-        files = ["xmlrpc.php", "wp-config.php.bak", ".env", "wp-content/debug.log"]
-        findings = []
+    def scanVulnFiles(self, baseUrl: str) -> List[str]:
+        """Pencarian celah log bawaan WP atau arsip usang rentan ekstraksi muatan.
+        
+        Args:
+            baseUrl: Direktori akar rujukan kueri.
+            
+        Returns:
+            Daftar berkas dengan potensi intervensi serangan masukan.
+        """
+        files = [
+            "xmlrpc.php",
+            "wp-config.php.bak",
+            "wp-content/debug.log"
+        ]
+        found = []
         for f in files:
-            target = urljoin(url, f)
+            target = urljoin(baseUrl, f)
             try:
-                res = self.session.head(target, timeout=3)
-                if res.status_code == 200:
-                    findings.append(f)
+                res = self.session.head(target, headers=self.headers, timeout=3, allow_redirects=False)
+                if res.status_code in [200, 403]:
+                    found.append(f)
             except Exception:
                 pass
-        return findings
+        return found

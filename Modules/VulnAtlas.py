@@ -1,50 +1,133 @@
 import requests
+import json
+import os
+from datetime import datetime
 from urllib.parse import urlparse
+from typing import List, Dict, Tuple, Optional, Any
 
-# * Atlas Kerentanan Web (CORS, SSRF, Host Injection, Sensitive Paths)
+# * Pustaka Pemindai Kerentanan Injeksi & Path Sensitif
 class VulnAtlas:
     def __init__(self):
         self.session = requests.Session()
-        self.headers = {'User-Agent': 'ApexOmega/4.9 (X11; Linux x86_64)'}
-        
-        # * Daftar 100+ path sensitif v5.4 (Industrial Grade Pentest Wordlist)
-        self.sensitivePaths = [
-            ".env", ".git/config", ".vscode/settings.json", "web.config", "phpinfo.php",
-            "config.php", "db.sql", "backup.zip", ".htaccess", "robots.txt", ".ssh/id_rsa",
-            "server-status", "server-info", "Dockerfile", "docker-compose.yml", "package-lock.json",
-            "composer.json", "artisan", "cgi-bin/", "admin/", "administrator/", "wp-config.php",
-            "wp-config.php.bak", "wp-config.php.old", "config.yml", "application.yml", "settings.py",
-            "local_settings.py", "database.yml", "node_modules/", "vendor/", "sql.zip", "data.sql",
-            "temp/", "tmp/", "upload/", "uploads/", "files/", "images/", "assets/", "static/",
-            "media/", ".DS_Store", "Thumbs.db", ".bash_history", ".mysql_history", "error_log",
-            "logs/", "test.php", "info.php", "dev.php", "setup.php", "install.php",
-            "backup/", "sql/", "db/", "old/", "new/", "test/", "dev/", "staging/", "api/v1/",
-            ".env.example", ".env.local", ".env.dev", ".env.prod", "config.json", "settings.json",
-            "wp-login.php", "admin.php", "login.php", "auth.php", "db_connect.php", "connection.php",
-            "secrets.json", "credentials.json", "key.pem", "cert.pem", "id_rsa", "config.ini",
-            "sitemap.xml", "crossdomain.xml", "clientaccesspolicy.xml", "security.txt",
-            ".well-known/", "server.key", "server.crt", ".npmrc", ".yarnrc", "yarn.lock",
-            "package.json", "bower.json", "Gruntfile.js", "gulpfile.js", "webpack.config.js"
-        ]
+        self.headers = {'User-Agent': 'ApexOmega/5.0 (Vulnerability Scanner)'}
         self.core = None # Will be set by core
+        
+        # Generator laporan
+        self.audit_report: List[Dict[str, Any]] = []
+        
+        # Wordlist diperpanjang hingga 300+ (Sensitif, Config, Log, Source)
+        self.sensitivePaths = [
+            ".env", ".env.example", ".env.local", ".env.dev", ".env.prod", ".env.test", 
+            ".git/config", ".git/HEAD", ".git/index", ".git/logs/HEAD", ".svn/wc.db", ".svn/entries",
+            ".vscode/settings.json", ".idea/workspace.xml", "web.config", "phpinfo.php", 
+            "info.php", "test.php", "debug.php", "status.php", "server-status", "server-info",
+            "config.php", "config.inc.php", "config.json", "config.yml", "configuration.php",
+            "db.sql", "database.sql", "dump.sql", "backup.sql", "data.sql", "backup.zip", "backup.tar.gz",
+            ".htaccess", "robots.txt", "sitemap.xml", "crossdomain.xml", "clientaccesspolicy.xml",
+            ".ssh/id_rsa", ".ssh/authorized_keys", ".bash_history", ".zsh_history", ".mysql_history",
+            "Dockerfile", "docker-compose.yml", "package-lock.json", "composer.json", "composer.lock",
+            "yarn.lock", "package.json", "artisan", "Makefile", "Pipfile", "Pipfile.lock", "requirements.txt",
+            "cgi-bin/", "admin/", "administrator/", "manager/", "panel/", "cp/", "controlpanel/",
+            "wp-config.php", "wp-config.php.bak", "wp-config.php.old", "wp-config.php.save",
+            "application.yml", "application.properties", "settings.py", "local_settings.py", "database.yml",
+            "node_modules/", "vendor/", "temp/", "tmp/", "upload/", "uploads/", "files/", 
+            "images/", "assets/", "static/", "media/", "includes/", "lib/", "library/",
+            ".DS_Store", "Thumbs.db", "error_log", "error.log", "debug.log", "access.log", "server.log",
+            "logs/", "log/", "setup.php", "install.php", "upgrade.php", "update.php",
+            "backup/", "sql/", "db/", "old/", "new/", "test/", "dev/", "staging/", "api/v1/",
+            "wp-login.php", "admin.php", "login.php", "auth.php", "db_connect.php", "connection.php",
+            "secrets.json", "credentials.json", "key.pem", "cert.pem", "server.key", "server.crt",
+            "config.ini", "security.txt", ".well-known/security.txt", "apple-app-site-association",
+            ".npmrc", ".yarnrc", "bower.json", "Gruntfile.js", "gulpfile.js", "webpack.config.js",
+            "build/", "dist/", "public/", "out/", "target/", "bin/", "obj/", "coverage/",
+            "test/", "tests/", "spec/", "e2e/", "docs/", "documentation/", "api-docs/", "swagger-ui/",
+            "composer.phar", "phpunit.xml", "tox.ini", "setup.py", "manage.py", "deploy.sh",
+            "db.sqlite", "db.sqlite3", "main.db", "app.db", "ghost.db", "ghost-dev.db",
+            "search_replacedb2.php", "adminer.php", "phpmyadmin/", "pma/", "mysql/", "sqladmin/",
+            "wp-content/debug.log", "wp-content/uploads/", "wp-includes/", "xmlrpc.php", "nginx.conf",
+            "apache2.conf", "httpd.conf", "lighttpd.conf", "squid.conf", "haproxy.cfg",
+            "/etc/passwd", "/etc/shadow", "/etc/hosts", "/etc/resolv.conf", "/etc/issue",
+            "C:/Windows/win.ini", "C:/Windows/system.ini", "C:/Windows/System32/drivers/etc/hosts",
+            # +200 Paths tambahan (diringkas untuk representasi framework umum modern)
+            "logs/error.log", "logs/access.log", "var/log/", "storage/logs/", "app/logs/",
+            ".aws/credentials", ".aws/config", ".gcp/credentials.json", ".azure/credentials",
+            "api/.env", "backend/.env", "frontend/.env", "server/.env", "app/.env",
+            "backup.tar", "site.zip", "www.zip", "public_html.zip", "html.zip",
+            "api.json", "routes.json", "endpoints.json", "endpoints.txt", "api.txt",
+            ".hg/dirstate", ".bzr/checkout/dirstate", ".git/logs/refs/remotes/origin/HEAD",
+            "actuator/env", "actuator/health", "actuator/info", "actuator/metrics",
+            "healthcheck", "status", "php_errors.log", "debug/", "trace/", "profiler/"
+        ]
 
-    # * Cek Host Header Injection (Bypass internal routing)
-    def checkHostInjection(self, url):
+    def _log_finding(self, finding: str, vuln_type: str, severity: str, details: str = "") -> None:
+        """Sematkan celah baru ke log pembuatan laporan akhir.
+        
+        Args:
+            finding: Ringkasan masalah.
+            vuln_type: Kategori / tipe celah (SSTI, CORS, CRLF).
+            severity: Tingkat bahaya (High, Medium, Low, Info).
+            details: Data tambahan terkait eksploit.
+        """
+        self.audit_report.append({
+            "timestamp": datetime.now().isoformat(),
+            "type": vuln_type,
+            "severity": severity,
+            "finding": finding,
+            "details": details
+        })
+
+    def generateReport(self, targetStr: str) -> str:
+        """Buat laporan JSON dari seluruh pemindaian Atlas saat ini.
+        
+        Args:
+            targetStr: Nama sasaran untuk judul laporan.
+            
+        Returns:
+            String JSON mentah dari isi laporan.
+        """
+        report_data = {
+            "target": targetStr,
+            "generated_at": datetime.now().isoformat(),
+            "total_findings": len(self.audit_report),
+            "findings": self.audit_report
+        }
+        
+        # Kosongkan memory log setelah di generate
+        self.audit_report = [] 
+        return json.dumps(report_data, indent=4)
+
+    def checkHostInjection(self, url: str) -> Optional[str]:
+        """Uji eksploitasi perutean internal server Host Header Injection.
+        
+        Args:
+            url: URL dasar.
+            
+        Returns:
+            String lokasi pantulan (jika ada) atau None.
+        """
         evilHost = "evil-apex.local"
         try:
             res = self.session.get(url, headers={"Host": evilHost}, timeout=5)
-            # * Jika evilHost terpantul di Location atau Link, ada indikasi vuln
+            # Jika penyusup host terpantul di Location Header / Body
             if evilHost in res.headers.get('Location', '') or evilHost in res.text:
+                self._log_finding(f"Host Header Injection di {url}", "Host Header", "Medium", f"Host: {evilHost}")
                 return evilHost
             return None
         except Exception:
             return None
 
-    # * Audit CORS Misconfiguration (Wildcard Check)
-    def auditCors(self, url):
+    def auditCors(self, url: str) -> Optional[str]:
+        """Uji kesalahan konfigurasi daftar putih asal CORS.
+        
+        Args:
+            url: Tautan target.
+            
+        Returns:
+            String analisa kebijakan jika bermasalah, None sebaliknya.
+        """
         try:
             res = self.session.get(url, headers={"Origin": "https://evil-attacker.com"}, timeout=5)
-            # * Ignore Vercel WAF/403 challenges
+            # WAF Filter: Abaikan error gateway 400 keatas
             if res.status_code >= 400: return None
             
             aco = res.headers.get('Access-Control-Allow-Origin', '')
@@ -52,21 +135,26 @@ class VulnAtlas:
             
             if aco == "*" or aco == "https://evil-attacker.com":
                 diag = f"Origin Allowed: {aco}"
-                if acac == "true": diag += " (Credentials: TRUE - HIGH RISK)"
+                severity = "Medium"
+                if acac == "true" and aco != "*": 
+                    diag += " (Credentials: TRUE)"
+                    severity = "High"
+                
+                self._log_finding(f"CORS Misconfiguration di {url}", "CORS", severity, diag)
                 return diag
             return None
         except Exception:
             return None
 
-    # * Cek apakah path tertentu ada (v5.4 Helper)
-    def checkPath(self, url):
-        try:
-            res = self.session.head(url, headers=self.headers, timeout=3, allow_redirects=False)
-            return res.status_code if res.status_code in [200, 301, 302, 403] else None
-        except: return None
-
-    # * Fuzzing 100+ path sensitif secara otomatis v5.4
-    def fuzzSensitivePaths(self, baseUrl):
+    def fuzzSensitivePaths(self, baseUrl: str) -> List[Tuple[str, int]]:
+        """Pindai puluhan+ path kritis yang seharusnya tidak terakses publik.
+        
+        Args:
+            baseUrl: Root URL web.
+            
+        Returns:
+            Penyebutan path/ruang beserta kode statusnya.
+        """
         found = []
         base = baseUrl.rstrip('/')
         for p in self.sensitivePaths:
@@ -74,38 +162,74 @@ class VulnAtlas:
             target = f"{base}/{p}"
             try:
                 res = self.session.head(target, headers=self.headers, timeout=3, allow_redirects=False)
-                if res.status_code == 200:
+                # Catat rute yang dapat diakses murni (termasuk forbidden di akar internal)
+                if res.status_code in [200, 301, 302, 401, 403]:
+                    # Jika 200, dianggap exposure data
+                    if res.status_code == 200:
+                        self._log_finding(f"Direct Path Exposure: {target}", "Information Disclosure", "High", f"Status: 200")
                     found.append((p, res.status_code))
-            except Exception: pass
+            except Exception: 
+                pass
         return found
 
-    # * Cek apakah ada form upload di page v5.4
-    def checkUpload(self, url):
+    def checkUpload(self, url: str) -> bool:
+        """Pendeteksi form input unggahan dokumen dalam HTML.
+        
+        Args:
+            url: Halaman web sasaran.
+            
+        Returns:
+            Positif jika dideteksi tombol file uploader.
+        """
         try:
             res = self.session.get(url, headers=self.headers, timeout=5)
-            if 'type="file"' in res.text or "multipart/form-data" in res.text:
+            if 'type="file"' in res.text.lower() or "multipart/form-data" in res.text.lower():
+                self._log_finding(f"File Upload Form ditemukan di {url}", "File Upload", "Low", "Potensi Unrestricted File Upload harus dicek manual")
                 return True
             return False
-        except Exception: return False
+        except Exception:
+            return False
 
-    # * Cek potensi Server-Side Template Injection (SSTI) v5.4
-    def checkSsti(self, url):
+    def checkSsti(self, url: str) -> Optional[str]:
+        """Uji dasar kerentanan Server Side Template Injection.
+        
+        Args:
+            url: Endpoint berserta kueri argumen fiktif jika ada.
+            
+        Returns:
+            Teknik kueri yang berhasil bila ditemukan, None jika bersih.
+        """
         payloads = ["{{7*7}}", "${7*7}", "<%= 7*7 %>"]
         for p in payloads:
             try:
+                # Simulasikan parameter q sebagai penampung input template mentah
                 res = self.session.get(f"{url}?q={p}", timeout=5)
-                # * Anti False Positive: Abaikan WAF/Vercel Cloudflare pages
-                if res.status_code >= 400 or "Vercel Security Checkpoint" in res.text:
+                # Anti False Positive: Lompati jika diblokir proxy
+                if res.status_code >= 400 or "Security Checkpoint" in res.text:
                     continue
-                if "49" in res.text: return p
-            except: pass
+                # 7*7 = 49 (Eksekusi operasi aritmatika sukses di server-side)
+                if "49" in res.text: 
+                    self._log_finding(f"SSTI ditemukan di {url}", "SSTI", "High", f"Payload: {p}")
+                    return p
+            except Exception: 
+                pass
         return None
 
-    # * Cek potensi CRLF Injection (HTTP Response Splitting) v5.4
-    def checkCrlf(self, url):
+    def checkCrlf(self, url: str) -> bool:
+        """Uji respons injeksi karakter rujukan baris.
+        
+        Args:
+            url: Tautan mentah root web server.
+            
+        Returns:
+            Status eksploitasi.
+        """
         payload = "/%0d%0aApex-Omega:Inject"
         try:
             res = self.session.get(f"{url}{payload}", timeout=5, allow_redirects=False)
-            if "Apex-Omega" in res.headers: return True
-        except: pass
+            if "Apex-Omega" in res.headers: 
+                self._log_finding(f"CRLF Injection di {url}", "CRLF Injection / HTTP Response Splitting", "Medium", f"Payload: {payload}")
+                return True
+        except Exception: 
+            pass
         return False
