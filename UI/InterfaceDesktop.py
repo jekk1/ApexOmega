@@ -378,6 +378,7 @@ oLink.Save
     # * Kirim script langsung ke terminal
     def _send_script_to_terminal(self, script):
         self.ghost_window = None
+        self.ole_dragging = False
         self._build_sidebar()
         self._build_main_terminal()
         self._insert_to_terminal(script["code"])
@@ -422,33 +423,49 @@ oLink.Save
         ghost_lbl.pack()
         
         self.ghost_window.update_idletasks()
+        # Update posisi awal
+        self.drag_start_pos = (event.x, event.y)
+        self.ole_dragging = False
         self._on_script_ghost_move(event)
 
-    # * Update posisi Ghost Image (v6.0.1)
+    # * Update posisi Ghost Image & Trigger OLE (v6.0.3)
     def _on_script_ghost_move(self, event):
         if hasattr(self, "ghost_window") and self.ghost_window:
             x = event.x_root + 15
             y = event.y_root + 15
             self.ghost_window.geometry(f"+{x}+{y}")
-            self.ghost_window.lift() # * Paksa paling depan
+            self.ghost_window.lift()
             self.ghost_window.update_idletasks()
-
-    # * Akhiri Drag dan Trigger OLE File Drop (v5.9.9)
-    def _on_script_drag_end(self, event):
-        if self.ghost_window:
-            self.ghost_window.destroy()
-            self.ghost_window = None
             
+            # * Trigger OLE Drag jika sudah geser > 5 pixel (v6.0.3)
+            if not self.ole_dragging:
+                dx = abs(event.x - self.drag_start_pos[0])
+                dy = abs(event.y - self.drag_start_pos[1])
+                if dx > 8 or dy > 8: # * Threshold drag
+                    self.ole_dragging = True
+                    self._trigger_ole_drag()
+
+    # * Akhiri Drag (v6.0.3)
+    def _on_script_drag_end(self, event):
+        if hasattr(self, "ghost_window") and self.ghost_window:
+            try: self.ghost_window.destroy()
+            except: pass
+            self.ghost_window = None
+        self.ole_dragging = False
+        self.dragging_script = None
+
+    # * Logic Mesin Drag-as-File (OLE Bridge v6.0.3)
+    def _trigger_ole_drag(self):
         script = getattr(self, "dragging_script", None)
         if not script: return
         
         def run_drag():
             try:
-                # 1. Persiapkan folder temp untuk file drop
+                # 1. Persiapkan folder temp
                 temp_dir = os.path.join(tempfile.gettempdir(), "ApexOmega_Drops")
                 if not os.path.exists(temp_dir): os.makedirs(temp_dir)
                 
-                # 2. Buat file fisik sesuai ekstensi metadata .js, .html, .img
+                # 2. Buat file fisik
                 clean_name = "".join([c if c.isalnum() else "_" for c in script["name"]])
                 ext = script.get("ext", ".txt")
                 file_path = os.path.join(temp_dir, f"{clean_name}{ext}")
@@ -456,7 +473,7 @@ oLink.Save
                 with open(file_path, "w", encoding="utf-8") as f:
                     f.write(script["code"])
                 
-                # 3. Panggil Windows OLE API via PowerShell Bridge (Reliable)
+                # 3. Panggil OLE via PowerShell (Background Thread)
                 ps_script = f"""
                 $file = "{file_path.replace('\\', '/')}"
                 Add-Type -AssemblyName System.Windows.Forms
@@ -468,12 +485,10 @@ oLink.Save
                 """
                 subprocess.run(["powershell", "-Command", ps_script], 
                               creationflags=subprocess.CREATE_NO_WINDOW)
-            except Exception as e:
-                print(f"Drag Error: {e}")
+            except:
+                pass
 
-        # Jalankan di Thread terpisah
         threading.Thread(target=run_drag, daemon=True).start()
-        self.dragging_script = None
 
     # * ========== END SCRIPTS TAB ==========
 
