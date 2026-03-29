@@ -1,4 +1,4 @@
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Any
 
 # * Modul Bantuan & Panduan Penggunaan Alat Bantu Keamanan
 class GuidedAssistant:
