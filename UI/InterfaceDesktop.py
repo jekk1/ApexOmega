@@ -321,9 +321,9 @@ oLink.Save
         item_frame.pack_propagate(False)
         
         # (drag_handle dipindah ke kanan di baris 350+)
-326:         # Risk indicator
-327:         risk_lbl = ctk.CTkLabel(item_frame, text=f"[{script['risk'][:1]}]", font=("Consolas", 11), text_color=risk_color, width=30)
-328:         risk_lbl.pack(side="left", padx=(5, 2))
+        # Risk indicator
+        risk_lbl = ctk.CTkLabel(item_frame, text=f"[{script['risk'][:1]}]", font=("Consolas", 11), text_color=risk_color, width=30)
+        risk_lbl.pack(side="left", padx=(5, 2))
         
         # Script name (clickable)
         name_lbl = ctk.CTkLabel(item_frame, text=script["name"], font=("Consolas", 12), text_color="#cccccc", anchor="w", cursor="hand2")
