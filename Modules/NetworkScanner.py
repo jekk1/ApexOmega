@@ -10,8 +10,18 @@ class NetworkScanner:
         self.timeout = 2
         self.headers = {'User-Agent': 'ApexOmega/3.0.0'}
 
+    # * Helper buat bersihin target dari protocol/path (URL -> Domain)
+    def _clean_domain(self, domain: str) -> str:
+        if not domain: return ""
+        from urllib.parse import urlparse
+        # * Contoh: https://google.com/test -> google.com
+        res = urlparse(domain).netloc if "://" in domain else domain
+        # * Handle cases like google.com:8080
+        return res.split(":")[0].strip("/")
+
     # * Cari subdomain menggunakan database sertifikat (Passive)
     def findSubdomains(self, domain: str) -> List[str]:
+        domain = self._clean_domain(domain)
         subdomains = set()
         try:
             url = f"https://crt.sh/?q=%25.{domain}&output=json"
@@ -32,10 +42,7 @@ class NetworkScanner:
     # * Ambil informasi DNS record (A, MX, NS)
     def getDnsInfo(self, domain: str) -> Dict:
         results = {}
-        from urllib.parse import urlparse
-        clean_domain = urlparse(domain).netloc if domain.startswith('http') else domain
-        clean_domain = clean_domain.split(':')[0].strip('/')
-        if not clean_domain: clean_domain = domain
+        clean_domain = self._clean_domain(domain)
         
         try:
             results['IP'] = socket.gethostbyname(clean_domain)
@@ -47,6 +54,7 @@ class NetworkScanner:
 
     # * Lakukan pencarian Whois dasar via API publik
     def whoisLookup(self, domain: str) -> Dict:
+        domain = self._clean_domain(domain)
         try:
             # * Menggunakan API rdap (standard modern whois)
             url = f"https://rdap.org/domain/{domain}"
@@ -93,6 +101,7 @@ class NetworkScanner:
 
     # * Ambil semua Record DNS (A, AAAA, MX, TXT)
     def getAllDnsRecords(self, domain: str) -> Dict:
+        domain = self._clean_domain(domain)
         records = {}
         types = ["A", "AAAA", "MX", "TXT", "NS"]
         import subprocess

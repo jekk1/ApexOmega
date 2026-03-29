@@ -135,10 +135,15 @@ class ApexOmega:
         self.gui.log_to_terminal("\n[!] PANIC STOP INITIATED (Ctrl+C). Terminating current process...\n", "[error] ")
         self.gui.show_prompt()
 
-    # * Set Target Utama (IP/Domain)
+    # * Set Target Utama (IP/Domain) - Auto-sanitize
     def set_active_target(self, target):
-        self.active_target = target
-        return target
+        if not target: return None
+        from urllib.parse import urlparse
+        # * Contoh: https://google.com/test/ -> google.com
+        clean = urlparse(target).netloc if "://" in target else target.split('/')[0]
+        # * Strip port and spaces
+        self.active_target = clean.split(':')[0].strip()
+        return self.active_target
 
     # * Interactive Shell Command Handler (Terminal Logic v5.9)
     def execute_shell_command(self, userInput):
@@ -236,8 +241,7 @@ class ApexOmega:
         if not self.active_target:
             self.gui.log_to_terminal("Vuln: No target set.\n", "[error] ")
             return
-        target = self.active_target
-        if not target.startswith('http'): target = f"http://{target}"
+        target = f"https://{self.active_target}"
         
         mode = args[0].lower() if args else "full"
         self.gui.log_to_terminal(f"Starting VULN ATLAS ({mode}) on: {target}\n", "[init] ")
@@ -296,8 +300,7 @@ class ApexOmega:
         if not self.active_target:
             self.gui.log_to_terminal("API: No target set.\n", "[error] ")
             return
-        target = self.active_target
-        if not target.startswith('http'): target = f"http://{target}"
+        target = f"https://{self.active_target}"
         
         mode = args[0].lower() if args else "all"
         self.gui.log_to_terminal(f"API AUDITOR ({mode}): Scanning {target}...\n", "[init] ")
@@ -365,7 +368,7 @@ class ApexOmega:
         if not self.active_target:
             self.gui.log_to_terminal("Dirb: No target set.\n", "[error] ")
             return
-        baseUrl = f"http://{self.active_target}" if not self.active_target.startswith("http") else self.active_target
+        baseUrl = f"https://{self.active_target}"
         
         mode = args[0].lower() if args else "common"
         self.gui.log_to_terminal(f"[*] DIRB ({mode}): Brute-forcing directories on {baseUrl}\n", "[init] ")
@@ -397,7 +400,7 @@ class ApexOmega:
         if not self.active_target:
             self.gui.log_to_terminal("Forms: No target set.\n", "[error] ")
             return
-        target = f"http://{self.active_target}" if not self.active_target.startswith("http") else self.active_target
+        target = f"https://{self.active_target}"
         self.gui.log_to_terminal(f"[*] FORMS: Auditing HTML Forms on {target}\n", "[init] ")
         res = self.web.auditForms(target)
         for f in res:
@@ -410,7 +413,7 @@ class ApexOmega:
         if not self.active_target:
             self.gui.log_to_terminal("Cookie: No target set.\n", "[error] ")
             return
-        target = f"http://{self.active_target}" if not self.active_target.startswith("http") else self.active_target
+        target = f"https://{self.active_target}"
         self.gui.log_to_terminal(f"[*] COOKIE: Auditing Session Cookies on {target}\n", "[init] ")
         res = self.web.auditCookies(target)
         for c in res:
@@ -426,7 +429,7 @@ class ApexOmega:
         if not self.active_target:
             self.gui.log_to_terminal("Git: No target set.\n", "[error] ")
             return
-        target = f"http://{self.active_target}" if not self.active_target.startswith("http") else self.active_target
+        target = f"https://{self.active_target}"
         mode = args[0].lower() if args else "check"
         self.gui.log_to_terminal(f"[*] GIT ({mode}): Searching for exposed .git directory on {target}\n", "[init] ")
         res = self.web.checkGitExposed(target)
@@ -578,9 +581,11 @@ class ApexOmega:
             
             # 2. Tech Detection (semua mode)
             self.gui.log_to_terminal("  [*] Detecting Web Technologies...\n")
-            target_url = f"http://{self.active_target}" if not self.active_target.startswith("http") else self.active_target
+            target_url = f"https://{self.active_target}"
             tech = self.web.detectTech(target_url)
-            self.gui.log_to_terminal(f"  [+] Server: {tech.get('server', ['Unknown'])[0]}\n", "[success] ")
+            server_list = tech.get('server', [])
+            server_info = server_list[0] if server_list else "Unknown"
+            self.gui.log_to_terminal(f"  [+] Server: {server_info}\n", "[success] ")
             
             # 3. Deep mode: WHOIS + All DNS Records
             if mode in ["deep", "full"]:
@@ -657,7 +662,7 @@ class ApexOmega:
             return
         
         mode = args[0].lower() if args else "full"
-        target = self.active_target if self.active_target.startswith("http") else f"http://{self.active_target}"
+        target = f"https://{self.active_target}"
         self.gui.log_to_terminal(f"Modul Web Audit ({mode}) Aktif on {target}...\n", "[init] ")
         
         if mode in ["tech", "full"]:
@@ -678,7 +683,7 @@ class ApexOmega:
             self.gui.log_to_terminal("ERROR: Target not set.\n", "[error] ")
             return
         
-        target = self.active_target if self.active_target.startswith("http") else f"http://{self.active_target}"
+        target = f"https://{self.active_target}"
         mode = args[0].lower() if args else "all"
         self.gui.log_to_terminal(f"WP Scanner ({mode}): Checking {target}...\n", "[init] ")
         
