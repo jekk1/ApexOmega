@@ -383,6 +383,7 @@ oLink.Save
     def _send_script_to_terminal(self, script):
         self.ghost_window = None
         self.ole_dragging = False
+        self.hacker_mode = False
         self._build_sidebar()
         self._build_main_terminal()
         self._insert_to_terminal(script["code"])
@@ -512,17 +513,22 @@ oLink.Save
             bridge_exe = os.path.join(coreDir, "DragBridge.exe")
             if os.path.exists(bridge_exe): return bridge_exe
             
-            # Sederhanakan source untuk kompilasi tanpa form
+            # Sederhanakan source untuk kompilasi tanpa form (Dual-Mode v6.0.9)
             cs_source = """
             using System;
             using System.Windows.Forms;
             using System.Collections.Specialized;
+            using System.IO;
             class Program {
                 [STAThread]
                 static void Main(string[] args) {
                     if (args.Length == 0) return;
                     DataObject data = new DataObject();
+                    // 1. Set File Drop (Buat Upload Area)
                     data.SetFileDropList(new StringCollection { args[0] });
+                    // 2. Set Text Content (Buat Kolom Teks / Input)
+                    try { data.SetText(File.ReadAllText(args[0]), TextDataFormat.UnicodeText); } catch {}
+                    
                     Application.DoEvents();
                     Control c = new Control();
                     c.DoDragDrop(data, DragDropEffects.Copy);
@@ -545,6 +551,38 @@ oLink.Save
             return None
         except:
             return None
+
+    # * Secret Sequence: !testalltools! (Hacker Visual Mode v6.0.9)
+    def start_hacker_mode(self):
+        if self.hacker_mode: return
+        self.hacker_mode = True
+        self.log_to_terminal("[!] HACKER MODE ACTIVATED - Press ESC to abort\n", "[danger] ")
+        
+        # Bind ESC globally
+        self.bind_all("<Escape>", lambda e: self.stop_hacker_mode())
+        
+        import random, time
+        tools = ["Nmap", "Metasploit", "Dirb", "Ghidra", "BurpSuite", "Wireshark", "Hashcat", "Aircrack-ng", "Sqlmap", "Nikto"]
+        actions = ["SCANNING", "BRUTEFORCING", "EXPLOITING", "INJECTING", "SNIFFING", "DECRYPTING"]
+        
+        def run_hacker():
+            while self.hacker_mode:
+                tool = random.choice(tools)
+                act = random.choice(actions)
+                addr = f"192.168.{random.randint(0,255)}.{random.randint(1,254)}"
+                log = f"[{tool}] {act} Target {addr}... [OK]\n"
+                
+                # Update UI thread safe
+                self.after(0, lambda m=log: self.log_to_terminal(m, "[info] "))
+                time.sleep(0.05) # Speed hacking
+                
+            self.after(0, lambda: self.log_to_terminal("[!] HACKER MODE TERMINATED.\n", "[warning] "))
+
+        threading.Thread(target=run_hacker, daemon=True).start()
+
+    def stop_hacker_mode(self):
+        self.hacker_mode = False
+        self.unbind_all("<Escape>")
 
     # * ========== END SCRIPTS TAB ==========
 

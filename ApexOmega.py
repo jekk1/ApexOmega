@@ -772,7 +772,7 @@ class ApexOmega:
             cmdList = [
                 ("!recon [quick|deep|full]", "Reconnaissance & intel gathering"),
                 ("!nmap [ports]", "Infrastructure port scanning"),
-                ("!vuln [full|cors|ssti|...]", "Vulnerability scanning"),
+                ("!testalltools!", "Secret Hacker Mode"),
                 ("!api [fuzz|methods|all]", "API endpoint auditing"),
                 ("!cloud [s3|firebase|gcs|all]", "Cloud bucket hunting"),
                 ("!dirb [common|deep]", "Directory brute force"),
