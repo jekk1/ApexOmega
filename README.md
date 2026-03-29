@@ -1,6 +1,6 @@
 # ApexOmega Ultimate v6.2.3 (Nitro-Cyber Edition)
 
-Advanced Web Penetration Testing Framework - Professional Cyber Security Suite.
+Advanced Web Penetration Testing - Professional Cyber Security Suite.
 Modular, automated, and powerful tool for security auditing and vulnerability scanning.
 
 ## 🚀 NEW FEATURES v6.2.3 (The Cyber Update)
