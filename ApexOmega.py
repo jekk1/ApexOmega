@@ -829,11 +829,15 @@ class ApexOmega:
             self.update_check_in_progress = True
             self.gui.log_to_terminal("[root@shell] Checking GitHub for updates (jekk1/ApexOmega)...\n", "[inspect] ")
             try:
-                # * Fetch remote version with Cache Buster (v5.9.8)
+                # * Fetch remote version with Cache Buster & Headers (v6.0.0)
                 try:
-                    # Tambah t=[timestamp] biar bypass cache GitHub Raw
                     cache_buster = f"?t={int(time.time())}"
-                    response = requests.get(VERSION_URL + cache_buster, timeout=5)
+                    headers = {
+                        "Cache-Control": "no-cache",
+                        "Pragma": "no-cache",
+                        "Expires": "0"
+                    }
+                    response = requests.get(VERSION_URL + cache_buster, headers=headers, timeout=5)
                     if response.status_code != 200:
                         self.gui.log_to_terminal(f"Failed to check updates (HTTP {response.status_code})\n")
                         self.show_prompt()
@@ -844,15 +848,45 @@ class ApexOmega:
                     self.show_prompt()
                     return
                 
-                if remoteVer < self.VERSION:
+                # * Parsing versi numerik biar kaku (Semver Parsing Fix)
+                def parse_v(v): 
+                    try: return [int(x) for x in v.split('.')]
+                    except: return [0,0,0]
+                
+                curr_v = parse_v(self.VERSION)
+                rem_v = parse_v(remoteVer)
+                
+                if rem_v > curr_v:
+                    # Upgrade logic
+                    self.gui.log_to_terminal(f"New version found: v{remoteVer} (Local: v{self.VERSION})\n", "[warning] ")
+                    
+                    confirm = messagebox.askyesno("ApexOmega Update", f"Ada versi baru v{remoteVer}. Mau download & restart otomatis?")
+                    if not confirm: 
+                        self.gui.log_to_terminal("Update dibatalkan oleh user.\n")
+                        self.gui.show_prompt()
+                        return
+
+                    self.gui.log_to_terminal("[*] Downloading updates from GitHub (Auto-Sync)...\n", "[info] ")
+                    try:
+                        # Cek git dulu
+                        git_check = subprocess.run(["git", "--version"], capture_output=True, text=True)
+                        if git_check.returncode == 0:
+                            result = subprocess.run(["git", "pull", "origin", "main"], capture_output=True, text=True, timeout=30)
+                            if result.returncode == 0:
+                                self.gui.log_to_terminal("[+] Update downloaded successfully via Git!\n", "[success] ")
+                                self.gui.log_to_terminal("[*] Restarting application in 3s...\n", "[info] ")
+                                time.sleep(3)
+                                self.restart_app()
+                            else:
+                                raise Exception(f"Git Pull failed: {result.stderr}")
+                        else:
+                            raise FileNotFoundError
+                    except (FileNotFoundError, Exception):
+                        self.gui.log_to_terminal("[!] Git not detected or failed. Falling back to Direct Download (ZIP)...\n", "[warning] ")
+                        self._performUpdate(remoteVer)
+                elif rem_v < curr_v:
                     self.gui.log_to_terminal(f"Warning: Remote version (v{remoteVer}) is older than local (v{self.VERSION}).\n", "[warning] ")
                     self.gui.show_prompt()
-                    return
-                
-                if remoteVer == self.VERSION:
-                    self.gui.log_to_terminal(f"System is up-to-date (v{self.VERSION}).\n", "[info] ")
-                    self.gui.show_prompt()
-                    return
                 
                 self.gui.log_to_terminal(f"\n[!] New version found: v{remoteVer}\n", "[warning] ")
                 
