@@ -39,6 +39,7 @@ class InterfaceDesktop(ctk.CTk):
         
         self.tools_visible = True
         self.waitingTarget = True
+        self.hacker_mode = False
         self._setup_ui()
         
         # * Auto-Prompt Target on Startup
@@ -381,11 +382,6 @@ oLink.Save
 
     # * Kirim script langsung ke terminal
     def _send_script_to_terminal(self, script):
-        self.ghost_window = None
-        self.ole_dragging = False
-        self.hacker_mode = False
-        self._build_sidebar()
-        self._build_main_terminal()
         self._insert_to_terminal(script["code"])
 
     # * Insert text ke terminal input area
