@@ -205,7 +205,7 @@ oLink.Save
         
         # * Global Panic Stop (v5.8.10)
         self.bind_all("<Escape>", self._on_panic_stop)
-        # * --- Terminal Text (Dynamic Banner v5.9.4) ---
+        # * --- Terminal Text (Dynamic Banner v5.9.5) ---
         self._tw.insert("end", f"ApexOmega Console [Version: {self.core.VERSION}]\n", "dimText")
         self._tw.insert("end", "Titanium Absolute (Global DLL & Tcl Lock)\n\n", "dimText")
         
@@ -221,9 +221,6 @@ oLink.Save
         
         # * Global Panic Stop (v5.8.10)
         self.bind_all("<Escape>", self._on_panic_stop)
-        
-        self._tw.insert("end", f"ApexOmega Console [Version: {self.core.VERSION}]\n", "dimText")
-        self._tw.insert("end", "Titanium Absolute (Global DLL & Tcl Lock)\n\n", "dimText")
         
         self._tw.mark_set("inputStart", "end-1c")
         self._tw.mark_gravity("inputStart", "left")
@@ -335,9 +332,14 @@ oLink.Save
         item_frame.pack(fill="x", padx=5, pady=1)
         item_frame.pack_propagate(False)
         
+        # * Drag Handle [✥] - Fitur Drag Luar Aplikasi (v5.9.5)
+        drag_handle = ctk.CTkLabel(item_frame, text="✥", font=("Roboto", 14), text_color="cyan", width=25, cursor="fleur")
+        drag_handle.pack(side="left", padx=(5, 0))
+        drag_handle.bind("<ButtonPress-1>", lambda e: self._on_script_drag_start(e, script))
+
         # Risk indicator
         risk_lbl = ctk.CTkLabel(item_frame, text=f"[{script['risk'][:1]}]", font=("Consolas", 11), text_color=risk_color, width=30)
-        risk_lbl.pack(side="left", padx=(8, 2))
+        risk_lbl.pack(side="left", padx=(5, 2))
         
         # Script name (clickable)
         name_lbl = ctk.CTkLabel(item_frame, text=script["name"], font=("Consolas", 12), text_color="#cccccc", anchor="w", cursor="hand2")
@@ -355,12 +357,7 @@ oLink.Save
         )
         send_btn.pack(side="right", padx=5)
         
-        # * --- Drag n Drop Logic v5.9.4 (External File Mode) ---
-        # User bisa tarik item script ini keluar aplikasi (misal ke browser/explorer)
-        item_frame.bind("<ButtonPress-1>", lambda e: self._on_script_drag_start(e, script))
-        name_lbl.bind("<ButtonPress-1>", lambda e: self._on_script_drag_start(e, script))
-        
-        # Bind events
+        # * --- Bind events - Preview Only v5.9.5 ---
         name_lbl.bind("<Button-1>", lambda e, s=script: self._preview_script(s))
         
         # Hover effect
@@ -489,16 +486,23 @@ oLink.Save
             if not userInput or any(p in userInput for p in ["[*]", "[!]", "[+]", "[-]"]):
                 return "break"
                 
-            # * Deteksi apakah input ini target baru (URL/IP) atau cuma payload script (v5.9.1 Fix)
-            is_potential_target = (
-                not userInput.startswith("!") and 
-                "." in userInput and 
-                " " not in userInput and 
-                "<" not in userInput and 
-                ">" not in userInput and
-                "(" not in userInput and
-                len(userInput) < 100
-            )
+            # * Paste Shield & Command Validation (v5.9.5)
+            # Jika diawali < maka ini adalah payload HTML/XML, jangan anggap sebagai command/target.
+            is_html_payload = userInput.lower().strip().startswith("<")
+            
+            if is_html_payload:
+                is_potential_target = False
+            else:
+                # * Deteksi apakah input ini target baru (URL/IP) atau cuma payload script (v5.9.1 Fix)
+                is_potential_target = (
+                    not userInput.startswith("!") and 
+                    "." in userInput and 
+                    " " not in userInput and 
+                    "<" not in userInput and 
+                    ">" not in userInput and
+                    "(" not in userInput and
+                    len(userInput) < 100
+                )
             
             # * Prioritas: !command > target_baru > payload_biasa
             if is_potential_target:
