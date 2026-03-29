@@ -13,14 +13,15 @@ echo [+] TCL Path : %PYTHON_TCL%
 echo [+] DLLs Path: %PYTHON_DLLS%
 echo [+] CTK Path : %CTK_PATH%
 
-echo [*] Starting PyInstaller Build (v5.9.7 Ultimate)...
+echo [*] Starting PyInstaller Build (v6.0.6 Ultimate)...
 pyinstaller --noconfirm --onefile --windowed --clean --name "ApexOmega_Ultimate" ^
  --icon "app_icon.ico" ^
  --add-data "%PYTHON_TCL%;tcl/" ^
  --add-binary "%PYTHON_DLLS%\tcl86t.dll;." ^
  --add-binary "%PYTHON_DLLS%\tk86t.dll;." ^
  --add-binary "%PYTHON_DLLS%\_tkinter.pyd;." ^
- --add-data "%CTK_PATH%;customtkinter/" ^
+ --collect-all customtkinter ^
+ --collect-all darkdetect ^
  --add-data "Modules;Modules" ^
  --add-data "UI;UI" ^
  --add-data "Core;Core" ^

@@ -924,7 +924,12 @@ class ApexOmega:
                 shutil.rmtree(tempDir)
             
             with zipfile.ZipFile(zipPath, "r") as zf:
-                zf.extractall(tempDir)
+                # * Defensive extraction: Hindari replace folder sistem yang bisa hijack EXE (v6.0.6)
+                for member in zf.infolist():
+                    # Check if file is in a forbidden library folder
+                    if "customtkinter" in member.filename.lower() or "darkdetect" in member.filename.lower():
+                        continue
+                    zf.extract(member, tempDir)
             
             extractedFolders = os.listdir(tempDir)
             if not extractedFolders:

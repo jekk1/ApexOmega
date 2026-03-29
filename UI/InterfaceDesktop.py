@@ -20,8 +20,11 @@ except Exception:
     pass
 
 # * Tema Shell Mode (Zaqi Interactive Edition v5.9)
-ctk.set_appearance_mode("Dark")
-ctk.set_default_color_theme("blue")
+try:
+    ctk.set_appearance_mode("Dark")
+    ctk.set_default_color_theme("blue")
+except Exception as e:
+    print(f"Warning: Failed to load CTK theme: {e}")
 
 class InterfaceDesktop(ctk.CTk):
     def __init__(self, app_core):
