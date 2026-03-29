@@ -506,8 +506,19 @@ oLink.Save
             if not userInput or any(p in userInput for p in ["[*]", "[!]", "[+]", "[-]"]):
                 return "break"
                 
-            is_new_target = not userInput.startswith("!") and not (" " in userInput or len(userInput) > 100)
-            if is_new_target:
+            # * Deteksi apakah input ini target baru (URL/IP) atau cuma payload script (v5.9.1 Fix)
+            is_potential_target = (
+                not userInput.startswith("!") and 
+                "." in userInput and 
+                " " not in userInput and 
+                "<" not in userInput and 
+                ">" not in userInput and
+                "(" not in userInput and
+                len(userInput) < 100
+            )
+            
+            # * Prioritas: !command > target_baru > payload_biasa
+            if is_potential_target:
                 self.core.set_active_target(userInput)
 
             self._tw.insert("end", "\n")
@@ -521,15 +532,16 @@ oLink.Save
 
             if userInput.startswith("!"):
                 self.core.execute_shell_command(userInput)
-            else:
+            elif is_potential_target:
                 target = userInput
-                if " " in target or len(target) > 100: return "break"
-                
                 self._append_system(f"\n[*] New Target Set: {target}\n", "cyanText")
                 def recon_start():
                     self.core._run_recon_module([])
                     self.show_prompt()
                 threading.Thread(target=recon_start, daemon=True).start()
+            else:
+                # * Cuma input biasa/payload, jangan trigger recon
+                pass
 
         except Exception as e:
             self.log_to_terminal(f"\n[!] UI Logic Error: {str(e)}\n", "error")
