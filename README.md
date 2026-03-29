@@ -1,4 +1,4 @@
-# ApexOmega Ultimate v6.2.3 (Nitro-Cyber Edition)
+# ApexOmega Ultimate v6.3.0 (Nitro-Cyber Edition)
 
 Advanced Web Penetration Testing - Professional Cyber Security Suite.
 Modular, automated, and powerful tool for security auditing and vulnerability scanning.
@@ -10,7 +10,7 @@ Modular, automated, and powerful tool for security auditing and vulnerability sc
 - **Deep Assistant Docs** -- Panduan detail tiap tool sekarang bisa diakses langsung lewat Sidebar > How to Use.
 - **Improved UI Sidebar** -- Navigasi kategori lebih rapi: Recon, Discovery, Vuln, API/Cloud, Exploitation, & Utility.
 - **Advanced Ghost Cursor** -- Sistem drag-and-drop file/payload ke browser yang lebih responsif dan transparan.
-- **Version Persistence v6.2.3** -- Sinkronisasi versi global antara UI, internal logic, dan Git repository.
+- **Version Persistence v6.3.0** -- Sinkronisasi versi global antara UI, internal logic, dan Git repository.
 
 ## 🛠️ THE PENTESTING WORKFLOW (8 MISSION STRATEGY)
 
@@ -36,6 +36,21 @@ pip install -r requirements.txt
 # 3. Gaskan Mode GUI/CLI!
 python ApexOmega.py
 ```
+
+## 🛠️ BUILDING FROM SOURCE (Windows Exe)
+
+Kalo mau build jadi `.exe` sendiri, pastiin udah install PyInstaller:
+
+```powershell
+# 1. Install PyInstaller
+pip install pyinstaller
+
+# 2. Jalankan Build Script
+./build_app.bat
+```
+
+> [!NOTE]
+> Output `.exe` bakal ada di folder `dist/`. Build script ini udah otomatis handle asset `customtkinter` biar gak error pas dijalanin.
 
 ## 🔐 SECURITY & ETHICS
 

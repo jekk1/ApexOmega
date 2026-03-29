@@ -13,24 +13,8 @@ echo [+] TCL Path : %PYTHON_TCL%
 echo [+] DLLs Path: %PYTHON_DLLS%
 echo [+] CTK Path : %CTK_PATH%
 
-echo [*] Starting PyInstaller Build (v6.0.6 Ultimate)...
-pyinstaller --noconfirm --onefile --windowed --clean --name "ApexOmega_Ultimate" ^
- --icon "app_icon.ico" ^
- --add-data "%PYTHON_TCL%;tcl/" ^
- --add-binary "%PYTHON_DLLS%\tcl86t.dll;." ^
- --add-binary "%PYTHON_DLLS%\tk86t.dll;." ^
- --add-binary "%PYTHON_DLLS%\_tkinter.pyd;." ^
- --collect-all customtkinter ^
- --collect-all darkdetect ^
- --add-data "Modules;Modules" ^
- --add-data "UI;UI" ^
- --add-data "Core;Core" ^
- --add-data "app_icon.ico;." ^
- --add-data "version.txt;." ^
- --hidden-import=customtkinter ^
- --hidden-import=darkdetect ^
- --hidden-import=_tkinter ^
- ApexOmega.py
+echo [*] Starting PyInstaller Build (v6.3.0 Ultimate)...
+pyinstaller --noconfirm --clean ApexOmega_Ultimate.spec
 
 echo [+] Build Complete! Check dist/ folder.
 pause
