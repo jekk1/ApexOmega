@@ -918,14 +918,27 @@ class ApexOmega:
                 dstPath = os.path.join(softwareDir, item)
                 
                 try:
-                    if os.path.isdir(srcPath):
-                        if os.path.exists(dstPath):
+                    # * Safe File Replacement v5.9.3 (Rename-Move trick for Windows)
+                    if os.path.exists(dstPath):
+                        if os.path.isfile(srcPath):
+                            # Jika file (seperti .exe), rename dulu baru timpa
+                            oldPath = dstPath + ".old"
+                            if os.path.exists(oldPath): os.remove(oldPath)
+                            os.rename(dstPath, oldPath)
+                            shutil.copy2(srcPath, dstPath)
+                            try: os.remove(oldPath)
+                            except: pass
+                        else:
+                            # Jika folder, hapus dan copy
                             shutil.rmtree(dstPath, ignore_errors=True)
-                        shutil.copytree(srcPath, dstPath)
+                            shutil.copytree(srcPath, dstPath)
                     else:
-                        shutil.copy2(srcPath, dstPath)
+                        if os.path.isdir(srcPath):
+                            shutil.copytree(srcPath, dstPath)
+                        else:
+                            shutil.copy2(srcPath, dstPath)
                     updatedCount += 1
-                except Exception:
+                except:
                     self.gui.log_to_terminal(f"  [!] Skipped: {item} (File in use?)")
             
             shutil.rmtree(tempDir, ignore_errors=True)
@@ -947,12 +960,28 @@ class ApexOmega:
             if os.path.exists(zipPath):
                 os.remove(zipPath)
 
-    # * Restart aplikasi otomatis (v5.9)
+    # * Restart aplikasi otomatis (v5.9.3 Fix DLL)
     def restart_app(self):
-        self.gui.log_to_terminal("\n[!] RESTARTING APEXOMEGA v5.9...\n", "[init] ")
+        self.gui.log_to_terminal("\n[!] RESTARTING APEXOMEGA v5.9.3...\n", "[init] ")
         self.bridge.stopNativeSession()
-        python = sys.executable
-        os.execl(python, python, *sys.argv)
+        
+        try:
+            # * Clear TCL/TK environment variables (v5.9.3 DLL Fix)
+            # Menghindari error 'DLL load failed while importing _tkinter' 
+            # karena folder temp lama masih nyangkut di environment.
+            for env_var in ["TCL_LIBRARY", "TK_LIBRARY"]:
+                if env_var in os.environ:
+                    del os.environ[env_var]
+            
+            # * Gunakan Popen + exit (lebih stabil daripada execl di Windows)
+            subprocess.Popen([sys.executable] + sys.argv, 
+                             creationflags=subprocess.CREATE_NEW_PROCESS_GROUP | subprocess.DETACHED_PROCESS if os.name == 'nt' else 0,
+                             close_fds=True)
+            os._exit(0)
+        except Exception as e:
+            # Fallback jika gagal
+            python = sys.executable
+            os.execl(python, python, *sys.argv)
 
     # * Bersihkan sesi
     def exitFramework(self):

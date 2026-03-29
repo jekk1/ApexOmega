@@ -31,7 +31,6 @@ class InterfaceDesktop(ctk.CTk):
         
         self.tools_visible = True
         self.waitingTarget = True
-        self.dragging_script = None
         self._setup_ui()
         
         # * Auto-Prompt Target on Startup
@@ -334,12 +333,6 @@ oLink.Save
         
         # Bind events
         name_lbl.bind("<Button-1>", lambda e, s=script: self._preview_script(s))
-        name_lbl.bind("<Double-Button-1>", lambda e, s=script: self._send_script_to_terminal(s))
-        
-        # Drag-and-drop bindings
-        name_lbl.bind("<ButtonPress-1>", lambda e, s=script: self._on_drag_start(e, s))
-        name_lbl.bind("<B1-Motion>", self._on_drag_motion)
-        name_lbl.bind("<ButtonRelease-1>", self._on_drag_release)
         
         # Hover effect
         def on_enter(e, f=item_frame):
@@ -378,45 +371,6 @@ oLink.Save
         # Insert di posisi input saat ini
         self._tw.insert("end", code)
         self._tw.see("end")
-
-    # * Drag-and-drop handlers
-    def _on_drag_start(self, event, script):
-        self.dragging_script = script
-        self._drag_label = ctk.CTkLabel(self, text=f"[{script['name']}]", font=("Consolas", 11), text_color="#00ff00", fg_color="#1a1a1a", corner_radius=4)
-
-    def _on_drag_motion(self, event):
-        if self.dragging_script and hasattr(self, '_drag_label'):
-            try:
-                x = event.x_root - self.winfo_rootx()
-                y = event.y_root - self.winfo_rooty()
-                self._drag_label.place(x=x + 10, y=y + 10)
-            except Exception:
-                pass
-
-    def _on_drag_release(self, event):
-        if self.dragging_script and hasattr(self, '_drag_label'):
-            try:
-                self._drag_label.destroy()
-            except Exception:
-                pass
-            
-            # Cek apakah drop di area terminal
-            try:
-                x = event.x_root - self.winfo_rootx()
-                y = event.y_root - self.winfo_rooty()
-                
-                # Area terminal detection
-                tw_x = self.terminal.winfo_rootx() - self.winfo_rootx()
-                tw_y = self.terminal.winfo_rooty() - self.winfo_rooty()
-                tw_w = self.terminal.winfo_width()
-                tw_h = self.terminal.winfo_height()
-                
-                if tw_x <= x <= tw_x + tw_w and tw_y <= y <= tw_y + tw_h:
-                    self._insert_to_terminal(self.dragging_script["code"])
-            except Exception:
-                pass
-            
-            self.dragging_script = None
 
     # * Search handler
     def _on_script_search(self, *args):
