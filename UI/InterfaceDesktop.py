@@ -190,25 +190,11 @@ oLink.Save
         self._tw.tag_config("init", foreground="#aaaaaa")
         self._tw.tag_config("gen", foreground="#bb86fc")
         
-        # * Bind event untuk proteksi
-        self._tw.bind("<Control-c>", lambda e: self.core.stop_running_tool())
-        
-        lbl_info = ctk.CTkLabel(self.tab_console, text="[!] CTRL+C TO STOP | !EXIT TO ROOT | !HELP FOR MANUAL", font=("Roboto", 10), text_color="#444444")
-        lbl_info.pack(side="bottom", pady=5)
-        self._tw.bind("<Key>", self._on_key)
-        self._tw.bind("<Button-1>", self._on_click)
-        self._tw.bind("<Return>", self._on_enter, add=False)
-        self._tw.bind("<BackSpace>", self._on_backspace)
-        self._tw.bind("<Delete>", self._on_delete)
-        self._tw.bind("<<Cut>>", self._block_cut)
-        self._tw.bind("<Control-a>", self._block_select_all)
-        
-        # * Global Panic Stop (v5.8.10)
-        self.bind_all("<Escape>", self._on_panic_stop)
-        # * --- Terminal Text (Dynamic Banner v5.9.5) ---
+        # * --- Terminal Text (Dynamic Banner v5.9.6) ---
         self._tw.insert("end", f"ApexOmega Console [Version: {self.core.VERSION}]\n", "dimText")
         self._tw.insert("end", "Titanium Absolute (Global DLL & Tcl Lock)\n\n", "dimText")
         
+        # * Setup Terminal Input Controls
         self._tw.mark_set("inputStart", "end-1c")
         self._tw.mark_gravity("inputStart", "left")
         self._tw.bind("<Key>", self._on_key)
@@ -218,12 +204,10 @@ oLink.Save
         self._tw.bind("<Delete>", self._on_delete)
         self._tw.bind("<<Cut>>", self._block_cut)
         self._tw.bind("<Control-a>", self._block_select_all)
+        self._tw.bind("<Control-c>", lambda e: self.core.stop_running_tool())
         
         # * Global Panic Stop (v5.8.10)
         self.bind_all("<Escape>", self._on_panic_stop)
-        
-        self._tw.mark_set("inputStart", "end-1c")
-        self._tw.mark_gravity("inputStart", "left")
 
         # * --- Setup Tab Found ---
         self.found_box = ctk.CTkTextbox(self.tab_found, font=("Consolas", 13), text_color="#00ff00", fg_color="#050505", border_width=0, border_spacing=20)

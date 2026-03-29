@@ -826,14 +826,13 @@ class ApexOmega:
             self.update_check_in_progress = True
             self.gui.log_to_terminal("[root@shell] Checking GitHub for updates (jekk1/ApexOmega)...\n", "[inspect] ")
             try:
-                versionUrl = f"https://raw.githubusercontent.com/jekk1/ApexOmega/main/version.txt?t={int(time.time())}"
-                response = requests.get(versionUrl, timeout=5)
-                if response.status_code != 200:
-                    self.gui.log_to_terminal(f"Failed to check updates (HTTP {response.status_code})\n")
-                    self.gui.show_prompt()
-                    return
-                
-                remoteVer = response.text.strip()
+                # * Fetch remote version with Cache Buster (v5.9.6)
+                try:
+                    # Tambah t=[timestamp] biar bypass cache GitHub Raw
+                    cache_buster = f"?t={int(time.time())}"
+                    remoteVer = requests.get(VERSION_URL + cache_buster, timeout=5).text.strip()
+                except:
+                    remoteVer = requests.get(VERSION_URL, timeout=5).text.strip()
                 
                 if remoteVer < self.VERSION:
                     self.gui.log_to_terminal(f"Warning: Remote version (v{remoteVer}) is older than local (v{self.VERSION}).\n", "[warning] ")
