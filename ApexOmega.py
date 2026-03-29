@@ -887,33 +887,9 @@ class ApexOmega:
                 elif rem_v < curr_v:
                     self.gui.log_to_terminal(f"Warning: Remote version (v{remoteVer}) is older than local (v{self.VERSION}).\n", "[warning] ")
                     self.gui.show_prompt()
-                
-                self.gui.log_to_terminal(f"\n[!] New version found: v{remoteVer}\n", "[warning] ")
-                
-                confirm = messagebox.askyesno("ApexOmega Update", f"Ada versi baru v{remoteVer}. Mau download & restart otomatis?")
-                if not confirm: 
-                    self.gui.log_to_terminal("Update dibatalkan oleh user.\n")
+                else:
+                    self.gui.log_to_terminal(f"System is up-to-date (v{self.VERSION}).\n", "[success] ")
                     self.gui.show_prompt()
-                    return
-
-                self.gui.log_to_terminal("[*] Downloading updates from GitHub (Auto-Sync)...\n", "[info] ")
-                try:
-                    # Cek git dulu
-                    git_check = subprocess.run(["git", "--version"], capture_output=True, text=True)
-                    if git_check.returncode == 0:
-                        result = subprocess.run(["git", "pull", "origin", "main"], capture_output=True, text=True, timeout=30)
-                        if result.returncode == 0:
-                            self.gui.log_to_terminal("[+] Update downloaded successfully via Git!\n", "[success] ")
-                            self.gui.log_to_terminal("[*] Restarting application in 3s...\n", "[info] ")
-                            time.sleep(3)
-                            self.restart_app()
-                        else:
-                            raise Exception(f"Git Pull failed: {result.stderr}")
-                    else:
-                        raise FileNotFoundError
-                except (FileNotFoundError, Exception):
-                    self.gui.log_to_terminal("[!] Git not detected or failed. Falling back to Direct Download (ZIP)...\n", "[warning] ")
-                    self._performUpdate(remoteVer)
                     
             except Exception as e:
                 self.gui.log_to_terminal(f"Update Error: {str(e)}\n")
