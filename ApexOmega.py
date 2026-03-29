@@ -44,14 +44,15 @@ from Modules.WebDiscovery import WebDiscovery
 from Modules.VulnAtlas import VulnAtlas
 from Modules.ApiAuditor import ApiAuditor
 from Modules.CloudAudit import CloudAudit
+from Modules.ScriptLibrary import ScriptLibrary
 import requests
 import socket
 from tkinter import messagebox
 from urllib.parse import urljoin
 
-# * Inisialisasi framework Apex Omega Shell v5.1 (Auto-Pilot Edition)
+# * Inisialisasi framework Apex Omega Shell v5.9 (Script Section Edition)
 class ApexOmega:
-    VERSION = "5.8.16"
+    VERSION = "5.9.0"
     def __init__(self, mode="gui"):
         socket.setdefaulttimeout(3) # * Anti-Stuck Globally
         self.stop_requested = False
@@ -75,6 +76,7 @@ class ApexOmega:
         self.atlas = VulnAtlas()
         self.api_auditor = ApiAuditor()
         self.cloud_audit = CloudAudit()
+        self.script_lib = ScriptLibrary()
         
         # * Link Core for Global Events (v5.4)
         self.web.core = self
@@ -98,7 +100,7 @@ class ApexOmega:
         if self.ui_mode == "cli":
             console.clear()
             self.ui.showBanner()
-            self.ui.logStatus("Memeriksa mesin Apex v5.5...", "info")
+            self.ui.logStatus("Memeriksa mesin Apex v5.9...", "info")
             time.sleep(0.5)
             
             if self.bridge.startNativeSession():
@@ -122,7 +124,7 @@ class ApexOmega:
         self.active_target = target
         return target
 
-    # * Interactive Shell Command Handler (Terminal Logic v5.4)
+    # * Interactive Shell Command Handler (Terminal Logic v5.9)
     def execute_shell_command(self, userInput):
         parts = userInput.split()
         if not parts: return
@@ -150,21 +152,11 @@ class ApexOmega:
                 self.gui.show_prompt()
                 return
 
-            # * Pilih Modul (Format !tool)
-            if command.startswith("!"):
-                tool_name = command[1:] # Hapus tanda seru
-                
-                # -- Verifikasi Tool v5.4 (Args Support) --
-                args = parts[1:]
-                
-                if tool_name in ["recon", "info"]:
-                    self.current_module = "recon"
-                    self._run_recon_module(args)
+            # * Unified Dispatch v5.9 (Child Command Support)
             tool_name = userInput.lower().replace("!", "").split()[0]
             args = userInput.split()[1:]
             
             try:
-                # * Unified Dispatch System v5.8.1
                 self._dispatch_module(tool_name, args)
             except Exception as e:
                 self.gui.log_to_terminal(f"Error executing {tool_name}: {e}\n", "error")
@@ -205,7 +197,9 @@ class ApexOmega:
             "webports": self._run_webports_module,
             "sqlmap": self._run_web_module,
             "aoi": self._run_web_module,
-            "testalltools": self._run_testalltools_module
+            "testalltools": self._run_testalltools_module,
+            "help": self._run_help_module,
+            "script": self._run_script_module
         }
         
         if tool_name in mapping:
@@ -214,8 +208,9 @@ class ApexOmega:
         else:
             self.gui.log_to_terminal(f"[!] Unknown tool: {tool_name}. Type !help for manual.\n", "error")
 
-    # -- Module Automated Runners --
+    # -- Module Automated Runners (v5.9 Child Command Support) --
 
+    # * Vuln Atlas Scanner dengan mode spesifik
     def _run_vuln_module(self, args=[]):
         if not self.active_target:
             self.gui.log_to_terminal("Vuln: No target set.\n", "[error] ")
@@ -223,50 +218,59 @@ class ApexOmega:
         target = self.active_target
         if not target.startswith('http'): target = f"http://{target}"
         
-        mode = args[0] if args else "Full"
+        mode = args[0].lower() if args else "full"
         self.gui.log_to_terminal(f"Starting VULN ATLAS ({mode}) on: {target}\n", "[init] ")
         
+        runAll = (mode == "full")
+        
         # 1. Host Injection
-        self.gui.log_to_terminal("  [*] Testing Host Header Injection...\n")
-        host_vuln = self.atlas.checkHostInjection(target)
-        if host_vuln: 
-            self.gui.log_to_terminal(f"  [!] HOST INJECTION VULNERABLE: {host_vuln}\n", "[danger] ")
-            self.gui.log_to_found(f"[VULN] Host Header Injection at {target} (Host: {host_vuln})")
+        if runAll or mode == "host":
+            self.gui.log_to_terminal("  [*] Testing Host Header Injection...\n")
+            host_vuln = self.atlas.checkHostInjection(target)
+            if host_vuln: 
+                self.gui.log_to_terminal(f"  [!] HOST INJECTION VULNERABLE: {host_vuln}\n", "[danger] ")
+                self.gui.log_to_found(f"[VULN] Host Header Injection at {target} (Host: {host_vuln})")
         
         # 2. CORS Audit
-        self.gui.log_to_terminal("  [*] Auditing CORS configuration...\n")
-        cors = self.atlas.auditCors(target)
-        if cors: 
-            self.gui.log_to_terminal(f"  [!] CORS MISCONFIGURED: {cors}\n", "[warning] ")
-            self.gui.log_to_found(f"[VULN] CORS Misconfig at {target} ({cors})")
+        if runAll or mode == "cors":
+            self.gui.log_to_terminal("  [*] Auditing CORS configuration...\n")
+            cors = self.atlas.auditCors(target)
+            if cors: 
+                self.gui.log_to_terminal(f"  [!] CORS MISCONFIGURED: {cors}\n", "[warning] ")
+                self.gui.log_to_found(f"[VULN] CORS Misconfig at {target} ({cors})")
         
-        # 4. SSTI Check (v5.4 New)
-        self.gui.log_to_terminal("  [*] Testing Server-Side Template Injection (SSTI)...\n")
-        ssti = self.atlas.checkSsti(target)
-        if ssti: 
-            self.gui.log_to_terminal(f"  [!!!] SSTI VULNERABLE: Found echo with payload {ssti}\n", "[danger] ")
-            self.gui.log_to_found(f"[VULN] SSTI Detected at {target} (Payload: {ssti})")
+        # 3. SSTI Check
+        if runAll or mode == "ssti":
+            self.gui.log_to_terminal("  [*] Testing Server-Side Template Injection (SSTI)...\n")
+            ssti = self.atlas.checkSsti(target)
+            if ssti: 
+                self.gui.log_to_terminal(f"  [!!!] SSTI VULNERABLE: Found echo with payload {ssti}\n", "[danger] ")
+                self.gui.log_to_found(f"[VULN] SSTI Detected at {target} (Payload: {ssti})")
 
-        # 5. File Upload Detection (v5.4 New)
-        self.gui.log_to_terminal("  [*] Searching for File Upload vectors...\n")
-        if self.atlas.checkUpload(target):
-            self.gui.log_to_terminal("  [!] FILE UPLOAD DETECTED: Found upload form on page\n", "[warning] ")
-            self.gui.log_to_found(f"[INTERESTING] File Upload Form Found at {target}")
+        # 4. File Upload Detection
+        if runAll or mode == "upload":
+            self.gui.log_to_terminal("  [*] Searching for File Upload vectors...\n")
+            if self.atlas.checkUpload(target):
+                self.gui.log_to_terminal("  [!] FILE UPLOAD DETECTED: Found upload form on page\n", "[warning] ")
+                self.gui.log_to_found(f"[INTERESTING] File Upload Form Found at {target}")
 
-        # 6. CRLF Injection (v5.4 New)
-        self.gui.log_to_terminal("  [*] Testing CRLF Injection (HTTP Splitting)...\n")
-        if self.atlas.checkCrlf(target):
-            self.gui.log_to_terminal("  [!] CRLF INJECTION VULNERABLE: Header injection possible\n", "[danger] ")
-            self.gui.log_to_found(f"[VULN] CRLF Injection Vulnerability at {target}")
+        # 5. CRLF Injection
+        if runAll or mode == "crlf":
+            self.gui.log_to_terminal("  [*] Testing CRLF Injection (HTTP Splitting)...\n")
+            if self.atlas.checkCrlf(target):
+                self.gui.log_to_terminal("  [!] CRLF INJECTION VULNERABLE: Header injection possible\n", "[danger] ")
+                self.gui.log_to_found(f"[VULN] CRLF Injection Vulnerability at {target}")
 
-        # 7. Path Fuzzing (Extreme 100+ Paths)
-        self.gui.log_to_terminal("  [*] Fuzzing 100+ Sensitive Paths (config, backup, dev, git)...\n")
-        paths = self.atlas.fuzzSensitivePaths(target)
-        for p, code in paths:
-            self.gui.log_to_terminal(f"  [+] FOUND PATH: {p:25} (HTTP {code})\n", "[success] ")
+        # 6. Path Fuzzing
+        if runAll or mode == "paths":
+            self.gui.log_to_terminal("  [*] Fuzzing 100+ Sensitive Paths (config, backup, dev, git)...\n")
+            paths = self.atlas.fuzzSensitivePaths(target)
+            for p, code in paths:
+                self.gui.log_to_terminal(f"  [+] FOUND PATH: {p:25} (HTTP {code})\n", "[success] ")
         
         self.gui.log_to_terminal("Vuln Scan Complete. Type !exit to switch.\n")
 
+    # * API Auditor dengan mode fuzz/methods/all
     def _run_api_module(self, args=[]):
         if not self.active_target:
             self.gui.log_to_terminal("API: No target set.\n", "[error] ")
@@ -274,21 +278,25 @@ class ApexOmega:
         target = self.active_target
         if not target.startswith('http'): target = f"http://{target}"
         
-        self.gui.log_to_terminal(f"API AUDITOR: Scanning {target}...\n", "[init] ")
+        mode = args[0].lower() if args else "all"
+        self.gui.log_to_terminal(f"API AUDITOR ({mode}): Scanning {target}...\n", "[init] ")
         
         # 1. API Fuzz
-        self.gui.log_to_terminal("  [*] Fuzzing API Endpoints (v1, v2, graphql, rest)...\n")
-        res = self.api_auditor.fuzzEndpoints(target)
-        for e in res:
-            self.gui.log_to_terminal(f"  [+] API ENDPOINT: {e}\n", "[success] ")
+        if mode in ["fuzz", "all"]:
+            self.gui.log_to_terminal("  [*] Fuzzing API Endpoints (v1, v2, graphql, rest)...\n")
+            res = self.api_auditor.fuzzEndpoints(target)
+            for e in res:
+                self.gui.log_to_terminal(f"  [+] API ENDPOINT: {e}\n", "[success] ")
             
         # 2. Method Check
-        self.gui.log_to_terminal("  [*] Testing HTTP Methods (PUT, DELETE, PATCH)...\n")
-        m_res = self.api_auditor.checkAllowedMethods(target)
-        self.gui.log_to_terminal(f"  [+] ALLOWED: {', '.join(m_res)}\n")
+        if mode in ["methods", "all"]:
+            self.gui.log_to_terminal("  [*] Testing HTTP Methods (PUT, DELETE, PATCH)...\n")
+            m_res = self.api_auditor.checkAllowedMethods(target)
+            self.gui.log_to_terminal(f"  [+] ALLOWED: {', '.join(m_res)}\n")
         
         self.gui.log_to_terminal("API Audit Complete.\n")
 
+    # * Stress Engine (format: !stress <threads> <duration>)
     def _run_stress_module(self, args=[]):
         if not self.active_target:
             self.gui.log_to_terminal("Stress: No target set.\n", "[error] ")
@@ -315,7 +323,7 @@ class ApexOmega:
             while time.time() - start_wait < duration:
                 if self.stop_requested or not self.isRunning:
                     break
-                # * Live Status v5.8.14 (Zaqi Debug Edition - Overwrite)
+                # * Live Status v5.8.14 (Overwrite)
                 s = self.special.stats
                 curr_status = f"\r  [*] PROGRESS: [success .{s['success']}x] [blocked .{s['blocked']}x] [redirect .{s['redirect']}x] [error .{s['error']}x]"
                 self.gui.log_to_terminal(curr_status, "[info] ")
@@ -324,22 +332,29 @@ class ApexOmega:
         else:
             self.gui.log_to_terminal(f"  [!] Infinite Attack Running (Press ESC or !stop to terminate)\n", "[danger] ")
             while not self.stop_requested and self.isRunning:
-                # * Live Status v5.8.14 (Zaqi Debug Edition - Infinite Mode Overwrite)
                 s = self.special.stats
                 curr_status = f"\r  [*] PROGRESS: [success .{s['success']}x] [blocked .{s['blocked']}x] [redirect .{s['redirect']}x] [error .{s['error']}x]"
                 self.gui.log_to_terminal(curr_status, "[info] ")
                 time.sleep(1.0)
         
-        self.gui.update_roadmap_check(5)
+        self.gui.update_roadmap_check(7)
 
+    # * Directory Brute Force (mode: common/deep)
     def _run_dirb_module(self, args=[]):
         if not self.active_target:
             self.gui.log_to_terminal("Dirb: No target set.\n", "[error] ")
             return
         baseUrl = f"http://{self.active_target}" if not self.active_target.startswith("http") else self.active_target
-        self.gui.log_to_terminal(f"[*] DIRB: Brute-forcing directories on {baseUrl}\n", "[init] ")
         
-        commonDirs = ["admin", "config", "backup", "dev", "login", "wp-admin"]
+        mode = args[0].lower() if args else "common"
+        self.gui.log_to_terminal(f"[*] DIRB ({mode}): Brute-forcing directories on {baseUrl}\n", "[init] ")
+        
+        if mode == "deep":
+            commonDirs = ["admin", "config", "backup", "dev", "login", "wp-admin", "api", "v1", "v2",
+                          "test", "private", "shell.php", "cmd.php", ".env", "phpinfo.php", ".git", "administrator"]
+        else:
+            commonDirs = ["admin", "config", "backup", "dev", "login", "wp-admin"]
+        
         for d in commonDirs:
             if self.stop_requested: break
             target = urljoin(baseUrl, d)
@@ -350,17 +365,13 @@ class ApexOmega:
                 self.gui.log_to_found(f"[DIR] Found path: {baseUrl}/{d} (HTTP {code})")
         self.gui.log_to_terminal("Dirb complete.\n", "[info] ")
 
+    # * Headers Audit
     def _run_headers_module(self, args=[]):
-        if not self.active_target:
-            self.gui.log_to_terminal("Headers: No target set.\n", "[error] ")
-            return
-        target = f"http://{self.active_target}" if not self.active_target.startswith("http") else self.active_target
-        self.gui.log_to_terminal(f"[*] HEADERS: Auditing Security Headers on {target}\n", "[init] ")
-        res = self.web.auditSecurityHeaders(target)
-        for line in res:
-            tag = "[success]" if "PRESENT" in line else "[error]"
-            self.gui.log_to_terminal(f"  {line}\n", tag)
+        self.gui.log_to_terminal(f"\n[*] INITIATING HEADS-CHECK (SECURITY HEADERS AUDIT)...\n", "cyanText")
+        scanner = HeadsCheck(self)
+        scanner.scan()
 
+    # * Form Auditor
     def _run_form_module(self, args=[]):
         if not self.active_target:
             self.gui.log_to_terminal("Forms: No target set.\n", "[error] ")
@@ -373,6 +384,7 @@ class ApexOmega:
             if f['inputs']: self.gui.log_to_terminal(f"      Inputs: {', '.join(f['inputs'])}\n")
         if not res: self.gui.log_to_terminal("  [-] No forms found on landing page.\n")
 
+    # * Cookie Auditor
     def _run_cookie_module(self, args=[]):
         if not self.active_target:
             self.gui.log_to_terminal("Cookie: No target set.\n", "[error] ")
@@ -388,58 +400,113 @@ class ApexOmega:
             self.gui.log_to_terminal(f"      Secure:   {c['secure']}\n", s_tag)
         if not res: self.gui.log_to_terminal("  [-] No cookies received from target.\n")
 
+    # * Git Exposure Scanner (mode: check/deep)
     def _run_git_module(self, args=[]):
         if not self.active_target:
             self.gui.log_to_terminal("Git: No target set.\n", "[error] ")
             return
         target = f"http://{self.active_target}" if not self.active_target.startswith("http") else self.active_target
-        self.gui.log_to_terminal(f"[*] GIT: Searching for exposed .git directory on {target}\n", "[init] ")
+        mode = args[0].lower() if args else "check"
+        self.gui.log_to_terminal(f"[*] GIT ({mode}): Searching for exposed .git directory on {target}\n", "[init] ")
         res = self.web.checkGitExposed(target)
         for f in res:
             self.gui.log_to_terminal(f"  [!!!] CRITICAL EXPOSURE: {f}\n", "[danger] ")
         if not res: self.gui.log_to_terminal("  [-] No public .git repository found.\n")
+        
+        # Deep mode: coba download content yang terexpose
+        if mode == "deep" and res:
+            self.gui.log_to_terminal("  [*] Attempting to read exposed content...\n")
+            for f in res:
+                try:
+                    url = urljoin(target, f)
+                    r = requests.get(url, timeout=5)
+                    if r.status_code == 200:
+                        preview = r.text[:200].replace('\n', ' ')
+                        self.gui.log_to_terminal(f"  [+] Content ({f}): {preview}...\n", "[success] ")
+                        self.gui.log_to_found(f"[GIT LEAK] {f} content readable at {target}")
+                except Exception:
+                    pass
 
+    # * Cloud Bucket Scanner (mode: s3/firebase/gcs/all)
     def _run_cloud_module(self, args=[]):
         if not self.active_target:
             self.gui.log_to_terminal("Cloud: No target set.\n", "[error] ")
             return
-        self.gui.log_to_terminal(f"CLOUD HUNTER: Searching for Buckets for {self.active_target}...\n", "[init] ")
+        
+        mode = args[0].lower() if args else "all"
+        self.gui.log_to_terminal(f"CLOUD HUNTER ({mode}): Searching for Buckets for {self.active_target}...\n", "[init] ")
+        
+        # Filter suffix berdasarkan mode
+        suffixMap = {
+            "s3": [".s3.amazonaws.com"],
+            "firebase": [".firebaseio.com"],
+            "gcs": [".storage.googleapis.com"],
+            "all": [".s3.amazonaws.com", ".firebaseio.com", ".storage.googleapis.com"]
+        }
+        
+        suffixes = suffixMap.get(mode, suffixMap["all"])
+        originalSuffixes = self.cloud_audit.cloudSuffixes
+        self.cloud_audit.cloudSuffixes = suffixes
+        
         res = self.cloud_audit.findCloudBuckets(self.active_target)
         for b in res:
             self.gui.log_to_terminal(f"  [!] PUBLIC BUCKET FOUND: {b}\n", "[danger] ")
         if not res:
             self.gui.log_to_terminal("  [-] No public buckets found.\n")
         self.gui.log_to_terminal("Cloud Hunt complete.\n")
+        
+        # Restore
+        self.cloud_audit.cloudSuffixes = originalSuffixes
 
+    # * Payload Generator (mode: encode/decode)
     def _run_payload_module(self, args=[]):
-        if not self.active_target:
-            self.gui.log_to_terminal("Payload Gen: No target set, using generic payload.\n", "[info] ")
+        mode = args[0].lower() if args else "encode"
         
-        # Contoh payload sederhana (bypass/xss)
-        text = self.active_target if self.active_target else "alert('ApexOmega')"
-        res = self.payload_gen.generate(text)
-        
-        self.gui.log_to_terminal(f"Generating Payloads for: {text}\n", "[gen] ")
-        for fmt, val in res.items():
-            self.gui.log_to_terminal(f"  {fmt}: {val}\n", "[+] ")
+        if mode == "decode" and len(args) >= 3:
+            fmt = args[1].lower()
+            text = " ".join(args[2:])
+            self.gui.log_to_terminal(f"Decoding ({fmt}): {text}\n", "[gen] ")
+            result = self.payload_gen.decode(text, fmt)
+            self.gui.log_to_terminal(f"  Result: {result}\n", "[success] ")
+        else:
+            # Encode mode (default)
+            text = " ".join(args[1:]) if len(args) > 1 else (self.active_target if self.active_target else "alert('ApexOmega')")
+            res = self.payload_gen.generate(text)
+            
+            self.gui.log_to_terminal(f"Generating Payloads for: {text}\n", "[gen] ")
+            if res:
+                for fmt, val in res.items():
+                    self.gui.log_to_terminal(f"  {fmt}: {val}\n", "[+] ")
         self.gui.log_to_terminal("Payloads ready. Type !exit to switch.\n")
 
+    # * Subdomain Scanner (mode: brute/passive)
     def _run_subdomain_module(self, args=[]):
         if not self.active_target:
             self.gui.log_to_terminal("Discovery: No target set.\n", "[error] ")
             return
-        self.gui.log_to_terminal(f"Bruteforcing Subdomains for: {self.active_target}\n", "[info] ")
-        res = self.discovery.bruteSubdomain(self.active_target)
-        for host, ip in res:
-            self.gui.log_to_terminal(f"  [+] {host:20} -> {ip}\n", "[success] ")
-            self.gui.log_to_found(f"[SUBDOMAIN] Found host: {host} ({ip})")
-        self.gui.log_to_terminal(f"Scan complete. Found {len(res)} subdomains.\n")
+        
+        mode = args[0].lower() if args else "brute"
+        
+        if mode == "passive":
+            self.gui.log_to_terminal(f"Passive Subdomain Discovery (crt.sh) for: {self.active_target}\n", "[info] ")
+            res = self.net.findSubdomains(self.active_target)
+            for host in res:
+                self.gui.log_to_terminal(f"  [+] {host}\n", "[success] ")
+                self.gui.log_to_found(f"[SUBDOMAIN] Certificate found: {host}")
+            self.gui.log_to_terminal(f"Scan complete. Found {len(res)} subdomains (passive).\n")
+        else:
+            self.gui.log_to_terminal(f"Bruteforcing Subdomains for: {self.active_target}\n", "[info] ")
+            res = self.discovery.bruteSubdomain(self.active_target)
+            for host, ip in res:
+                self.gui.log_to_terminal(f"  [+] {host:20} -> {ip}\n", "[success] ")
+                self.gui.log_to_found(f"[SUBDOMAIN] Found host: {host} ({ip})")
+            self.gui.log_to_terminal(f"Scan complete. Found {len(res)} subdomains.\n")
 
+    # * VHost Scanner
     def _run_vhost_module(self, args=[]):
         if not self.active_target:
             self.gui.log_to_terminal("Discovery: No target set.\n", "[error] ")
             return
-        # * VHost butuh IP aslinya kalau targetnya domain
         try:
             ip = socket.gethostbyname(self.active_target)
             self.gui.log_to_terminal(f"Hunting VHosts on {ip} for {self.active_target}...\n", "[info] ")
@@ -450,42 +517,88 @@ class ApexOmega:
         except:
             self.gui.log_to_terminal("Error: Could not resolve target IP for VHost scan.\n")
 
+    # * Web Ports Scanner (mode: common/full)
     def _run_webports_module(self, args=[]):
         if not self.active_target:
             self.gui.log_to_terminal("Discovery: No target set.\n", "[error] ")
             return
-        self.gui.log_to_terminal(f"Scanning Web Ports for: {self.active_target}\n", "[info] ")
+        
+        mode = args[0].lower() if args else "common"
+        
+        if mode == "full":
+            self.discovery.webPorts = [80, 443, 3000, 3001, 4000, 4200, 4443, 5000, 5001, 5555,
+                                       8000, 8008, 8080, 8081, 8443, 8888, 9000, 9090, 9200, 9443]
+        
+        self.gui.log_to_terminal(f"Scanning Web Ports ({mode}) for: {self.active_target}\n", "[info] ")
         res = self.discovery.scanWebPorts(self.active_target)
         for p in res:
             self.gui.log_to_terminal(f"  [+] Port {p} is OPEN\n", "[success] ")
         self.gui.log_to_terminal("Port scan complete.\n")
+        
+        # Restore default
+        if mode == "full":
+            self.discovery.webPorts = [80, 443, 8000, 8008, 8080, 8081, 8443, 8888, 9000, 9443]
 
+    # * Recon Module (mode: quick/deep/full)
     def _run_recon_module(self, args=[]):
         if not self.active_target:
             self.gui.log_to_terminal("Recon: Target not set.\n", "[error] ")
             return
         
-        mode = args[0] if args else "quick"
+        mode = args[0].lower() if args else "quick"
         self.gui.log_to_terminal(f"[*] INITIATING {mode.upper()} RECON: {self.active_target}\n", "[init] ")
         
         try:
-            # 1. IP & DNS Info
+            # 1. IP & DNS Info (semua mode)
             self.gui.log_to_terminal("  [*] Fetching DNS & IP Records...\n")
             records = self.net.getDnsInfo(self.active_target)
             for k, v in records.items():
                 self.gui.log_to_terminal(f"  [+] {k:10}: {v}\n", "[success] ")
             
-            # 2. Tech Detection
+            # 2. Tech Detection (semua mode)
             self.gui.log_to_terminal("  [*] Detecting Web Technologies...\n")
             target_url = f"http://{self.active_target}" if not self.active_target.startswith("http") else self.active_target
             tech = self.web.detectTech(target_url)
             self.gui.log_to_terminal(f"  [+] Server: {tech.get('server', ['Unknown'])[0]}\n", "[success] ")
             
+            # 3. Deep mode: WHOIS + All DNS Records
+            if mode in ["deep", "full"]:
+                self.gui.log_to_terminal("  [*] Fetching WHOIS Data...\n")
+                whois = self.net.whoisLookup(self.active_target)
+                if "error" not in whois:
+                    name = whois.get("name", "Unknown")
+                    self.gui.log_to_terminal(f"  [+] WHOIS Name: {name}\n", "[success] ")
+                else:
+                    self.gui.log_to_terminal(f"  [-] WHOIS: {whois.get('error', 'Not found')}\n", "[warning] ")
+                
+                self.gui.log_to_terminal("  [*] Fetching All DNS Records (A, AAAA, MX, TXT, NS)...\n")
+                allDns = self.net.getAllDnsRecords(self.active_target)
+                for rType, rData in allDns.items():
+                    preview = rData[:80] if isinstance(rData, str) else str(rData)[:80]
+                    self.gui.log_to_terminal(f"  [+] {rType:5}: {preview}\n", "[success] ")
+            
+            # 4. Full mode: Tech detail + Certificate Subdomains
+            if mode == "full":
+                if tech.get("framework"):
+                    self.gui.log_to_terminal(f"  [+] Frameworks: {', '.join(tech['framework'])}\n", "[success] ")
+                if tech.get("cms"):
+                    self.gui.log_to_terminal(f"  [+] CMS: {', '.join(tech['cms'])}\n", "[success] ")
+                if tech.get("waf"):
+                    self.gui.log_to_terminal(f"  [!] WAF Detected: {', '.join(tech['waf'])}\n", "[warning] ")
+                
+                self.gui.log_to_terminal("  [*] Searching Certificate Subdomains (crt.sh)...\n")
+                certSubs = self.net.findSubdomains(self.active_target)
+                for sub in certSubs[:10]:
+                    self.gui.log_to_terminal(f"  [+] CertSub: {sub}\n", "[success] ")
+                if len(certSubs) > 10:
+                    self.gui.log_to_terminal(f"  [*] ... and {len(certSubs)-10} more subdomains\n", "[info] ")
+            
             self.gui.log_to_terminal("Recon Complete. Step 1 Finished.\n", "[info] ")
-            self.gui.update_roadmap_check(1)
+            self.gui.update_roadmap_check(0)
         except Exception as e:
             self.gui.log_to_terminal(f"Recon Error: {str(e)}\n", "[error] ")
 
+    # * Nmap Port Scanner (custom ports support)
     def _run_nmap_module(self, args=[]):
         if not self.active_target:
             self.gui.log_to_terminal("Nmap: Target not set.\n", "[error] ")
@@ -498,7 +611,6 @@ class ApexOmega:
         
         try:
             if custom_ports:
-                # * Logic for custom ports
                 res = []
                 for p in custom_ports:
                     if self.discovery._scan_single_port(self.active_target, int(p)):
@@ -513,49 +625,92 @@ class ApexOmega:
                 self.gui.log_to_terminal("  [-] No target ports open.\n", "[warning] ")
                 
             self.gui.log_to_terminal("Nmap Infrastructure Scan Complete.\n", "[info] ")
-            self.gui.update_roadmap_check(2)
+            self.gui.update_roadmap_check(1)
         except Exception as e:
             self.gui.log_to_terminal(f"Nmap Error: {str(e)}\n", "[error] ")
 
+    # * Web Audit Module (mode: tech/sqli/full)
     def _run_web_module(self, args=[]):
         if not self.active_target:
-            self.gui.log_to_terminal("ERROR: Target not set.")
+            self.gui.log_to_terminal("ERROR: Target not set.\n", "[error] ")
             return
-        self.gui.log_to_terminal(f"Modul Web Audit Aktif on {self.active_target}...")
-        tech = self.web.detectTech(self.active_target)
-        if tech["framework"]: self.gui.log_to_terminal(f"Framework: {', '.join(tech['framework'])}")
-        sqli = self.web.runBrutalSqlScan(self.active_target)
-        if sqli: self.gui.log_to_terminal(f"SQLi Found: {len(sqli)} targets!")
-        self.gui.log_to_terminal("Web Audit Complete. Type !exit to switch.")
+        
+        mode = args[0].lower() if args else "full"
+        target = self.active_target if self.active_target.startswith("http") else f"http://{self.active_target}"
+        self.gui.log_to_terminal(f"Modul Web Audit ({mode}) Aktif on {target}...\n", "[init] ")
+        
+        if mode in ["tech", "full"]:
+            tech = self.web.detectTech(target)
+            if tech["framework"]: self.gui.log_to_terminal(f"Framework: {', '.join(tech['framework'])}\n", "[success] ")
+            if tech["cms"]: self.gui.log_to_terminal(f"CMS: {', '.join(tech['cms'])}\n", "[success] ")
+            if tech["server"]: self.gui.log_to_terminal(f"Server: {', '.join(tech['server'])}\n", "[success] ")
+        
+        if mode in ["sqli", "full"]:
+            sqli = self.web.runBrutalSqlScan(target)
+            if sqli: self.gui.log_to_terminal(f"SQLi Found: {len(sqli)} targets!\n", "[danger] ")
+        
+        self.gui.log_to_terminal("Web Audit Complete. Type !exit to switch.\n")
 
+    # * WordPress Scanner (mode: version/plugins/users/files/all)
     def _run_wp_module(self, args=[]):
         if not self.active_target:
-            self.gui.log_to_terminal("ERROR: Target not set.")
+            self.gui.log_to_terminal("ERROR: Target not set.\n", "[error] ")
             return
-        self.gui.log_to_terminal(f"WP Specialized Module: Checking {self.active_target}...")
-        ver = self.wp.detectVersion(self.active_target)
-        if ver:
-             self.gui.log_to_terminal(f"WP Version Detected: {ver}\n", "[success] ")
-        else:
-             self.gui.log_to_terminal(f"Failed to detect WP version.\n", "[error] ")
+        
+        target = self.active_target if self.active_target.startswith("http") else f"http://{self.active_target}"
+        mode = args[0].lower() if args else "all"
+        self.gui.log_to_terminal(f"WP Scanner ({mode}): Checking {target}...\n", "[init] ")
+        
+        runAll = (mode == "all")
+        
+        if runAll or mode == "version":
+            ver = self.wp.detectVersion(target)
+            self.gui.log_to_terminal(f"WP Version Detected: {ver}\n", "[success] " if ver != "Unknown" else "[warning] ")
+        
+        if runAll or mode == "plugins":
+            plugins = self.wp.scanPlugins(target)
+            if plugins:
+                for p in plugins:
+                    self.gui.log_to_terminal(f"  [+] Plugin Found: {p}\n", "[success] ")
+                    self.gui.log_to_found(f"[WP] Plugin: {p} at {target}")
+            else:
+                self.gui.log_to_terminal("  [-] No common plugins detected.\n")
+        
+        if runAll or mode == "users":
+            users = self.wp.enumerateUsers(target)
+            if users:
+                for u in users:
+                    self.gui.log_to_terminal(f"  [+] User Found: {u}\n", "[success] ")
+                    self.gui.log_to_found(f"[WP] User: {u} at {target}")
+            else:
+                self.gui.log_to_terminal("  [-] User enumeration blocked or no users found.\n")
+        
+        if runAll or mode == "files":
+            files = self.wp.checkVulnFiles(target)
+            if files:
+                for f in files:
+                    self.gui.log_to_terminal(f"  [!!!] VULN FILE EXPOSED: {f}\n", "[danger] ")
+                    self.gui.log_to_found(f"[WP CRITICAL] Exposed file: {f} at {target}")
+            else:
+                self.gui.log_to_terminal("  [-] No vulnerable files found.\n")
 
     def _run_chaos_module(self, args=[]):
         if not self.active_target:
-            self.gui.log_to_terminal("ERROR: Target not set.")
+            self.gui.log_to_terminal("ERROR: Target not set.\n", "[error] ")
             return
-        self.gui.log_to_terminal(f"NITRO ATTACK Active on {self.active_target}...")
+        self.gui.log_to_terminal(f"NITRO ATTACK Active on {self.active_target}...\n")
         res = self.special.runNitroStress(self.active_target, duration=5, threads=20)
         self.gui.log_to_terminal(res)
-        self.gui.log_to_terminal("Attack cycle finished.")
+        self.gui.log_to_terminal("Attack cycle finished.\n")
 
+    # * Test All Tools (v5.9)
     def _run_testalltools_module(self, args=[]):
         if not self.active_target:
-            self.gui.log_to_terminal("[!] TEST ALL: Target belum diset. Gunakan [IP/URL] dulu sebelum testalltools.\n", "[error] ")
+            self.gui.log_to_terminal("[!] TEST ALL: Target belum diset.\n", "[error] ")
             return
         
         self.gui.log_to_terminal("\n[!] INITIATING SECRET TEST-ALL-TOOLS SEQUENCE...\n", "[init] ")
         
-        # Eksekusi berurutan modul-modul penting untuk testing
         tools_to_test = [
             "recon", "nmap", "cookie", "headers", "git", "form", 
             "dirb", "vuln", "wp", "subdomain", "vhost", "webports", 
@@ -574,6 +729,79 @@ class ApexOmega:
                 
         self.gui.log_to_terminal("\n[!] SECRET TEST-ALL-TOOLS COMPLETED.\n", "[success] ")
 
+    # * Help Command (terminal-side)
+    def _run_help_module(self, args=[]):
+        if args:
+            tool = args[0].lower()
+            usage = self.guided.getUsage(tool)
+            info = self.guided.helpDatabase.get(tool, None)
+            
+            if usage:
+                self.gui.log_to_terminal(f"\n=== HELP: {tool.upper()} ===\n", "cyanText")
+                self.gui.log_to_terminal(f"Syntax: {usage['syntax']}\n\n", "[success] ")
+                self.gui.log_to_terminal("Modes:\n", "[info] ")
+                for m, desc in usage['modes'].items():
+                    self.gui.log_to_terminal(f"  {m:20} - {desc}\n")
+                self.gui.log_to_terminal("\nExamples:\n", "[info] ")
+                for ex in usage['examples']:
+                    self.gui.log_to_terminal(f"  {ex}\n", "[success] ")
+                if info:
+                    self.gui.log_to_terminal(f"\nInfo: {info}\n", "[init] ")
+            else:
+                self.gui.log_to_terminal(f"[!] No help data for: {tool}\n", "[error] ")
+        else:
+            self.gui.log_to_terminal("\n=== APEXOMEGA v5.9 - COMMAND REFERENCE ===\n", "cyanText")
+            self.gui.log_to_terminal("Type !help <tool> for detailed usage.\n\n", "[info] ")
+            
+            cmdList = [
+                ("!recon [quick|deep|full]", "Reconnaissance & intel gathering"),
+                ("!nmap [ports]", "Infrastructure port scanning"),
+                ("!vuln [full|cors|ssti|...]", "Vulnerability scanning"),
+                ("!api [fuzz|methods|all]", "API endpoint auditing"),
+                ("!cloud [s3|firebase|gcs|all]", "Cloud bucket hunting"),
+                ("!dirb [common|deep]", "Directory brute force"),
+                ("!headers", "Security headers audit"),
+                ("!form", "HTML form auditing"),
+                ("!cookie", "Cookie security audit"),
+                ("!git [check|deep]", "Git exposure scanning"),
+                ("!wp [version|plugins|users|files|all]", "WordPress scanning"),
+                ("!payload [encode|decode] [text]", "Payload encoding/decoding"),
+                ("!subdomain [brute|passive]", "Subdomain discovery"),
+                ("!vhost", "Virtual host discovery"),
+                ("!webports [common|full]", "Web port scanning"),
+                ("!webaudit [tech|sqli|full]", "Full web audit"),
+                ("!stress <threads> <duration>", "Stress testing"),
+                ("!script [category]", "Script/payload library"),
+                ("!testalltools", "Run all tools sequentially"),
+                ("!exit", "Exit module or reset target"),
+            ]
+            
+            for cmd, desc in cmdList:
+                self.gui.log_to_terminal(f"  {cmd:40} {desc}\n")
+
+    # * Script Library Command (terminal-side)
+    def _run_script_module(self, args=[]):
+        if args:
+            category = " ".join(args).lower()
+            scripts = self.script_lib.searchScripts(category)
+            if scripts:
+                self.gui.log_to_terminal(f"\n=== SCRIPTS: {category.upper()} ({len(scripts)} found) ===\n", "cyanText")
+                for i, s in enumerate(scripts):
+                    risk_tag = "[danger] " if s["risk"] == "Critical" else "[warning] " if s["risk"] == "High" else "[info] "
+                    self.gui.log_to_terminal(f"  [{i+1}] {s['name']} [{s['risk']}]\n", risk_tag)
+                    self.gui.log_to_terminal(f"      {s['description']}\n", "[init] ")
+                self.gui.log_to_terminal("\nUse the Scripts tab to preview & drag payloads to terminal.\n", "[info] ")
+            else:
+                self.gui.log_to_terminal(f"[!] No scripts found for: {category}\n", "[error] ")
+        else:
+            cats = self.script_lib.getCategories()
+            self.gui.log_to_terminal("\n=== SCRIPT LIBRARY v5.9 ===\n", "cyanText")
+            self.gui.log_to_terminal("Type !script <category> to list scripts.\n\n", "[info] ")
+            for cat in cats:
+                count = len(self.script_lib.getScripts(cat))
+                self.gui.log_to_terminal(f"  {cat:25} ({count} scripts)\n", "[success] ")
+            self.gui.log_to_terminal("\nOr open the Scripts tab for drag-and-drop.\n", "[info] ")
+
 # -- Update Core --
 
     # * Cek dan download update otomatis dari GitHub
@@ -581,20 +809,17 @@ class ApexOmega:
         def task():
             self.gui.log_to_terminal("[root@shell] Checking GitHub for updates (jekk1/ApexOmega)...\n", "[inspect] ")
             try:
-                # * Cache Buster: Tambahkan timestamp ke URL biar gak kena cache GitHub
                 versionUrl = f"https://raw.githubusercontent.com/jekk1/ApexOmega/main/version.txt?t={int(time.time())}"
                 response = requests.get(versionUrl, timeout=5)
                 if response.status_code != 200:
                     self.gui.log_to_terminal(f"Failed to check updates (HTTP {response.status_code})")
                     self.gui.show_prompt()
                     return
-                # Trigger Create Shortcuts on check
                 if getattr(sys, 'frozen', False):
                     self.gui._create_shortcuts()
                 
                 remoteVer = response.text.strip()
                 
-                # -- Logika Small Update v5.7.1 --
                 if remoteVer < self.VERSION:
                     self.gui.log_to_terminal(f"Warning: Remote version (v{remoteVer}) is older than local (v{self.VERSION}).\n", "[warning] ")
                     self.gui.show_prompt()
@@ -602,12 +827,10 @@ class ApexOmega:
                 
                 isSmallUpdate = False
                 if remoteVer == self.VERSION:
-                    # * Perbaikan logik update (Zaqi): Kalau versi sama persis, langsung nganggep up-to-date (no annoying popup)
                     self.gui.log_to_terminal(f"System is up-to-date (v{self.VERSION}).\n", "[info] ")
                     self.gui.show_prompt()
                     return
                 
-                # -- Proceed with Update (Large or Small) --
                 msg = f"\n[!] New version found: v{remoteVer}\n" if not isSmallUpdate else "\n[*] Initiating Small Update (Force Sync)...\n"
                 self.gui.log_to_terminal(msg, "[warning] " if not isSmallUpdate else "[info] ")
                 
@@ -619,7 +842,6 @@ class ApexOmega:
 
                 self.gui.log_to_terminal("[*] Downloading updates from GitHub (Auto-Sync)...\n", "[info] ")
                 try:
-                    # * Coba pake Git dulu (Lebih cepet & ringan)
                     result = subprocess.run(["git", "pull", "origin", "main"], capture_output=True, text=True, timeout=30)
                     if result.returncode == 0:
                         self.gui.log_to_terminal("[+] Update downloaded successfully via Git!\n", "[success] ")
@@ -629,7 +851,6 @@ class ApexOmega:
                     else:
                         raise Exception(f"Git Pull failed: {result.stderr}")
                 except (FileNotFoundError, Exception) as e:
-                    # * FALLBACK: Kalo git gak ada (WinError 2) atau bermasalah, pake ZIP Download
                     self.gui.log_to_terminal("[!] Git not detected or failed. Falling back to Direct Download (ZIP)...\n", "[warning] ")
                     self._performUpdate(remoteVer)
                     
@@ -637,16 +858,6 @@ class ApexOmega:
                 self.gui.log_to_terminal(f"Update Error: {str(e)}")
         
         threading.Thread(target=task, daemon=True).start()
-
-    # * Seamless Restart v5.1
-    def restart_app(self):
-        try:
-            # * Launch instance baru dan exit yang lama secara seamless
-            subprocess.Popen([sys.executable] + sys.argv)
-            os._exit(0)
-        except Exception as e:
-            print(f"Failed to restart: {e}")
-            sys.exit(0)
 
     # * Download ZIP dari GitHub dan replace file project
     def _performUpdate(self, remoteVer):
@@ -659,7 +870,6 @@ class ApexOmega:
                 self.gui.log_to_terminal(f"Download failed (HTTP {response.status_code})")
                 return
             
-            # * Lokasi Software/ saat ini
             softwareDir = os.path.dirname(os.path.abspath(__file__))
             rootDir = os.path.dirname(softwareDir)
             tempDir = os.path.join(rootDir, "_update_temp")
@@ -681,7 +891,6 @@ class ApexOmega:
                 self.gui.log_to_terminal("ERROR: Empty archive.")
                 return
             
-            # * Repo root di ZIP: ApexOmega-main/ (Sekarang isinya langsung data Software)
             sourceRepoRoot = os.path.join(tempDir, extractedFolders[0])
             sourceSoftwareDir = sourceRepoRoot
             
@@ -692,7 +901,6 @@ class ApexOmega:
             self.gui.log_to_terminal("Replacing files...")
             updatedCount = 0
             
-            # * Update isi Software/
             for item in os.listdir(sourceSoftwareDir):
                 if item in {".git", "__pycache__", "_update_temp", "_update.zip"}:
                     continue
@@ -711,7 +919,6 @@ class ApexOmega:
                 except Exception:
                     self.gui.log_to_terminal(f"  [!] Skipped: {item} (File in use?)")
             
-            # * Cleanup
             shutil.rmtree(tempDir, ignore_errors=True)
             if os.path.exists(zipPath):
                 os.remove(zipPath)
@@ -719,13 +926,11 @@ class ApexOmega:
             self.gui.log_to_terminal(f"Update complete! {updatedCount} items updated to v{remoteVer}.\n")
             self.gui.log_to_terminal("[!] AUTO-RESTARTING SYSTEM TO APPLY CHANGES...\n", "[danger] ")
             
-            # * Kasih jeda dikit biar user sempet baca log
             time.sleep(2)
             self.restart_app()
             
         except Exception as e:
             self.gui.log_to_terminal(f"Update Error: {str(e)}")
-            # * Final cleanup
             rootDir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
             tempDir = os.path.join(rootDir, "_update_temp")
             zipPath = os.path.join(rootDir, "_update.zip")
@@ -733,18 +938,10 @@ class ApexOmega:
             if os.path.exists(zipPath):
                 os.remove(zipPath)
 
-    # * Run Headers Check v5.8.5
-    def _run_headers_module(self, args):
-        self.gui.log_to_terminal(f"\n[*] INITIATING HEADS-CHECK (SECURITY HEADERS AUDIT)...\n", "cyanText")
-        scanner = HeadsCheck(self)
-        scanner.scan()
-
-    # * Restart aplikasi otomatis (v5.5)
+    # * Restart aplikasi otomatis (v5.9)
     def restart_app(self):
-        self.gui.log_to_terminal("\n[!] RESTARTING APEXOMEGA v5.5...\n", "[init] ")
+        self.gui.log_to_terminal("\n[!] RESTARTING APEXOMEGA v5.9...\n", "[init] ")
         self.bridge.stopNativeSession()
-        
-        # * Restart process pake executable python yang sama
         python = sys.executable
         os.execl(python, python, *sys.argv)
 

@@ -1,55 +1,228 @@
-# * Pustaka Tool Pentester (v4.5 Shell Edition)
+# * Pustaka Tool Pentester (v5.9 Shell Edition - Child Commands)
 class GuidedAssistant:
     def __init__(self):
-        # * Database Bantuan v5.3 (Nitro-Max Pro Edition)
+        # * Database Bantuan v5.9 (Full Child Command Edition)
         self.helpDatabase = {
-            "recon": "Reconnaissance itu langkah stalking pro buat cari tau siapa owner target, servernya apa, dan IP aslinya di mana. Tanpa recon lu bakal buta total pas nyerang karena gak tau titik lemah musuh ada di mana sebenernya. Ibarat mau perang tapi gak bawa peta, pasti lu bakal nyasar dan akhirnya ketangkep basah sama admin. Pake !recon [mode] buat pilih intensitas stalking lu (contoh: !recon full). Tool !recon ini kerja otomatis buat nyisir info dasar target biar lu tinggal duduk manis nunggu hasil keluar. Pengetahuan itu kekuatan, makin banyak info yang lu dapet makin gampang lu nyari celah buat masuk nanti. Gunain command !recon di awal tiap misi biar serangan lu gak zonk dan bener-bener kena sasaran yang pas. Hasilnya bakal muncul di terminal dan otomatis nyentang misi pertama lu di tab Roadmap Penaklukan.",
-            
-            "nmap": "Nmap itu senter sakti buat ngelongok isi rumah orang, liat pintu mana yang kebuka atau jendela yang gak dikunci. Tool ini legendaris banget di dunia cyber security karena akurasinya yang gila dan fiturnya yang lengkap buat scan port. Sekarang lu bisa tentuin port mana yang mau lu cek secara spesifik (contoh: !nmap 80,443,3306). Kita cari tau service apa aja yang lagi running, misal port 80 buat web atau port 22 buat akses terminal SSH. Kalo lu tau software versinya, lu tinggal cari di Google exploitnya apa dan boom, dapet akses kuncinya deh. Jangan asal scan server bank ya bro, pake buat belajar infrastruktur target aja biar lu makin jago di tongkrongan. !nmap bakal buka mata lu soal jeroan server target yang biasanya disembunyiin rapat-rapat sama sistem firewall mereka. Hasil scannya bakal ijo terang kalau ada port yang mangap alias open.",
-            
-            "subdomain": "Subdomain discovery itu teknik nyari pintu belakang kayak 'dev.target.com' atau 'test.target.com' yang sering dilupain admin. Biasanya domain utama dijaga ketat, tapi anak-anaknya seringkali gak diproteksi dan isinya banyak bug berbahaya buat dimainin. Tool !subdomain ini bakal nge-brute puluhan ribu nama buat nemu subdomain rahasia yang lagi aktif di server mereka. Lu bisa nemu server staging atau backup yang isinya database asli kalo lu beruntung pas proses scanning massal ini. Sering banget hacker pro dapet akses root cuma gara-gara nemu subdomain lama yang isinya file zip source code aslinya. Jangan cuma fokus di www doang, cari semua saudaranya biar target lu gak punya tempat sembunyi lagi di internet. Prosesnya otomatis dan kenceng, lu tinggal masukin domain utamanya terus biarin asisten gw yang cariin pintu belakangnya.",
-            
-            "webaudit": "Web Audit itu proses periksa kesehatan website lu secara menyeluruh kayak lagi check-up di dokter spesialis cyber. Kita cek dari kepala sampe kaki, mulai dari WAF detection (Cloudflare), headers keamanan, sampe script JS yang rahasia. Tool !webaudit v5.2 ini udah pro banget, dia bisa bongkar teknologi apa aja yang dipake di balik tampilan website itu. Kita juga bakal audit cookie-nya, liat apakah udah aman dari pencurian session atau masih gampang buat di-bypass. Directory fuzzing juga jalan buat nyari folder harta karun kayak /admin atau folder /.git yang isinya bocoran source code. Info ini disajiin live di terminal dengan warna ijo kalau nemu folder sensitif yang harusnya rahasia. Lu bakal tau target lu itu empuk atau keras setelah liat semua log merah dan ijo yang muncul di layar terminal.",
-            
-            "vuln": "Vuln Atlas itu peta harta karun buat cari lubang vulnerability kayak SQL Injection, XSS, sampe Host Header Injection. Tool ini kayak detektor logam yang bunyi kenceng tiap kali nemu celah berharga di form input website target lu. Kita tes puluhan payload otomatis biar lu gak perlu cape ngetik satu satu secara manual pas lagi nyari celah keamanan. Kalo ada yang tembus, notifikasi bakal ijo dan lu bisa langsung klaim website itu bener-bener rentan alias vulnerable banget. Audit CORS sama Open Redirect juga ada biar lu tau apakah data user bisa dibocorin ke website lain punya penyerang. Fuzzing 50+ sensitive path kayak .env atau config.php juga jalan buat cari password database yang ketinggalan sama adminnya. Vuln Atlas dirancang biar hasilnya bener-bener jelas dan gak bikin lu bingung mana celah beneran mana yang cuma zonk.",
-            
-            "api": "API Auditor itu spesialis spesialis bongkar jalur rahasia di balik layar yang biasanya pake koneksi REST atau GraphQL modern. Jaman now website itu cuma topeng, aslinya datanya ngalir lewat jalur API yang seringkali lupa gak dikasih pengamanan pro. Tool !api bakal nyisir endpoint kayak /api/v1, /api/v2, sampe jalur docs Swagger yang isinya bocoran semua struktur database mereka. Kita tes IDOR check buat liat apakah kita bisa ambil data user lain tanpa perlu login lewat jalur belakang ini. Method discovery juga jalan buat tau apakah kita bisa ngirim request POST atau DELETE ke tempat yang harusnya rahasia. Bayangin kalo lu bisa hancurin data orang cuma gara-gara adminnya bego lupa nutup akses method DELETE di API user. API Auditor bakal kasih tau semua celah itu secara transparan biar lu bisa hajar serangan ke titik yang paling parah.",
-            
-            "cloud": "Cloud Hunter itu pencium bau data bocor di awan storage kayak AWS S3, Firebase DB, atau Google Cloud Storage. Admin jaman sekarang suka nitip file penting di cloud tapi seringkali mereka males setting aksesnya jadi private pro. Tool !cloud bakal nyari bucket-bucket publik itu otomatis cuma modal domain target yang lagi lu stalk sekarang juga. Kita tebak puluhan pola nama bucket yang biasanya dipake buat simpen backup database atau source code rahasia perusahaan. Kalo nemu yang public berstatus OK 200, isinya bisa jutaan record data user yang bakal bikin lu jadi sultan digital. Firebase yang gak diproteksi juga jadi sasaran empuk karena isinya biasanya data chat history atau credential login user asli. Hunter ini pake teknik rekursif pinter biar gak ada satupun layanan cloud target yang lu lewatin pas proses pengintaian.",
-            
-            "stress": "Stress Testing itu modul buat ngetes mental server target lu pas dihajar ribuan request massal selevel tsunami digital. Tool !stress v5.3 pake teknik Layer 7 HTTP Flood yang udah di-nitro buat bypass caching dan WAF yang ngehalangin jalan. Lu bisa atur jumlah pasukan (threads) serangan lu (contoh: !stress 200). Kita gerakin puluhan pasukan (threads) barengan buat bikin CPU server musuh jadi 100% sampe akhirnya megap-megap offline. Lu bisa atur durasi sama intensitas serangannya biar lu tau seberapa kuat infrastruktur yang lagi lu hadepin sekarang. Pake tool ini buat ngetes server lu sendiri aja ya bro, jangan bikin kacau web publik cuma buat pamer kekuatan doang. Serangannya pake teknik Cache Buster unik, jadi setiap request isinya beda-beda biar server target dipaksa mikir keras non-stop. Kalo target lu tewas alias offline, misi terakhir di Roadmap bakal otomatis centang ijo sebagai tanda lu udah menang telak.",
+            "recon": "Reconnaissance tahap stalking pro buat cari tau siapa owner target, servernya apa, dan IP aslinya di mana. Tanpa recon lu bakal buta total pas nyerang karena gak tau titik lemah musuh. Pake !recon [mode] buat pilih intensitas: quick (IP+DNS), deep (+WHOIS+AllDNS), atau full (+Tech+CertSubs).",
 
-            "vhost": "VHost Discovery itu cara buat nyari website 'rahasia' yang nebeng di satu IP server yang sama. Biasanya satu server isinya banyak website, dan ada yang cuma bisa diakses lewat nama domain rahasia tertentu. Tool !vhost bakal nyisir ribuan kemungkinan nama host sampe nemu pintu masuk ke website internal perusahaan yang gak dipublikasiin. Sering banget admin nyimpen panel admin di vhost rahasia biar gak ketauan orang luar, tapi di tangan kita tetep bakal ketebak juga. Ini teknik pro buat memperluas cakupan serangan lu biar gak cuma fokus di satu domain utama doang. Hasilnya bakal muncul list domain tambahan yang bisa lu audit pake tool lain nantinya.",
+            "nmap": "Nmap itu senter sakti buat ngelongok isi rumah orang, liat pintu (port) mana yang kebuka atau jendela yang gak dikunci. Sekarang lu bisa tentuin port spesifik: !nmap 80,443,3306. Default scan 10 web ports standar.",
 
-            "webports": "WebPorts itu spesialis cari pintu masuk web di port-port yang gak umum kayak 8080, 8443, atau 3000. Biasanya developer males install SSL di port dev, jadi scannya gampang banget dan isinya banyak bug yang belom dipack. Tool !webports bakal sweep puluhan port web standar buat mastiin gak ada satupun layanan web target yang lu lewatin. Kalo nemu port mangap yang statusnya 200 OK, berarti lu dapet mainan baru buat dieksploitasi lebih dalem. Port scan standar seringkali miss di bagian ini, makanya WebPorts hadir buat jadi solusi sapu jagat lu.",
+            "subdomain": "Subdomain discovery nyari pintu belakang kayak 'dev.target.com' yang sering dilupain admin. Pake !subdomain brute (wordlist) atau !subdomain passive (crt.sh certificate database).",
 
-            "wordpress": "WordPress Scanner itu tool khusus buat bongkar mesin CMS paling populer sejagat raya. Kita cari tau versinya, plugin apa aja yang dipake, sampe username admin yang bisa di-bruteforce nantinya. WordPress yang gak diupdate itu ibarat rumah tanpa kunci, masuknya gampang banget modal exploit publik yang udah gw sediain. Tool !wordpress bakal kasih tau titik lemah spesifik dari instalasi WP target lu secara otomatis dan instan. Lu bakal tau apakah ada plugin 'Slider Revolution' atau file manager yang isinya celah RCE (Remote Code Execution) buat dapet shell. Fokus liat hasil log ijonya buat tau plugin mana yang fix jadi pintu masuk lu.",
+            "webaudit": "Web Audit periksa kesehatan website dari WAF detection, tech stack, sampe SQL Injection. Pake !webaudit tech (detect tech only), !webaudit sqli (SQL scan), atau !webaudit full (semua).",
 
-            "sqlmap": "SQLMap Lite itu detektor SQL Injection otomatis yang bakal ngetes form input target lu secara brutal dan cerdas. Kita kirim payload yang bisa bikin database server musuh jadi 'ngaku' dan ngebocorin isinya kayak username sama password. Kalo targetnya rentan, lu bisa dapet akses full ke table database perusahaan cuma dalam hitungan menit lewat Terminal ini. Tool !sqlmap v5.3 dirancang buat bypass filter standar, jadi peluang dapet ijonya makin gede. Tekniknya pake error-based sampe time-based injection yang disesuaiin sama respon server target secara live. Lu tinggal duduk manis liat tabel database bocor satu demi satu di layar terminal lu.",
+            "vuln": "Vuln Atlas peta harta karun buat cari lubang vulnerability. Bisa scan spesifik: !vuln cors, !vuln ssti, !vuln crlf, !vuln host, !vuln upload, !vuln paths, atau !vuln full (semua sekaligus).",
 
-            "dirb": "Dirb (Directory Brute Force) itu tool buat nyari folder 'harta karun' yang disembunyiin admin di server mereka. Kita tebak ribuan nama folder kayak /admin, /backup, /secret, sampe folder /phpmyadmin yang isinya database management. Tool !dirb v5.3 pake teknik kenceng biar scan lu gak kerasa lama tapi hasilnya meyakinkan banget. Kalo nemu folder yang harusnya rahasia, statusnya bakal ijo dan lu bisa langsung buka di browser buat eksplorasi hartanya. Ini cara paling ampuh buat nemu file-file backup .zip atau .sql yang sering banget ketinggalan di root directory server target.",
-            
-            "wp": "WordPress Scanner itu tool khusus buat bongkar mesin CMS paling populer sejagat raya. Kita cari tau versinya, plugin apa aja yang dipake, sampe username admin yang bisa di-bruteforce nantinya. WordPress yang gak diupdate itu ibarat rumah tanpa kunci, masuknya gampang banget modal exploit publik yang udah gw sediain. Tool !wp bakal kasih tau titik lemah spesifik dari instalasi WP target lu secara otomatis dan instan. Fokus liat hasil log ijonya buat tau plugin mana yang fix jadi pintu masuk lu.",
-            
-            "payload": "Payload Engine itu generator otomatis buat peluru serangan XSS, SQLi, dan SSRF. Daripada ribet ngapalin struktur sintaks buat bypass WAF, tool !payload nge-generate otomatis varian bypass string yang bisa langsung lu copas ke form web musuh. Berguna banget saat lu lagi main audit manual lewat browser dan butuh peluru cepat.",
+            "api": "API Auditor spesialis bongkar jalur rahasia REST/GraphQL. Pake !api fuzz (endpoint discovery), !api methods (HTTP method check), atau !api all (kedua-duanya).",
 
-            "headers": "Headers Auditor itu cara cek apakah website target udah pake 'helm pengaman' HTTP Security Headers atau belom. Kita audit CSP, XFO, sampe HSTS header buat tau seberapa kuat proteksi target dari serangan Clickjacking sampe XSS. Website modern yang gampang dibobol biasanya lupa pasang header-header kursial ini di konfigurasi servernya. Tool !headers bakal kasih list merah dan ijo: ijo berarti aman, merah berarti target 'telanjang' dan gampang lu kerjain. Info ini penting banget buat nentuin payload serangan apa yang bakal mempan lu tembak ke arah web target nantinya.",
+            "cloud": "Cloud Hunter pencium data bocor di storage awan. Filter provider: !cloud s3 (AWS), !cloud firebase, !cloud gcs (Google Cloud), atau !cloud all (scan semua).",
 
-            "form": "Form Auditor itu spesialis cari parameter input yang berisiko jadi jalur masuk SQLi atau XSS di website. Kita list semua form, button, sampe input field yang ada di landing page target buat lu analisa lebih lanjut secara teknis. Tool !form v5.3 bakal kasih tau method apa (POST/GET) yang dipake biar lu tau cara ngirim payload serangan yang bener. Seringkali celah fatal ada di form login atau search bar yang filternya 'low quality' alias cupu banget. Tool ini ngebantu lu mapping titik mana aja yang bisa lu hajar pake payload dari Vuln Atlas nantinya.",
+            "stress": "Stress Testing modul buat ngetes mental server target. Format: !stress <threads> <duration_seconds>. Contoh: !stress 200 30 (200 worker selama 30 detik). Duration 0 = infinite.",
 
-            "cookie": "Cookie Auditor itu detektif yang bakal meriksa apakah session cookie website target udah diproteksi maksimal atau belom. Kita cek flag 'HttpOnly' (biar gak kena XSS) dan flag 'Secure' (biar gak dicuri di jalur HTTP biasa). Kalo kedua flag itu merah alias 'FALSE', artinya lu bisa nyuri session login user lain cuma modal satu script XSS receh doang. Tool !cookie bakal bongkar semua rahasia dibalik cookie target lu secara transparan di layar terminal ijo lu. Hacker pinter itu selalu audit cookie dulu sebelum lakuin serangan Account Takeover yang mematikan.",
+            "vhost": "VHost Discovery cari website rahasia yang nebeng di satu IP server sama. Cukup ketik !vhost, otomatis scan dari target aktif.",
 
-            "git": "Git Hunter itu tool krusial buat nyari folder '.git' yang bocor dan isinya source code asli website target lu. Kalo adminnya ceroboh dan folder .git terbuka, lu bisa download seluruh code aslinya dan nyari password DB di dalem file config. Ini adalah celah 'Critical' yang sering bikin perusahaan gede tumbang dalam sekejap cuma gara-gara satu folder kecil ini. Tool !git bakal sweep file-file konfirgurasi sensitif kayak .git/config buat pastiin apakah kodenya bisa kita 'pwn' atau belom. Kalo ketemu, notifikasinya bakal MERAH (DANGER) karena ini temuan harta karun paling berharga di dunia pentesting."
+            "webports": "WebPorts spesialis cari layanan web di port gak umum. Pake !webports common (10 port standar) atau !webports full (extended range).",
+
+            "wordpress": "WordPress Scanner bongkar mesin CMS paling populer. Pake !wp version, !wp plugins, !wp users, !wp files, atau !wp all (semua scan sekaligus).",
+
+            "wp": "WordPress Scanner bongkar mesin CMS paling populer. Pake !wp version, !wp plugins, !wp users, !wp files, atau !wp all (semua scan sekaligus).",
+
+            "sqlmap": "SQLMap Lite detektor SQL Injection otomatis yang ngetes form input target. Cukup ketik !sqlmap, otomatis scan dari target aktif.",
+
+            "dirb": "Dirb Directory Brute Force nyari folder harta karun tersembunyi. Pake !dirb common (6 path dasar) atau !dirb deep (17+ path lengkap).",
+
+            "payload": "Payload Engine generator encoding otomatis. Pake !payload encode [text] atau !payload decode [format] [text]. Format: base64, hex, url.",
+
+            "headers": "Headers Auditor cek keamanan HTTP headers (CSP, XFO, HSTS, dll). Cukup ketik !headers, otomatis audit 6 header krusial target.",
+
+            "form": "Form Auditor cari parameter input berisiko jadi jalur SQLi/XSS. Cukup ketik !form, otomatis list semua form di landing page target.",
+
+            "cookie": "Cookie Auditor periksa flag keamanan session cookie (HttpOnly, Secure). Cukup ketik !cookie, otomatis audit cookie target.",
+
+            "git": "Git Hunter nyari folder .git bocor yang isinya source code. Pake !git check (exposure check) atau !git deep (coba download content).",
+
+            "script": "Script Library berisi koleksi payload siap pakai (XSS, SQLi, Clickjacking, dll). Pake !script [kategori] buat list payload di terminal. Atau buka tab Scripts buat drag-and-drop.",
+
+            "help": "Ketik !help buat liat semua tools + syntax. Ketik !help [nama_tool] buat liat detail penggunaan spesifik."
         }
-        
-        # * Pentesting Roadmap Checklist Steps v5.3 (Nitro-Max Edition)
+
+        # * Usage Database v5.9 (Syntax + Contoh per Tool)
+        self.usageDatabase = {
+            "recon": {
+                "syntax": "!recon [quick|deep|full]",
+                "modes": {
+                    "quick": "IP + DNS records (default)",
+                    "deep": "Quick + WHOIS + All DNS Records",
+                    "full": "Deep + Tech Detection + Certificate Subdomains"
+                },
+                "examples": ["!recon", "!recon quick", "!recon deep", "!recon full"]
+            },
+            "nmap": {
+                "syntax": "!nmap [port1,port2,port3]",
+                "modes": {
+                    "(tanpa args)": "Scan 10 web ports standar (80,443,8080,dll)",
+                    "custom": "Tentuin port spesifik dipisah koma"
+                },
+                "examples": ["!nmap", "!nmap 80,443", "!nmap 22,80,443,3306,8080"]
+            },
+            "vuln": {
+                "syntax": "!vuln [full|cors|ssti|crlf|host|upload|paths]",
+                "modes": {
+                    "full": "Scan semua vulnerability sekaligus (default)",
+                    "cors": "Audit CORS misconfiguration only",
+                    "ssti": "Test Server-Side Template Injection only",
+                    "crlf": "Test CRLF Injection only",
+                    "host": "Test Host Header Injection only",
+                    "upload": "Detect file upload forms only",
+                    "paths": "Fuzz 100+ sensitive paths only"
+                },
+                "examples": ["!vuln", "!vuln full", "!vuln cors", "!vuln ssti", "!vuln paths"]
+            },
+            "api": {
+                "syntax": "!api [fuzz|methods|all]",
+                "modes": {
+                    "fuzz": "Endpoint discovery (22+ common API paths)",
+                    "methods": "HTTP method check (GET,POST,PUT,DELETE,PATCH)",
+                    "all": "Kedua-duanya sekaligus (default)"
+                },
+                "examples": ["!api", "!api fuzz", "!api methods", "!api all"]
+            },
+            "cloud": {
+                "syntax": "!cloud [s3|firebase|gcs|all]",
+                "modes": {
+                    "s3": "Scan AWS S3 buckets only",
+                    "firebase": "Scan Firebase databases only",
+                    "gcs": "Scan Google Cloud Storage only",
+                    "all": "Scan semua provider (default)"
+                },
+                "examples": ["!cloud", "!cloud s3", "!cloud firebase", "!cloud all"]
+            },
+            "dirb": {
+                "syntax": "!dirb [common|deep]",
+                "modes": {
+                    "common": "6 directory path dasar (default)",
+                    "deep": "17+ path termasuk config, backup, api endpoints"
+                },
+                "examples": ["!dirb", "!dirb common", "!dirb deep"]
+            },
+            "headers": {
+                "syntax": "!headers",
+                "modes": {
+                    "(tanpa args)": "Audit 6 security headers: HSTS, CSP, XFO, X-Content-Type, Referrer-Policy, Permissions-Policy"
+                },
+                "examples": ["!headers"]
+            },
+            "form": {
+                "syntax": "!form",
+                "modes": {
+                    "(tanpa args)": "Audit semua HTML forms di landing page target"
+                },
+                "examples": ["!form"]
+            },
+            "cookie": {
+                "syntax": "!cookie",
+                "modes": {
+                    "(tanpa args)": "Audit flag keamanan cookies: HttpOnly, Secure"
+                },
+                "examples": ["!cookie"]
+            },
+            "git": {
+                "syntax": "!git [check|deep]",
+                "modes": {
+                    "check": "Cek exposure .git/config, HEAD, index (default)",
+                    "deep": "Check + coba download content yang terexpose"
+                },
+                "examples": ["!git", "!git check", "!git deep"]
+            },
+            "wp": {
+                "syntax": "!wp [version|plugins|users|files|all]",
+                "modes": {
+                    "version": "Detect WP version only",
+                    "plugins": "Enumerate installed plugins",
+                    "users": "Enumerate users via WP-JSON API",
+                    "files": "Check vuln files (xmlrpc, debug.log, etc)",
+                    "all": "Semua scan sekaligus (default)"
+                },
+                "examples": ["!wp", "!wp version", "!wp plugins", "!wp users", "!wp all"]
+            },
+            "payload": {
+                "syntax": "!payload [encode|decode] [format] [text]",
+                "modes": {
+                    "encode": "Encode target/text ke semua format (default)",
+                    "decode base64": "Decode dari Base64",
+                    "decode hex": "Decode dari Hex",
+                    "decode url": "Decode dari URL encoding"
+                },
+                "examples": ["!payload", "!payload encode test123", "!payload decode base64 dGVzdA=="]
+            },
+            "subdomain": {
+                "syntax": "!subdomain [brute|passive]",
+                "modes": {
+                    "brute": "Wordlist bruteforce 100+ subdomain (default)",
+                    "passive": "Certificate Transparency search via crt.sh"
+                },
+                "examples": ["!subdomain", "!subdomain brute", "!subdomain passive"]
+            },
+            "vhost": {
+                "syntax": "!vhost",
+                "modes": {
+                    "(tanpa args)": "Scan virtual hosts via Host header manipulation"
+                },
+                "examples": ["!vhost"]
+            },
+            "webports": {
+                "syntax": "!webports [common|full]",
+                "modes": {
+                    "common": "10 web ports standar (default)",
+                    "full": "Extended 20+ ports termasuk dev/debug ports"
+                },
+                "examples": ["!webports", "!webports common", "!webports full"]
+            },
+            "webaudit": {
+                "syntax": "!webaudit [tech|sqli|full]",
+                "modes": {
+                    "tech": "Detect tech stack only",
+                    "sqli": "SQL injection scan only",
+                    "full": "Semua audit sekaligus (default)"
+                },
+                "examples": ["!webaudit", "!webaudit tech", "!webaudit sqli"]
+            },
+            "stress": {
+                "syntax": "!stress <threads> <duration_seconds>",
+                "modes": {
+                    "<threads>": "Jumlah worker/pasukan serangan (contoh: 200)",
+                    "<duration>": "Durasi waktu serangan dalam detik (0 = infinite)"
+                },
+                "examples": ["!stress 50 10", "!stress 200 30", "!stress 500 0"]
+            },
+            "script": {
+                "syntax": "!script [category]",
+                "modes": {
+                    "(tanpa args)": "List semua kategori script yang tersedia",
+                    "category": "List scripts dalam kategori tertentu (XSS, SQLi, dll)"
+                },
+                "examples": ["!script", "!script xss", "!script sqli", "!script clickjacking"]
+            },
+            "help": {
+                "syntax": "!help [tool_name]",
+                "modes": {
+                    "(tanpa args)": "Tampilkan semua tools + syntax ringkas",
+                    "tool_name": "Detail penggunaan tool spesifik"
+                },
+                "examples": ["!help", "!help nmap", "!help vuln", "!help stress"]
+            }
+        }
+
+        # * Pentesting Roadmap v5.9 (8 Misi Detail)
         self.roadmap = [
-            "v5.3-Misi-1: Reconnaissance (!recon) - Tahap pengumpulan intelijen dasar. Kita cari IP asli, record DNS, WHOIS, sampe teknologi server yang dipake. Tanpa info ini, serangan lu bakal buta arah dan gampang ketauan admin.",
-            "v5.3-Misi-2: Network Scanning (!nmap) - Pemetaan infrastruktur server. Kita cari 'pintu' atau port (80, 443, 3306) yang lagi mangap/kebuka. Jika ada port terbuka, artinya ada jalan masuk buat eksploitasi lebih dalem nanti.",
-            "v5.3-Misi-3: Subdomain Hunt (!subdomain) - Mencari pintu belakang di domain anak-anak. Seringkali domain utama dijaga ketat, tapi subdomain 'dev' atau 'test' dilupain admin dan isinya penuh bug gila yang bisa kita hajar habis-habisan.",
-            "v5.3-Misi-4: Vulnerability Audit (!webaudit / !vuln) - Mencari 'lubang' keamanan di level aplikasi. Kita cek potensi SQL Injection, XSS, hingga Host Header Injection. Di tahap ini, kita cari bukti nyata kalau website itu beneran rentan.",
-            "v5.3-Misi-5: API & Cloud Hunting (!api / !cloud) - Bongkar urat nadi data modern. Kita cari endpoint API yang bocor atau storage S3/Firebase yang statusnya 'Public'. Sekali dapet, jutaan data user bisa lu ambil tanpa perlu login sama sekali.",
-            "v5.3-Misi-6: Stress Testing (!stress) - Pengujian ketahanan akhir. Kita bantai server target dengan tsunami request buat liat seberapa kuat pertahanan mereka. Kalau server tumbang, artinya misi penaklukan website lu udah sukses 100%."
+            "v5.9-Misi-1: Reconnaissance (!recon) - Tahap pengumpulan intelijen dasar. Kita cari IP asli, record DNS, WHOIS, sampe teknologi server yang dipake. Mode: quick/deep/full. Tanpa info ini serangan lu bakal buta arah.",
+            "v5.9-Misi-2: Infrastructure Scan (!nmap) - Pemetaan port dan service server. Kita cari pintu (port) yang kebuka: 80 (HTTP), 443 (HTTPS), 22 (SSH), 3306 (MySQL). Custom ports: !nmap 80,443,3306.",
+            "v5.9-Misi-3: Discovery (!subdomain / !dirb) - Cari pintu belakang: subdomain rahasia (dev, test, staging) dan directory tersembunyi (/admin, /backup, /.env). Brute force atau passive scan.",
+            "v5.9-Misi-4: Web Analysis (!headers / !cookie / !form / !git) - Audit keamanan web layer: security headers, cookie flags, form parameters, dan exposed .git repository.",
+            "v5.9-Misi-5: Vulnerability Scan (!vuln) - Cari lubang vulnerability: CORS Misconfig, SSTI, CRLF Injection, Host Header Injection, File Upload, dan 100+ Sensitive Path fuzzing.",
+            "v5.9-Misi-6: API dan Cloud (!api / !cloud) - Bongkar urat nadi data modern: endpoint API rahasia, HTTP method bypass, dan cloud storage publik (S3, Firebase, GCS).",
+            "v5.9-Misi-7: CMS Audit (!wp) - Audit khusus platform CMS: WordPress version, plugin vulnerabilities, user enumeration, dan sensitive file exposure.",
+            "v5.9-Misi-8: Stress Testing (!stress) - Pengujian ketahanan akhir. Bantai server dengan tsunami HTTP request buat liat seberapa kuat pertahanan mereka. Format: !stress <threads> <duration>."
         ]
 
     def getSteps(self):
@@ -57,6 +230,10 @@ class GuidedAssistant:
 
     def getRoadmap(self):
         return self.roadmap
+
+    # * Ambil usage info untuk tool tertentu
+    def getUsage(self, toolName):
+        return self.usageDatabase.get(toolName, None)
 
     def searchHelp(self, query):
         query = query.lower()
