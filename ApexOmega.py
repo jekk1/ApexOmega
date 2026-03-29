@@ -45,6 +45,7 @@ from Modules.VulnAtlas import VulnAtlas
 from Modules.ApiAuditor import ApiAuditor
 from Modules.CloudAudit import CloudAudit
 from Modules.ScriptLibrary import ScriptLibrary
+from Modules.WebToolsGuide import WebToolsGuide
 import requests
 import socket
 from tkinter import messagebox
@@ -81,6 +82,7 @@ class ApexOmega:
         self.api_auditor = ApiAuditor()
         self.cloud_audit = CloudAudit()
         self.script_lib = ScriptLibrary()
+        self.web_guide = WebToolsGuide(self)
         
         # * Link Core for Global Events (v5.4)
         self.web.core = self
@@ -225,7 +227,38 @@ class ApexOmega:
             "aoi": self._run_web_module,
             "testalltools": self._run_testalltools_module,
             "help": self._run_help_module,
-            "script": self._run_script_module
+            "script": self._run_script_module,
+            "webtools": self._run_web_tools_module,
+            "waf": self._run_waf_module,
+            "cmdi": self._run_cmdi_module,
+            "cms": self._run_cms_module,
+            "davtest": self._run_davtest_module,
+            "nikto": self._run_nikto_module,
+            "urlcrazy": self._run_urlcrazy_module,
+            "wayback": self._run_wayback_module,
+            "weevely": self._run_weevely_module,
+            "testssl": self._run_testssl_module,
+            "apacheusers": self._run_apacheusers_module,
+            "cewl": self._run_cewl_module,
+            "gau": self._run_gau_module,
+            "httrack": self._run_httrack_module,
+            "laudanum": self._run_laudanum_module,
+            "nuclei": self._run_nuclei_module,
+            "padbuster": self._run_padbuster_module,
+            "slowhttp": self._run_slowhttp_module,
+            "wapiti": self._run_wapiti_module,
+            "webcache": self._run_webcache_module,
+            "websploit": self._run_websploit_module,
+            "gowitness": self._run_gowitness_module,
+            "joomscan": self._run_joomscan_module,
+            "webacoo": self._run_webacoo_module,
+            "ffuf": self._run_ffuf_module,
+            "skipfish": self._run_skipfish_module,
+            "wfuzz": self._run_wfuzz_module,
+            "dnsenum": self._run_dnsenum_module,
+            "sslscan": self._run_sslscan_module,
+            "fierce": self._run_fierce_module,
+            "dmitry": self._run_dmitry_module
         }
         
         if tool_name in mapping:
@@ -235,6 +268,262 @@ class ApexOmega:
             self.gui.log_to_terminal(f"[!] Unknown tool: {tool_name}. Type !help for manual.\n", "error")
 
     # -- Module Automated Runners (v5.9 Child Command Support) --
+    
+    # * Jalankan WAFW00F Engine
+    def _run_waf_module(self, args=[]):
+        if not self.active_target:
+            self.gui.log_to_terminal("WAF: No target set.\n", "[error] ")
+            return
+        target = f"https://{self.active_target}"
+        self.gui.log_to_terminal(f"Starting WAF Detection on {target}...\n", "[init] ")
+        res = self.web.advancedWafDetection(target)
+        for r in res:
+            self.gui.log_to_terminal(f"  [+] {r}\n", "[warning] ")
+        if not res: self.gui.log_to_terminal("  [-] WAF not detected or bypassed.\n", "[success] ")
+
+    # * Jalankan COMMIX Engine
+    def _run_cmdi_module(self, args=[]):
+        if not self.active_target:
+            return self.gui.log_to_terminal("CMDI: No target set.\n", "[error] ")
+        target = f"https://{self.active_target}"
+        self.gui.log_to_terminal(f"Testing Command Injection on {target}...\n", "[init] ")
+        res = self.web.checkCommandInjection(target)
+        tag = "[danger] " if "VULN" in res else "[success] "
+        self.gui.log_to_terminal(f"  Result: {res}\n", tag)
+
+    # * Jalankan CMSEEK Engine
+    def _run_cms_module(self, args=[]):
+        if not self.active_target: return
+        target = f"https://{self.active_target}"
+        self.gui.log_to_terminal(f"Deep CMS Scan (Joomla/Drupal) on {target}...\n", "[init] ")
+        res = self.web.cmsDeepScan(target)
+        for r in res: self.gui.log_to_terminal(f"  [!] {r}\n", "[danger] ")
+        if not res: self.gui.log_to_terminal("  [-] No other CMS signatures found.\n")
+
+    # * Jalankan DAVTEST Engine
+    def _run_davtest_module(self, args=[]):
+        if not self.active_target: return
+        target = f"https://{self.active_target}"
+        self.gui.log_to_terminal(f"Testing WebDAV & HTTP Methods on {target}...\n", "[init] ")
+        res = self.web.testWebDav(target)
+        self.gui.log_to_terminal(f"  Result: {res}\n", "[warning] ")
+
+    # * Jalankan NIKTO Engine
+    def _run_nikto_module(self, args=[]):
+        if not self.active_target: return
+        target = f"https://{self.active_target}"
+        self.gui.log_to_terminal(f"Nikto CGI Scan on {target}...\n", "[init] ")
+        res = self.web.runNiktoScan(target)
+        for r in res: self.gui.log_to_terminal(f"  [!] Exposed Path: {r}\n", "[danger] ")
+        if not res: self.gui.log_to_terminal("  [-] Clean.\n")
+
+    # * Jalankan URLCRAZY Engine
+    def _run_urlcrazy_module(self, args=[]):
+        if not self.active_target: return
+        self.gui.log_to_terminal(f"Generating Typosquatting for {self.active_target}...\n", "[init] ")
+        res = self.web.generateTyposquat(self.active_target)
+        for r in res: self.gui.log_to_terminal(f"  [+] {r}\n", "[info] ")
+
+    # * Jalankan WAYBACKPY Engine
+    def _run_wayback_module(self, args=[]):
+        if not self.active_target: return
+        self.gui.log_to_terminal(f"Fetching Wayback OSINT for {self.active_target}...\n", "[init] ")
+        res = self.web.scrapeWayback(self.active_target)
+        for r in res: self.gui.log_to_terminal(f"  [+] History: {r}\n", "[success] ")
+        if not res: self.gui.log_to_terminal("  [-] No history found.\n")
+
+    # * Jalankan WEEVELY Engine
+    def _run_weevely_module(self, args=[]):
+        pwd = args[0] if args else "admin123"
+        self.gui.log_to_terminal(f"Generating Weevely PHP Webshell (pass: {pwd})...\n", "[init] ")
+        res = self.web.generatePhpWebshell(pwd)
+        self.gui.log_to_terminal(f"\n{res}\n\n", "[info] ")
+
+    # * Jalankan TESTSSL Engine
+    def _run_testssl_module(self, args=[]):
+        if not self.active_target: return
+        target = f"https://{self.active_target}"
+        self.gui.log_to_terminal(f"Testing SSL/TLS on {target}...\n", "[init] ")
+        res = self.web.auditTlsSsl(target)
+        if res.get("secure"):
+            self.gui.log_to_terminal(f"  [+] Version: {res['version']}\n", "[success] ")
+            self.gui.log_to_terminal(f"  [+] Cipher: {res['cipher'][0]}\n", "[success] ")
+        else:
+            self.gui.log_to_terminal(f"  [X] Failed: {res.get('error')}\n", "[error] ")
+
+    # * Jalankan APACHE-USERS Engine
+    def _run_apacheusers_module(self, args=[]):
+        if not self.active_target: return
+        target = f"https://{self.active_target}"
+        self.gui.log_to_terminal(f"Hunting Apache /~users on {target}...\n", "[init] ")
+        res = self.web.checkApacheUsers(target)
+        for r in res: self.gui.log_to_terminal(f"  [!] User found: {r}\n", "[danger] ")
+        if not res: self.gui.log_to_terminal("  [-] No users found.\n")
+
+    # * Jalankan CEWL Engine
+    def _run_cewl_module(self, args=[]):
+        if not self.active_target: return
+        target = f"https://{self.active_target}"
+        self.gui.log_to_terminal(f"Generating Wordlist from {target}...\n", "[init] ")
+        res = self.web.generateCewlWordlist(target)
+        self.gui.log_to_terminal(f"  [+] Found {len(res)} words: {', '.join(res[:10])}...\n", "[success] ")
+
+    # * Jalankan GAU Engine
+    def _run_gau_module(self, args=[]):
+        if not self.active_target: return
+        self.gui.log_to_terminal(f"Fetching URLs (AlienVault OTX) for {self.active_target}...\n", "[init] ")
+        res = self.web.getAllUrlsFast(self.active_target)
+        for r in res: self.gui.log_to_terminal(f"  [+] Link: {r}\n", "[success] ")
+        if not res: self.gui.log_to_terminal("  [-] No URLs found.\n")
+
+    # * Jalankan HTTRACK Engine
+    def _run_httrack_module(self, args=[]):
+        if not self.active_target: return
+        target = f"https://{self.active_target}"
+        self.gui.log_to_terminal(f"Cloning partial HTML from {target}...\n", "[init] ")
+        res = self.web.cloneWebPage(target)
+        self.gui.log_to_terminal(f"\n{res}...\n\n", "[info] ")
+
+    # * Jalankan LAUDANUM Engine
+    def _run_laudanum_module(self, args=[]):
+        lang = args[0] if args else "php"
+        self.gui.log_to_terminal(f"Generating Laudanum Webshell ({lang})...\n", "[init] ")
+        res = self.web.generateLaudanumShell(lang)
+        self.gui.log_to_terminal(f"\n  {res}\n\n", "[info] ")
+
+    # * Jalankan NUCLEI Engine
+    def _run_nuclei_module(self, args=[]):
+        if not self.active_target: return
+        target = f"https://{self.active_target}"
+        self.gui.log_to_terminal(f"Running Mini-Nuclei Templates on {target}...\n", "[init] ")
+        res = self.web.runNucleiTemplateScan(target)
+        for r in res: self.gui.log_to_terminal(f"  [!] {r}\n", "[danger] ")
+        if not res: self.gui.log_to_terminal("  [-] Clean.\n")
+
+    # * Jalankan PADBUSTER Engine
+    def _run_padbuster_module(self, args=[]):
+        if not self.active_target: return
+        target = f"https://{self.active_target}"
+        self.gui.log_to_terminal(f"Testing Padding Oracle Crypto on {target}...\n", "[init] ")
+        res = self.web.testPaddingOracle(target)
+        self.gui.log_to_terminal(f"  Result: {res}\n", "[warning] ")
+
+    # * Jalankan SLOWHTTPTEST Engine
+    def _run_slowhttp_module(self, args=[]):
+        if not self.active_target: return
+        target = f"https://{self.active_target}"
+        self.gui.log_to_terminal(f"Launching Slowloris HTTP Test on {target}...\n", "[init] ")
+        res = self.web.runSlowlorisTest(target)
+        self.gui.log_to_terminal(f"  Result: {res}\n", "[danger] " if "Vulnerable" in res else "[success] ")
+
+    # * Jalankan WAPITI Engine
+    def _run_wapiti_module(self, args=[]):
+        if not self.active_target: return
+        target = f"https://{self.active_target}"
+        self.gui.log_to_terminal(f"Wapiti URL Parameter Fuzzer on {target}...\n", "[init] ")
+        res = self.web.runWapitiFuzzer(target)
+        for r in res: self.gui.log_to_terminal(f"  [!] {r}\n", "[danger] ")
+        if not res: self.gui.log_to_terminal("  [-] No obvious injection found.\n")
+
+    # * Jalankan WEBCACHE Engine
+    def _run_webcache_module(self, args=[]):
+        if not self.active_target: return
+        target = f"https://{self.active_target}"
+        self.gui.log_to_terminal(f"Checking Web Cache Poisoning on {target}...\n", "[init] ")
+        res = self.web.testWebCachePoisoning(target)
+        self.gui.log_to_terminal(f"  Result: {res}\n", "[danger] " if "VULN" in res else "[success] ")
+
+    # * Jalankan WEBSPLOIT Engine
+    def _run_websploit_module(self, args=[]):
+        if not self.active_target: return
+        target = f"https://{self.active_target}"
+        self.gui.log_to_terminal(f"Websploit Framework Active on {target}...\n", "[init] ")
+        res = self.web.runWebsploitAudit(target)
+        for r in res: self.gui.log_to_terminal(f"  [+] {r}\n", "[info] ")
+
+    # * Jalankan GOWITNESS Engine
+    def _run_gowitness_module(self, args=[]):
+        if not self.active_target: return
+        target = f"https://{self.active_target}"
+        self.gui.log_to_terminal(f"Taking screenshot of {target}...\n", "[init] ")
+        res = self.web.takeScreenshot(target)
+        for r in res: self.gui.log_to_terminal(f"  [!] {r}\n", "[warning] ")
+
+    # * Jalankan JOOMSCAN Engine
+    def _run_joomscan_module(self, args=[]):
+        if not self.active_target: return
+        target = f"https://{self.active_target}"
+        self.gui.log_to_terminal(f"JoomScan active on {target}...\n", "[init] ")
+        res = self.web.scanJoomla(target)
+        for r in res: self.gui.log_to_terminal(f"  [+] {r}\n", "[danger] ")
+        if not res: self.gui.log_to_terminal("  [-] Not vulnerable.\n")
+
+    # * Jalankan WEBACOO Engine
+    def _run_webacoo_module(self, args=[]):
+        self.gui.log_to_terminal(f"Generating Webacoo Cookie Payload...\n", "[init] ")
+        res = self.web.generateWebacooShell()
+        self.gui.log_to_terminal(f"\n  {res}\n\n", "[danger] ")
+
+    # * Jalankan FFUF Engine
+    def _run_ffuf_module(self, args=[]):
+        if not self.active_target: return
+        target = f"https://{self.active_target}"
+        self.gui.log_to_terminal(f"FFUF fast dir fuzzing on {target}...\n", "[init] ")
+        res = self.web.runFfufFuzz(target)
+        for r in res: self.gui.log_to_terminal(f"  [+] {r}\n", "[success] ")
+        if not res: self.gui.log_to_terminal("  [-] Clean.\n")
+
+    # * Jalankan SKIPFISH Engine
+    def _run_skipfish_module(self, args=[]):
+        if not self.active_target: return
+        target = f"https://{self.active_target}"
+        self.gui.log_to_terminal(f"Skipfish behavior scan on {target}...\n", "[init] ")
+        res = self.web.runSkipfishProbe(target)
+        self.gui.log_to_terminal(f"  Result: {res}\n", "[info] ")
+
+    # * Jalankan WFUZZ Engine
+    def _run_wfuzz_module(self, args=[]):
+        if not self.active_target: return
+        target = f"https://{self.active_target}"
+        self.gui.log_to_terminal(f"Wfuzz parameter fuzzing on {target}...\n", "[init] ")
+        res = self.web.runWfuzz(target)
+        for r in res: self.gui.log_to_terminal(f"  [!] {r}\n", "[danger] ")
+        if not res: self.gui.log_to_terminal("  [-] Clean.\n")
+
+    # * Jalankan DNSENUM Engine
+    def _run_dnsenum_module(self, args=[]):
+        if not self.active_target: return
+        self.gui.log_to_terminal(f"DnsEnum mapping {self.active_target}...\n", "[init] ")
+        res = self.web.runDnsEnum(self.active_target)
+        for r in res: self.gui.log_to_terminal(f"  [+] {r}\n", "[success] ")
+        if not res: self.gui.log_to_terminal("  [-] Clean.\n")
+
+    # * Jalankan SSLSCAN Engine
+    def _run_sslscan_module(self, args=[]):
+        if not self.active_target: return
+        target = f"https://{self.active_target}"
+        self.gui.log_to_terminal(f"SslScan targeting {target}...\n", "[init] ")
+        res = self.web.runSslScan(target)
+        for r in res: self.gui.log_to_terminal(f"  [+] {r}\n", "[info] ")
+
+    # * Jalankan FIERCE Engine
+    def _run_fierce_module(self, args=[]):
+        if not self.active_target: return
+        self.gui.log_to_terminal(f"Fierce Zone Transfer on {self.active_target}...\n", "[init] ")
+        res = self.web.checkZoneTransfer(self.active_target)
+        for r in res: self.gui.log_to_terminal(f"  [!] {r}\n", "[success] ")
+
+    # * Jalankan DMITRY Engine
+    def _run_dmitry_module(self, args=[]):
+        if not self.active_target: return
+        self.gui.log_to_terminal(f"Deepmagic Info Gathering on {self.active_target}...\n", "[init] ")
+        res = self.web.gatherDmitryInfo(self.active_target)
+        for r in res: self.gui.log_to_terminal(f"  [+] {r}\n", "[danger] ")
+    
+    # * Nampilin referensi web pentest tools ke UI console
+    def _run_web_tools_module(self, args=[]):
+        self.gui.log_to_terminal("[*] Memuat daftar referensi web tools...\n", "[init] ")
+        self.web_guide.show_tools()
 
     # * Vuln Atlas Scanner dengan mode spesifik
     def _run_vuln_module(self, args=[]):

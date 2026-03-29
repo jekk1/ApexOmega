@@ -341,9 +341,17 @@ oLink.Save
         send_btn = ctk.CTkButton(
             item_frame, text="[>>]", width=35, height=28, 
             fg_color="#1a1a1a", text_color="cyan", hover_color="#222",
-            command=lambda: self._send_to_terminal(script["code"])
+            command=lambda: self._insert_to_terminal(script["code"])
         )
-        send_btn.pack(side="right", padx=5)
+        send_btn.pack(side="right", padx=(2, 5))
+
+        # * Tombol [GEN] untuk script generation manual (Zaqi req v6.3)
+        gen_btn = ctk.CTkButton(
+            item_frame, text="[GEN]", width=35, height=28,
+            fg_color="#1a1a1a", text_color="#bb86fc", hover_color="#222",
+            command=lambda: self._generate_script_file(script)
+        )
+        gen_btn.pack(side="right", padx=(2, 2))
 
         # * Drag Handle [✥] - Pindah ke Kanan (Hyper-Ergonomic v6.0.7)
         drag_handle = ctk.CTkLabel(item_frame, text="✥", font=("Roboto", 16), text_color="cyan", width=30, cursor="fleur")
@@ -393,6 +401,29 @@ oLink.Save
         # Insert di posisi input saat ini
         self._tw.insert("end", code)
         self._tw.see("end")
+
+    # * Generate script file manual (menyimpan script ke folder "script_generation")
+    def _generate_script_file(self, script):
+        try:
+            import os
+            # Set root folder dan bikin folder baru
+            rootDir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+            targetDir = os.path.join(rootDir, "script_generation")
+            if not os.path.exists(targetDir):
+                os.makedirs(targetDir)
+            
+            # Sanitasi nama file
+            clean_name = "".join([c if c.isalnum() else "_" for c in script["name"]])
+            ext = script.get("ext", ".txt")
+            file_path = os.path.join(targetDir, f"{clean_name}{ext}")
+            
+            with open(file_path, "w", encoding="utf-8") as f:
+                f.write(script["code"])
+                
+            self.log_to_terminal(f"\n[+] Script '{script['name']}' generated manually!\n", "[success] ")
+            self.log_to_terminal(f"    -> Saved in: {file_path}\n\n", "dimText")
+        except Exception as e:
+            self.log_to_terminal(f"\n[!] Failed to generate script: {e}\n", "errorText")
 
     # * Search handler
     def _on_script_search(self, *args):
