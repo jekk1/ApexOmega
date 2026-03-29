@@ -1,4 +1,5 @@
 import customtkinter as ctk
+import tkinter as tk
 import threading
 from tkinter import messagebox
 import os
@@ -393,36 +394,44 @@ oLink.Save
         query = self.script_search_var.get().lower().strip()
         self._populate_script_list(filterQuery=query)
 
-    # * Jalankan Windows OLE Drag-and-Drop (External Bridge v5.9.9)
+    # * Jalankan Windows OLE Drag-and-Drop (External Bridge v6.0.1)
     def _on_script_drag_start(self, event, script):
         self._preview_script(script)
         self.dragging_script = script
         
-        # 1. Buat Ghost Image (Spectral Label)
-        if self.ghost_window: self.ghost_window.destroy()
-        
-        self.ghost_window = ctk.CTkToplevel(self)
+        # 1. Buat Ghost Image (Spectral Label - v6.0.1 tk.Toplevel)
+        if hasattr(self, "ghost_window") and self.ghost_window:
+            try: self.ghost_window.destroy()
+            except: pass
+            
+        self.ghost_window = tk.Toplevel(self)
         self.ghost_window.overrideredirect(True)
         self.ghost_window.attributes("-topmost", True)
-        self.ghost_window.attributes("-alpha", 0.7) # * Semi-Transparent
-        self.ghost_window.configure(fg_color="#1a1a1a")
+        self.ghost_window.attributes("-alpha", 0.9) # * Lebih pekat biar kelihatan
+        self.ghost_window.configure(bg="#000000") # * Black background
         
-        ghost_lbl = ctk.CTkLabel(
+        # Risk color bullet
+        risk_c = {"Critical":"#f33","High":"#fc0","Medium":"#5de"}.get(script["risk"], "#666")
+        
+        ghost_lbl = tk.Label(
             self.ghost_window, text=f" ✥ {script['name']} ", 
-            font=("Consolas", 12, "bold"), text_color="cyan",
-            padx=10, pady=5
+            font=("Consolas", 11, "bold"), fg="#00ff00", bg="#000000",
+            padx=8, pady=4,
+            highlightthickness=1, highlightbackground=risk_c
         )
         ghost_lbl.pack()
         
-        # Update posisi awal
+        self.ghost_window.update_idletasks()
         self._on_script_ghost_move(event)
 
-    # * Update posisi Ghost Image (v5.9.9)
+    # * Update posisi Ghost Image (v6.0.1)
     def _on_script_ghost_move(self, event):
-        if self.ghost_window:
+        if hasattr(self, "ghost_window") and self.ghost_window:
             x = event.x_root + 15
             y = event.y_root + 15
             self.ghost_window.geometry(f"+{x}+{y}")
+            self.ghost_window.lift() # * Paksa paling depan
+            self.ghost_window.update_idletasks()
 
     # * Akhiri Drag dan Trigger OLE File Drop (v5.9.9)
     def _on_script_drag_end(self, event):
