@@ -79,7 +79,10 @@ class CloudAudit:
         names_to_test = self.generateBucketPermutations(domain)
         
         for name in names_to_test:
-            for provider, suffix in self.cloudSuffixes.items():
+            # * Robust Handling: Cek apakah data source adalah dict atau list (v6.3.1 Fix)
+            items = self.cloudSuffixes.items() if isinstance(self.cloudSuffixes, dict) else [(f"Provider_{i}", s) for i, s in enumerate(self.cloudSuffixes)]
+            
+            for provider, suffix in items:
                 target = f"https://{name}{suffix}"
                 try:
                     res = self.session.head(target, timeout=3, allow_redirects=True)

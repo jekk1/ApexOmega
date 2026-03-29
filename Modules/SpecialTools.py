@@ -59,6 +59,20 @@ class SpecialTools:
         self.isFlooding = True
         self.stats = {"success": 0, "blocked": 0, "error": 0, "redirect": 0}
         print(f"[*] Evaluasi HTTP Flood ke {targetUrl} menggunakan {threads} pekerja.")
+
+    # * Alias untuk sinkronisasi dengan Core v6.3.1 (Apex "Nitro" Engine)
+    def runNitroStress(self, targetUrl: str, duration: int = 15, threads: int = 50) -> str:
+        """Menjalankan pengujian beban Nitro (Pembungkus HTTP Flood).
+        
+        Args:
+            targetUrl: URL lengkap web yang diuji.
+            duration: Durasi waktu detik.
+            threads: Paralel pekerja utas jaringan.
+            
+        Returns:
+            String konfirmasi inisialisasi uji beban Nitro.
+        """
+        return self.runHttpFlood(targetUrl, duration, threads)
         
         def attack_worker():
             # * Batas waktu tidak terhingga jika nilai dimasukkan 0

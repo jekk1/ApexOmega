@@ -82,6 +82,10 @@ class WordPressScanner:
         except Exception:
             return None
 
+    def detectVersion(self, baseUrl: str) -> Optional[str]:
+        """Identifikasi versi mesin WP (Pembungkus scanVersion)."""
+        return self.scanVersion(baseUrl)
+
     def scanPlugins(self, baseUrl: str) -> List[str]:
         """Enumerasi direktori perluasan (plugin) umum dengan pencocokan status struktur peladen.
         

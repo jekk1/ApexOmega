@@ -67,6 +67,23 @@ class PayloadGen:
                 
         return results
 
+    def generate(self, text: str) -> Dict[str, str]:
+        """Hasil generator auto-encoding untuk teks bebas (v6.3.1).
+        
+        Args:
+            text: Teks payload mentah kustom.
+            
+        Returns:
+            Dictionary hasil berbagai varian encoding.
+        """
+        return {
+            "Raw": text,
+            "Base64": self.customEncode(text, "base64") or "Error",
+            "URL": self.customEncode(text, "url") or "Error",
+            "Hex": self.customEncode(text, "hex") or "Error",
+            "HTML": self.customEncode(text, "html") or "Error"
+        }
+
     def customEncode(self, text: str, mode: str = "base64") -> Optional[str]:
         """Lakukan enkoding manual string ke mode tertentu.
         

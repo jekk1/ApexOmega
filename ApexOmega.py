@@ -795,12 +795,16 @@ class ApexOmega:
         mode = args[0].lower() if args else "all"
         self.gui.log_to_terminal(f"CLOUD HUNTER ({mode}): Searching for Buckets for {self.active_target}...\n", "[init] ")
         
-        # Filter suffix berdasarkan mode
+        # Filter suffix berdasarkan mode (v6.3.1 Fix)
         suffixMap = {
-            "s3": [".s3.amazonaws.com"],
-            "firebase": [".firebaseio.com"],
-            "gcs": [".storage.googleapis.com"],
-            "all": [".s3.amazonaws.com", ".firebaseio.com", ".storage.googleapis.com"]
+            "s3": {"AWS S3": ".s3.amazonaws.com"},
+            "firebase": {"Firebase": ".firebaseio.com"},
+            "gcs": {"Google Cloud Storage": ".storage.googleapis.com"},
+            "all": {
+                "AWS S3": ".s3.amazonaws.com",
+                "Firebase": ".firebaseio.com",
+                "Google Cloud Storage": ".storage.googleapis.com"
+            }
         }
         
         suffixes = suffixMap.get(mode, suffixMap["all"])

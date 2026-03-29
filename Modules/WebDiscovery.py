@@ -109,6 +109,56 @@ class WebDiscovery:
             results = executor.map(check, self.subdomainList)
             found = [r for r in results if r]
         return found
+        
+    # * Alias untuk sinkronisasi dengan Core v6.3.1 (Sub-domain Engine)
+    def bruteSubdomain(self, domain: str) -> List[str]:
+        """Pencarian paksa sub-domain (Pembungkus bruteSubdomains)."""
+        return self.bruteSubdomains(domain)
+        
+    def scanWebPorts(self, target: str) -> List[int]:
+        """Identifikasi infrastruktur peladen terbuka (Port Utama: 80, 443, 8080, 8443, 2082, 2083).
+        
+        Args:
+            target: Alamat IP / Host sasaran pemindaian infrastruktru terbuka.
+            
+        Returns:
+            Susunan nomor port yang terdeteksi aktif/terbuka.
+        """
+        common_ports = [80, 443, 8080, 8443, 2082, 2083, 2086, 2087, 2095, 2096, 8880, 8000, 3000, 5000, 8081]
+        open_ports = []
+        
+        # Bersihkan target dari scheme jika ada
+        host = target.replace('https://', '').replace('http://', '').split('/')[0].split(':')[0]
+        
+        with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+            future_to_port = {executor.submit(self._scan_single_port, host, port): port for port in common_ports}
+            for future in concurrent.futures.as_completed(future_to_port):
+                port = future_to_port[future]
+                try:
+                    if future.result():
+                        open_ports.append(port)
+                except Exception:
+                    pass
+        return sorted(open_ports)
+
+    def _scan_single_port(self, host: str, port: int) -> bool:
+        """Pemeriksaan tunggal ketersediaan akses soket port.
+        
+        Args:
+            host: Alamat host tujuan.
+            port: Nomor port identifikasi.
+            
+        Returns:
+            Status koneksi berhasil (True/False).
+        """
+        try:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                s.settimeout(1.5)
+                # Mencoba jabat tangan soket awal
+                result = s.connect_ex((host, port))
+                return result == 0
+        except Exception:
+            return False
 
     def enumeratePassive(self, domain: str) -> List[str]:
         """Intelijen Pencarian Sub-Domain Pasif lewat arsip publik sertifikat TLS/SSL gratis maupun catatan mesin peramban global (Crt.sh & VirusTotal).
