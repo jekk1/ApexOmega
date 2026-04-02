@@ -48,7 +48,6 @@ Modular, automated, and powerful tool for security auditing and vulnerability sc
 ```powershell
 # 1. Clone Repository (Branch: main)
 git clone https://github.com/jekk1/ApexOmega.git
-cd ApexOmega/Software
 
 # 2. Install Dependencies (Minimal Python 3.10+)
 pip install -r requirements.txt
