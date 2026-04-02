@@ -5,6 +5,38 @@ from typing import List, Optional
 
 # * Modul Penganalisa Kerentanan Spesifik Platform WordPress
 class WordPressScanner:
+    """
+    WordPressScanner itu kayak montir khusus buat mobil merk WordPress.
+    
+    WordPress itu platform website paling populer di dunia (30%+ website pake ini).
+    Karena saking populernya, banyak hacker yang nyari celah khusus WP.
+    
+    Tool ini bisa:
+    
+    1. DETECT WordPress - Tau apakah website pake WP atau bukan
+       - Liat dari jejak khas WP (wp-content, wp-admin, wp-login)
+       - Scan signature di HTML source code
+    
+    2. VERSION DETECTION - Tau versi WP yang dipake
+       - Versi lama = banyak celah keamanan
+       - Info ini penting buat milih exploit yang cocok
+    
+    3. PLUGIN SCANNER - Cek plugin yang terinstall
+       - Scan 50+ plugin populer yang sering rentan
+       - Elementor, Contact Form 7, WooCommerce, dll
+       - Plugin outdated = pintu masuk hacker
+    
+    4. USER ENUMERATION - Daftar user yang ada
+       - Lewat author ID di URL
+       - Buat brute force login lebih akurat
+    
+    5. FILE DETECTION - Cari file sensitif
+       - wp-config.php (database password)
+       - Backup files, debug logs, dll
+    
+    WordPress itu kayak rumah dengan banyak jendela - tool ini cek satu-satu 
+    mana yang kebuka atau kaca yang pecah!
+    """
     def __init__(self):
         self.session = requests.Session()
         self.headers = {'User-Agent': 'ApexOmega/5.0 (WP Auditor)'}
@@ -166,12 +198,13 @@ class WordPressScanner:
 
     def scanVulnFiles(self, baseUrl: str) -> List[str]:
         """Pencarian celah log bawaan WP atau arsip usang rentan ekstraksi muatan.
-        
+        HANYA laporkan file yang benar-benar terekspos (HTTP 200), bukan yang diblokir (403).
+
         Args:
             baseUrl: Direktori akar rujukan kueri.
-            
+
         Returns:
-            Daftar berkas dengan potensi intervensi serangan masukan.
+            Daftar berkas dengan potensi intervensi serangan masukan (hanya yang valid).
         """
         files = [
             "xmlrpc.php",
@@ -183,7 +216,9 @@ class WordPressScanner:
             target = urljoin(baseUrl, f)
             try:
                 res = self.session.head(target, headers=self.headers, timeout=3, allow_redirects=False)
-                if res.status_code in [200, 403]:
+                # HANYA laporkan yang benar-benar accessible (200)
+                # JANGAN laporkan 403 karena itu artinya file diblokir/tidak ada
+                if res.status_code == 200:
                     found.append(f)
             except Exception:
                 pass

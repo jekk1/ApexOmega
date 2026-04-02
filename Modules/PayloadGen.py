@@ -4,6 +4,34 @@ from typing import Dict, List, Optional
 
 # * Modul generator payload keamanan aplikasi web modern
 class PayloadGen:
+    """
+    PayloadGen itu kayak pabrik senjata buat penetration testing.
+    
+    Dia produksi 'peluru' khusus buat nembus celah keamanan:
+    
+    1. XSS (Cross-Site Scripting) - Nyelipin script jahat
+       - Kayak nitip pesan tersembunyi di website
+       - Nanti muncul popup alert atau bisa ambil cookie user lain
+    
+    2. SQL Injection - Manipulasi database
+       - Nyelipin perintah SQL di form login/search
+       - Bisa bikin login tanpa password atau sedot semua data
+    
+    3. RCE (Remote Code Execution) - Jalankan perintah di server
+       - Ini yang paling dangerous
+       - Bisa suruh server ngelakuin apa aja (lihat file, download, dll)
+    
+    4. SSTI (Server-Side Template Injection) - Hack template engine
+       - Manipulasi cara website nampilin data
+       - Bisa eksekusi code di server
+    
+    5. CRLF - Inject header HTTP
+       - Nambahin header palsu di response
+       - Bisa buat redirect atau set cookie palsu
+    
+    Semua payload di-encode juga (Base64, URL encode) 
+    biar bisa bypass filter keamanan!
+    """
     def __init__(self):
         self.templates: Dict[str, List[str]] = {
             "xss": [

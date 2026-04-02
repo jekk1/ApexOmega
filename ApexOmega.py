@@ -30,7 +30,7 @@ from Core.NativeBridge import NativeBridge
 from Modules.WebScanner import WebScanner
 from Modules.NetworkScanner import NetworkScanner
 from Modules.CryptoTools import CryptoTools
-from Modules.SpecialTools import SpecialTools
+from Modules.SpecialTools import SpecialTools, EvilLimiter
 from Modules.EduModule import EduModule
 from Modules.HeadsCheck import HeadsCheck
 
@@ -85,7 +85,8 @@ class ApexOmega:
         self.script_lib = ScriptLibrary()
         self.web_guide = WebToolsGuide(self)
         self.decoder = DecoderTools()
-        
+        self.evil = EvilLimiter()
+
         # * Link Core for Global Events (v5.4)
         self.web.core = self
         self.atlas.core = self
@@ -260,7 +261,34 @@ class ApexOmega:
             "dnsenum": self._run_dnsenum_module,
             "sslscan": self._run_sslscan_module,
             "fierce": self._run_fierce_module,
-            "dmitry": self._run_dmitry_module
+            "dmitry": self._run_dmitry_module,
+            "evil": self._run_evil_module,
+            "evilimiter": self._run_evil_module,
+            "bandwidth": self._run_evil_module,
+            "arpspoof": self._run_evil_module,
+            "kill": self._run_evil_kill_module,
+            "scanlan": self._run_evil_scan_module,
+            "monitor": self._run_evil_monitor_module,
+            # WiFi Hacking Tools (Aircrack-ng Suite & Others)
+            "aircrack": self._run_aircrack_module,
+            "aircrack-ng": self._run_aircrack_module,
+            "airodump": self._run_airodump_module,
+            "airodump-ng": self._run_airodump_module,
+            "aireplay": self._run_aireplay_module,
+            "aireplay-ng": self._run_aireplay_module,
+            "wash": self._run_wash_module,
+            "reaver": self._run_reaver_module,
+            "bully": self._run_bully_module,
+            "mdk3": self._run_mdk3_module,
+            "mdk4": self._run_mdk4_module,
+            "kismet": self._run_kismet_module,
+            "wigle": self._run_wigle_module,
+            "macchanger": self._run_macchanger_module,
+            "ifconfig": self._run_ifconfig_module,
+            "iwconfig": self._run_iwconfig_module,
+            "rfkill": self._run_rfkill_module,
+            "hashcat": self._run_hashcat_module,
+            "john": self._run_john_module
         }
         
         if tool_name in mapping:
@@ -564,10 +592,365 @@ class ApexOmega:
         if not self.active_target: return
         self.gui.log_to_terminal(f"Deepmagic Info Gathering on {self.active_target}...\n", "[init] ")
         res = self.web.gatherDmitryInfo(self.active_target)
-        for r in res: 
+        for r in res:
             self.gui.log_to_terminal(f"  [+] {r}\n", "[danger] ")
             self.gui.log_to_found(f"[INFO] Dmitry Gathering: {r}")
-    
+
+    # * ========== EVILLIMITER NETWORK CONTROL (v6.3) ==========
+
+    # * Scan LAN untuk menemukan device
+    def _run_evil_scan_module(self, args=[]):
+        """Scan jaringan lokal untuk menemukan device yang terhubung."""
+        self.gui.log_to_terminal("[*] Scanning local network for devices...\n", "[init] ")
+        
+        try:
+            devices = self.evil.scan_network()
+            
+            if not devices:
+                self.gui.log_to_terminal("  [!] No devices found or scan failed.\n", "[warning] ")
+                self.gui.log_to_terminal("  [!] Note: Requires administrator/root privileges.\n", "[dimText] ")
+                return
+            
+            self.gui.log_to_terminal(f"  [+] Found {len(devices)} device(s):\n", "[success] ")
+            for device in devices:
+                self.gui.log_to_terminal(
+                    f"    IP: {device['ip']} | MAC: {device['mac']} | Host: {device['hostname']}\n",
+                    "[info] "
+                )
+        except Exception as e:
+            self.gui.log_to_terminal(f"  [!] Scan error: {e}\n", "[error] ")
+            self.gui.log_to_terminal("  [!] Note: Make sure you have scapy and netifaces installed.\n", "[dimText] ")
+
+    # * Attack target dengan ARP spoof + bandwidth limit
+    def _run_evil_module(self, args=[]):
+        """
+        EvilLimiter - Bandwidth limiting dan network control.
+        
+        Usage:
+            !evil <target_ip> [upload_limit] [download_limit]
+            Contoh: !evil 192.168.1.100 10kbit 20kbit
+        """
+        if len(args) < 1:
+            self.gui.log_to_terminal(
+                "\n[!] Usage: !evil <target_ip> [upload_limit] [download_limit]\n",
+                "[warning] "
+            )
+            self.gui.log_to_terminal(
+                "  Example: !evil 192.168.1.100 10kbit 20kbit\n"
+                "  Limits: 5kbit, 10kbit, 50kbit, 100kbit, 1mbit, etc.\n\n",
+                "[dimText] "
+            )
+            return
+        
+        target_ip = args[0]
+        upload_limit = args[1] if len(args) > 1 else "5kbit"
+        download_limit = args[2] if len(args) > 2 else "10kbit"
+        
+        self.gui.log_to_terminal(
+            f"[*] Starting EvilLimiter attack on {target_ip}...\n"
+            f"    Upload Limit: {upload_limit}\n"
+            f"    Download Limit: {download_limit}\n",
+            "[init] "
+        )
+        
+        try:
+            result = self.evil.start_attack(
+                target_ip=target_ip,
+                limit_upload=upload_limit,
+                limit_download=download_limit
+            )
+            
+            if result['success']:
+                self.gui.log_to_terminal(f"  [✓] {result['message']}\n", "[success] ")
+                self.gui.log_to_terminal(
+                    "  [!] Target bandwidth is now limited. Use !stop to stop attack.\n",
+                    "[warning] "
+                )
+            else:
+                self.gui.log_to_terminal(f"  [!] Attack failed: {result['message']}\n", "[error] ")
+                self.gui.log_to_terminal(
+                    "  [!] Note: Requires administrator/root privileges and 'tc' command.\n",
+                    "[dimText] "
+                )
+        except Exception as e:
+            self.gui.log_to_terminal(f"  [!] Error: {e}\n", "[error] ")
+
+    # * Stop attack
+    def _run_evil_stop_module(self, args=[]):
+        """Hentikan EvilLimiter attack."""
+        target_ip = args[0] if args else None
+        
+        if target_ip:
+            msg = self.evil.stop_attack(target_ip)
+            self.gui.log_to_terminal(f"  [✓] {msg}\n", "[success] ")
+        else:
+            msg = self.evil.stop_attack()
+            self.gui.log_to_terminal(f"  [✓] {msg}\n", "[success] ")
+
+    # * Kill connection target
+    def _run_evil_kill_module(self, args=[]):
+        """
+        Putus koneksi target dari jaringan.
+        
+        Usage: !kill <target_ip> [method]
+        Methods: arp (default), syn
+        """
+        if len(args) < 1:
+            self.gui.log_to_terminal(
+                "\n[!] Usage: !kill <target_ip> [method]\n"
+                "  Methods: arp (default), syn\n\n",
+                "[warning] "
+            )
+            return
+        
+        target_ip = args[0]
+        method = args[1] if len(args) > 1 else "arp"
+        
+        self.gui.log_to_terminal(
+            f"[*] Killing connection to {target_ip} using {method.upper()} method...\n",
+            "[init] "
+        )
+        
+        try:
+            success = self.evil.kill_connection(target_ip, method)
+            
+            if success:
+                self.gui.log_to_terminal(
+                    f"  [✓] Connection kill signal sent to {target_ip}\n",
+                    "[success] "
+                )
+            else:
+                self.gui.log_to_terminal(
+                    f"  [!] Failed to kill connection to {target_ip}\n",
+                    "[error] "
+                )
+        except Exception as e:
+            self.gui.log_to_terminal(f"  [!] Error: {e}\n", "[error] ")
+
+    # * Monitor traffic
+    def _run_evil_monitor_module(self, args=[]):
+        """
+        Monitor traffic jaringan.
+        
+        Usage: !monitor [target_ip] [duration]
+        """
+        target_ip = args[0] if args else None
+        duration = int(args[1]) if len(args) > 1 else 10
+        
+        target_str = target_ip if target_ip else "all devices"
+        self.gui.log_to_terminal(
+            f"[*] Monitoring traffic for {target_str} ({duration}s)...\n",
+            "[init] "
+        )
+        
+        try:
+            stats = self.evil.monitor_traffic(target_ip, duration)
+            
+            self.gui.log_to_terminal("\n  [===] Traffic Statistics [===]\n", "[cyanText] ")
+            self.gui.log_to_terminal(f"    Total Packets: {stats['packets']}\n", "[info] ")
+            self.gui.log_to_terminal(f"    Total Bytes: {stats['bytes']}\n", "[info] ")
+            self.gui.log_to_terminal(f"    TCP: {stats['tcp']} | UDP: {stats['udp']} | ICMP: {stats['icmp']}\n", "[info] ")
+            self.gui.log_to_terminal(f"    HTTP: {stats['http']} | HTTPS: {stats['https']}\n", "[info] ")
+        except Exception as e:
+            self.gui.log_to_terminal(f"  [!] Monitor error: {e}\n", "[error] ")
+
+    # ========== WIFI HACKING TOOLS ==========
+
+    # * Aircrack-ng - WiFi Cracking
+    def _run_aircrack_module(self, args=[]):
+        """
+        Aircrack-ng - WiFi WEP/WPA2 Password Cracker
+        Usage: !aircrack [capture_file.cap]
+        """
+        cap_file = args[0] if args else "capture.cap"
+        self.gui.log_to_terminal(f"[*] Starting Aircrack-ng on {cap_file}...\n", "[init] ")
+        self.gui.log_to_terminal("  [*] Analyzing captured packets...\n", "[info] ")
+        self.gui.log_to_terminal("  [!] Note: Run in terminal with: aircrack-ng <file.cap>\n", "[warning] ")
+        self.gui.log_to_terminal("  [!] Requires: .cap file from airodump-ng\n", "[warning] ")
+
+    # * Airodump-ng - WiFi Packet Capture
+    def _run_airodump_module(self, args=[]):
+        """
+        Airodump-ng - WiFi Packet Capture
+        Usage: !airodump [interface]
+        """
+        interface = args[0] if args else "wlan0mon"
+        self.gui.log_to_terminal(f"[*] Starting Airodump-ng on {interface}...\n", "[init] ")
+        self.gui.log_to_terminal("  [*] Capturing WiFi packets...\n", "[info] ")
+        self.gui.log_to_terminal("  [!] Note: Run in terminal with: airodump-ng {interface}\n", "[warning] ")
+        self.gui.log_to_terminal("  [!] Requires: Monitor mode enabled\n", "[warning] ")
+
+    # * Aireplay-ng - WiFi Packet Injection
+    def _run_aireplay_module(self, args=[]):
+        """
+        Aireplay-ng - WiFi Packet Injection
+        Usage: !aireplay [attack_type] [target_bssid]
+        """
+        attack = args[0] if args else "deauth"
+        target = args[1] if len(args) > 1 else "target_bssid"
+        self.gui.log_to_terminal(f"[*] Starting Aireplay-ng ({attack}) on {target}...\n", "[init] ")
+        self.gui.log_to_terminal("  [*] Injecting packets...\n", "[info] ")
+        self.gui.log_to_terminal("  [!] Note: Run in terminal with: aireplay-ng --deauth <count> -a <BSSID> <interface>\n", "[warning] ")
+
+    # * Wash - WPS Scanner
+    def _run_wash_module(self, args=[]):
+        """
+        Wash - WPS Scanner
+        Usage: !wash [interface]
+        """
+        interface = args[0] if args else "wlan0mon"
+        self.gui.log_to_terminal(f"[*] Starting Wash WPS scan on {interface}...\n", "[init] ")
+        self.gui.log_to_terminal("  [*] Scanning for WPS-enabled networks...\n", "[info] ")
+        self.gui.log_to_terminal("  [!] Note: Run in terminal with: wash -i {interface}\n", "[warning] ")
+
+    # * Reaver - WPS Cracker
+    def _run_reaver_module(self, args=[]):
+        """
+        Reaver - WPS PIN Cracker
+        Usage: !reaver [target_bssid]
+        """
+        bssid = args[0] if args else "target_bssid"
+        self.gui.log_to_terminal(f"[*] Starting Reaver WPS attack on {bssid}...\n", "[init] ")
+        self.gui.log_to_terminal("  [*] Attempting WPS PIN brute-force...\n", "[info] ")
+        self.gui.log_to_terminal("  [!] Note: Run in terminal with: reaver -i <interface> -b <BSSID> -vv\n", "[warning] ")
+        self.gui.log_to_terminal("  [!] This can take 4-10 hours!\n", "[warning] ")
+
+    # * Bully - WPS Cracker (Alternative to Reaver)
+    def _run_bully_module(self, args=[]):
+        """
+        Bully - WPS PIN Cracker
+        Usage: !bully [target_bssid]
+        """
+        bssid = args[0] if args else "target_bssid"
+        self.gui.log_to_terminal(f"[*] Starting Bully WPS attack on {bssid}...\n", "[init] ")
+        self.gui.log_to_terminal("  [*] Running WPS PIN brute-force (Bully method)...\n", "[info] ")
+        self.gui.log_to_terminal("  [!] Note: Run in terminal with: bully <interface> --bssid <BSSID>\n", "[warning] ")
+
+    # * MDK3 - WiFi DoS Tool
+    def _run_mdk3_module(self, args=[]):
+        """
+        MDK3 - WiFi DoS Tool
+        Usage: !mdk3 [attack_type] [target]
+        """
+        attack = args[0] if args else "deauth"
+        target = args[1] if len(args) > 1 else "all"
+        self.gui.log_to_terminal(f"[*] Starting MDK3 ({attack}) on {target}...\n", "[init] ")
+        self.gui.log_to_terminal("  [*] Launching WiFi DoS attack...\n", "[info] ")
+        self.gui.log_to_terminal("  [!] Note: Run in terminal with: mdk3 <interface> <attack> -s <speed>\n", "[warning] ")
+
+    # * MDK4 - WiFi DoS Tool (Updated)
+    def _run_mdk4_module(self, args=[]):
+        """
+        MDK4 - WiFi DoS Tool (Updated)
+        Usage: !mdk4 [attack_type] [target]
+        """
+        attack = args[0] if args else "deauth"
+        target = args[1] if len(args) > 1 else "all"
+        self.gui.log_to_terminal(f"[*] Starting MDK4 ({attack}) on {target}...\n", "[init] ")
+        self.gui.log_to_terminal("  [*] Launching WiFi DoS attack (MDK4)...\n", "[info] ")
+        self.gui.log_to_terminal("  [!] Note: Run in terminal with: mdk4 <interface> <attack>\n", "[warning] ")
+
+    # * Kismet - WiFi Detector/Sniffer
+    def _run_kismet_module(self, args=[]):
+        """
+        Kismet - WiFi Detector/Sniffer
+        Usage: !kismet [interface]
+        """
+        interface = args[0] if args else "wlan0"
+        self.gui.log_to_terminal(f"[*] Starting Kismet on {interface}...\n", "[init] ")
+        self.gui.log_to_terminal("  [*] Detecting WiFi networks...\n", "[info] ")
+        self.gui.log_to_terminal("  [!] Note: Run in terminal with: kismet -i {interface}\n", "[warning] ")
+
+    # * Wigle - WiFi Mapping
+    def _run_wigle_module(self, args=[]):
+        """
+        Wigle - WiFi Mapping (API)
+        Usage: !wigle [search_query]
+        """
+        query = args[0] if args else "network"
+        self.gui.log_to_terminal(f"[*] Searching Wigle.net for '{query}'...\n", "[init] ")
+        self.gui.log_to_terminal("  [*] Querying WiFi network database...\n", "[info] ")
+        self.gui.log_to_terminal("  [!] Note: Requires Wigle.net API key\n", "[warning] ")
+
+    # * Macchanger - MAC Address Changer
+    def _run_macchanger_module(self, args=[]):
+        """
+        Macchanger - MAC Address Changer
+        Usage: !macchanger [interface]
+        """
+        interface = args[0] if args else "wlan0"
+        self.gui.log_to_terminal(f"[*] Changing MAC address on {interface}...\n", "[init] ")
+        self.gui.log_to_terminal("  [*] Generating random MAC...\n", "[info] ")
+        self.gui.log_to_terminal("  [!] Note: Run in terminal with: macchanger -r {interface}\n", "[warning] ")
+
+    # * Ifconfig - Network Interface Config
+    def _run_ifconfig_module(self, args=[]):
+        """
+        Ifconfig - Network Interface Config
+        Usage: !ifconfig [interface]
+        """
+        interface = args[0] if args else ""
+        cmd = f"ifconfig {interface}" if interface else "ifconfig"
+        self.gui.log_to_terminal(f"[*] Running: {cmd}\n", "[init] ")
+        try:
+            result = subprocess.run(cmd.split(), capture_output=True, text=True, timeout=5)
+            self.gui.log_to_terminal(f"\n{result.stdout}\n", "[success] ")
+        except Exception as e:
+            self.gui.log_to_terminal(f"  [!] Error: {e}\n", "[error] ")
+
+    # * Iwconfig - Wireless Interface Config
+    def _run_iwconfig_module(self, args=[]):
+        """
+        Iwconfig - Wireless Interface Config
+        Usage: !iwconfig [interface]
+        """
+        interface = args[0] if args else ""
+        cmd = f"iwconfig {interface}" if interface else "iwconfig"
+        self.gui.log_to_terminal(f"[*] Running: {cmd}\n", "[init] ")
+        try:
+            result = subprocess.run(cmd.split(), capture_output=True, text=True, timeout=5)
+            self.gui.log_to_terminal(f"\n{result.stdout}\n", "[info] ")
+        except Exception as e:
+            self.gui.log_to_terminal(f"  [!] Error: {e}\n", "[error] ")
+
+    # * Rfkill - WiFi Blocker/Unblocker
+    def _run_rfkill_module(self, args=[]):
+        """
+        Rfkill - WiFi Blocker/Unblocker
+        Usage: !rfkill [list|unblock all]
+        """
+        action = args[0] if args else "list"
+        cmd = f"rfkill {action}"
+        self.gui.log_to_terminal(f"[*] Running: {cmd}\n", "[init] ")
+        try:
+            result = subprocess.run(cmd.split(), capture_output=True, text=True, timeout=5)
+            self.gui.log_to_terminal(f"\n{result.stdout}\n", "[success] ")
+        except Exception as e:
+            self.gui.log_to_terminal(f"  [!] Error: {e}\n", "[error] ")
+
+    # * Hashcat - Password Cracker
+    def _run_hashcat_module(self, args=[]):
+        """
+        Hashcat - GPU Password Cracker
+        Usage: !hashcat [hash_file] [wordlist]
+        """
+        hash_file = args[0] if args else "handshake.hccapx"
+        wordlist = args[1] if len(args) > 1 else "/usr/share/wordlists/rockyou.txt"
+        self.gui.log_to_terminal(f"[*] Starting Hashcat on {hash_file}...\n", "[init] ")
+        self.gui.log_to_terminal("  [*] Using GPU acceleration...\n", "[info] ")
+        self.gui.log_to_terminal("  [!] Note: Run in terminal with: hashcat -m 2500 <hash> <wordlist>\n", "[warning] ")
+
+    # * John the Ripper - Password Cracker
+    def _run_john_module(self, args=[]):
+        """
+        John the Ripper - Password Cracker
+        Usage: !john [hash_file]
+        """
+        hash_file = args[0] if args else "hash.txt"
+        self.gui.log_to_terminal(f"[*] Starting John the Ripper on {hash_file}...\n", "[init] ")
+        self.gui.log_to_terminal("  [*] Running password cracking...\n", "[info] ")
+        self.gui.log_to_terminal("  [!] Note: Run in terminal with: john {hash_file}\n", "[warning] ")
+
     # * Nampilin referensi web pentest tools ke UI console
     def _run_web_tools_module(self, args=[]):
         self.gui.log_to_terminal("[*] Memuat daftar referensi web tools...\n", "[init] ")
@@ -1053,7 +1436,7 @@ class ApexOmega:
                 self.gui.log_to_terminal("  [-] User enumeration blocked or no users found.\n")
         
         if runAll or mode == "files":
-            files = self.wp.checkVulnFiles(target)
+            files = self.wp.scanVulnFiles(target)
             if files:
                 for f in files:
                     self.gui.log_to_terminal(f"  [!!!] VULN FILE EXPOSED: {f}\n", "[danger] ")
@@ -1075,62 +1458,92 @@ class ApexOmega:
         if not self.active_target:
             self.gui.log_to_terminal("[!] TEST ALL: Target belum diset. Ketik target dulu.\n", "[error] ")
             return
-        
+
+        # Check network connectivity first
+        self.gui.log_to_terminal("[*] Checking network connectivity...\n", "[init] ")
+        import socket
+        try:
+            socket.create_connection(("8.8.8.8", 53), timeout=2)
+            self.gui.log_to_terminal("[+] Network connection: ONLINE\n", "[success] ")
+            network_available = True
+        except:
+            self.gui.log_to_terminal("[!] Network connection: OFFLINE - Network-dependent scans will FAIL\n", "[warning] ")
+            network_available = False
+
         target = self.active_target
         self.gui.log_to_terminal("\n" + "="*60 + "\n", "[info] ")
         self.gui.log_to_terminal("  APEXOMEGA FUNCTIONAL DIAGNOSTIC SCAN v6.2.3\n", "[init] ")
         self.gui.log_to_terminal(f"  Target: {target}\n", "[info] ")
         self.gui.log_to_terminal("="*60 + "\n\n", "[info] ")
+
+        # Network-dependent tools (will FAIL if offline)
+        network_tools = ["recon", "nmap", "waf", "headers", "cookie", "form", "git", "dirb", "vuln", "api", "cloud", 
+                        "wp", "cms", "joomscan", "nikto", "subdomain", "vhost", "webports", "dnsenum", "fierce", 
+                        "dmitry", "sslscan", "testssl", "wayback", "gau", "ffuf", "wfuzz", "nuclei", "wapiti", 
+                        "cmdi", "padbuster", "webcache", "davtest", "websploit", "webaudit"]
         
-        # * Daftar tool yang akan diuji secara berurutan (v6.2.3 Comprehensive)
+        # Local-only tools (always work offline)
+        local_tools = ["weevely", "webacoo", "laudanum", "slowhttp", "urlcrazy", "payload"]
+
+        # * Daftar tool yang akan diuji secara berurutan (v6.3.0 - ALL LATEST TOOLS)
         toolSequence = [
+            # RECON & DISCOVERY
             ("recon",    "Reconnaissance",       ["quick"]),
             ("nmap",     "Infrastructure Scan",   []),
-            ("waf",      "WAF Detection",         []),
-            ("headers",  "Security Headers",      []),
-            ("cookie",   "Cookie Audit",          []),
-            ("form",     "Form Audit",            []),
-            ("git",      "Git Exposure",          []),
-            ("dirb",     "Directory Bruteforce",  ["common"]),
-            ("vuln",     "Vulnerability Scan",    ["full"]),
-            ("api",      "API Audit",             ["all"]),
-            ("cloud",    "Cloud Bucket Hunt",     ["all"]),
-            ("wp",       "WordPress Scan",        ["all"]),
-            ("cms",      "CMS Fingerprinting",    []),
-            ("joomscan", "Joomla Security Scan",  []),
-            ("nikto",    "CGI / Server Scan",     []),
             ("subdomain","Subdomain Discovery",   ["brute"]),
             ("vhost",    "Virtual Host Scan",     []),
             ("webports", "Web Port Scan",         ["common"]),
             ("dnsenum",  "DNS Enumeration",       []),
             ("fierce",   "DNS Zone Transfer",     []),
             ("dmitry",   "Quick Port Probe",      []),
+            # SECURITY & HEADERS
+            ("waf",      "WAF Detection",         []),
+            ("headers",  "Security Headers",      []),
             ("sslscan",  "SSL Certificate Info",  []),
             ("testssl",  "TLS/SSL Audit",         []),
+            # CONTENT DISCOVERY
+            ("dirb",     "Directory Bruteforce",  ["common"]),
+            ("git",      "Git Exposure",          []),
+            ("ffuf",     "Fast Directory Fuzz",   []),
+            # VULNERABILITY SCANNING
+            ("vuln",     "Vulnerability Scan",    ["full"]),
+            ("wp",       "WordPress Scan",        ["all"]),
+            ("cms",      "CMS Fingerprinting",    []),
+            ("joomscan", "Joomla Security Scan",  []),
+            ("nikto",    "CGI / Server Scan",     []),
+            ("wapiti",   "Vulnerability Fuzzer",  []),
+            ("nuclei",   "Template-based Scan",   []),
+            # API & CLOUD
+            ("api",      "API Audit",             ["all"]),
+            ("cloud",    "Cloud Bucket Hunt",     ["all"]),
+            # WEB APPLICATION
+            ("cookie",   "Cookie Audit",          []),
+            ("form",     "Form Audit",            []),
             ("wayback",  "Wayback Machine API",   []),
             ("gau",      "Get All URLs (OTX)",    []),
-            ("ffuf",     "Fast Directory Fuzz",   []),
             ("wfuzz",    "Parameter Fuzzing",     []),
-            ("nuclei",   "Template-based Scan",   []),
-            ("wapiti",   "Vulnerability Fuzzer",  []),
+            # INJECTION & EXPLOIT
             ("cmdi",     "Command Injection",     []),
             ("padbuster", "Padding Oracle Test",   []),
             ("webcache", "Cache Poisoning Audit", []),
             ("davtest",  "WebDAV PUT Audit",      []),
+            ("websploit","System Audit Framework",[]),
+            # PAYLOAD GENERATION
             ("weevely",  "Weevely Backdoor Gen",  []),
             ("webacoo",  "Webacoo Cookie Shell",  []),
             ("laudanum", "Webshell Templates",    []),
-            ("slowhttp", "Slowloris DoS Test",    []),
             ("urlcrazy", "Typosquatting Gen",     []),
-            ("websploit","System Audit Framework",[]),
             ("payload",  "Payload Generator",     []),
+            # STRESS TESTING
+            ("slowhttp", "Slowloris DoS Test",    []),
+            # FULL AUDIT
             ("webaudit", "Full Web Audit",        ["full"]),
         ]
-        
+
         totalTools = len(toolSequence)
         results = []
         scanStart = time.time()
-        
+
         for idx, (toolName, toolLabel, toolArgs) in enumerate(toolSequence):
             if self.stop_requested:
                 self.gui.log_to_terminal("\n[!] DIAGNOSTIC SCAN ABORTED oleh user (ESC/Ctrl+C).\n", "[warning] ")
@@ -1138,41 +1551,46 @@ class ApexOmega:
                 for r in range(remaining):
                     results.append((toolSequence[idx + r][1], "SKIPPED", 0))
                 break
-            
+
             progress = f"[{idx+1}/{totalTools}]"
             self.gui.log_to_terminal(f"\n{'─'*50}\n", "[info] ")
             self.gui.log_to_terminal(f"  {progress} {toolLabel.upper()} ({toolName})\n", "[init] ")
             self.gui.log_to_terminal(f"{'─'*50}\n", "[info] ")
-            
+
             toolStart = time.time()
             status = "PASS"
-            
-            try:
-                self._dispatch_module(toolName, toolArgs)
-            except Exception as e:
+
+            # Check if tool requires network and network is offline
+            if not network_available and toolName in network_tools:
                 status = "FAIL"
-                self.gui.log_to_terminal(f"  [X] Error: {e}\n", "[error] ")
-            
+                self.gui.log_to_terminal(f"  [!] Skipped - Network unavailable\n", "[warning] ")
+            else:
+                try:
+                    self._dispatch_module(toolName, toolArgs)
+                except Exception as e:
+                    status = "FAIL"
+                    self.gui.log_to_terminal(f"  [X] Error: {e}\n", "[error] ")
+
             elapsed = time.time() - toolStart
             results.append((toolLabel, status, elapsed))
-            
+
             # * Status output per tool
-            statusTag = "[success] " if status == "PASS" else "[error] "
+            statusTag = "[success] " if status == "PASS" else "[error] " if status == "FAIL" else "[warning] "
             self.gui.log_to_terminal(f"  >> {toolLabel}: {status} ({elapsed:.1f}s)\n", statusTag)
-            
+
             # * Jeda antar tool biar output ga numpuk
             time.sleep(0.3)
-        
+
         # * Summary Report
         totalTime = time.time() - scanStart
         passCount = sum(1 for _, s, _ in results if s == "PASS")
         failCount = sum(1 for _, s, _ in results if s == "FAIL")
         skipCount = sum(1 for _, s, _ in results if s == "SKIPPED")
-        
+
         self.gui.log_to_terminal("\n\n" + "="*60 + "\n", "[info] ")
         self.gui.log_to_terminal("  DIAGNOSTIC SCAN REPORT\n", "[init] ")
         self.gui.log_to_terminal("="*60 + "\n\n", "[info] ")
-        
+
         for toolLabel, status, elapsed in results:
             if status == "PASS":
                 tag = "[success] "
@@ -1184,7 +1602,7 @@ class ApexOmega:
                 tag = "[warning] "
                 icon = "[-]"
             self.gui.log_to_terminal(f"  {icon} {toolLabel:30} {status:8} ({elapsed:.1f}s)\n", tag)
-        
+
         self.gui.log_to_terminal(f"\n  Total: {passCount} PASS / {failCount} FAIL / {skipCount} SKIPPED\n", "[info] ")
         self.gui.log_to_terminal(f"  Duration: {totalTime:.1f}s\n", "[info] ")
         self.gui.log_to_terminal("="*60 + "\n", "[info] ")

@@ -9,7 +9,65 @@ from collections import OrderedDict
 
 
 class DecoderTools:
-    """Universal decoder dengan automatic detection dan manual mode."""
+    """
+    DecoderTools itu kayak Google Translate buat bahasa kode-kode aneh!
+    
+    🎯 APA TUJUANNYA?
+    
+    Kadang lu nemu teks yang aneh-aneh:
+    - "SGVsbG8gV29ybGQ=" ← Ini apa sih?
+    - "Hello%20World" ← Kenapa ada %20?
+    - "&#72;&#101;&#108;&#108;&#111;" ← Kode rahasia?
+    - "01001000 01100101 01101100" ← Binary!
+    
+    Tool ini bisa TERJEMAHIN semua itu ke bahasa manusia!
+    
+    🔓 AUTO DECODE MODE - Deteksi otomatis
+    
+    Lu tinggal paste teks aneh, tool ini bakal:
+    1. Coba SEMUA jenis decode (Base64, URL, Hex, dll)
+    2. Kasih tau ini encoding jenis apa
+    3. Tampilin hasil yang paling masuk akal
+    4. Kasih confidence score (seberapa yakin dia)
+    
+    🔧 MANUAL DECODE MODE - Pilih sendiri
+    
+    Kalo lu TAU ini encoding jenis apa, bisa pilih manual:
+    - Base64 → Teks standar
+    - Base64 URL-Safe → Base64 buat link
+    - Base32 → Versi lebih panjang dari Base64
+    - Base85/ASCII85 → Encoding super padat
+    - URL Encode → %XX format
+    - HTML Entities → &#XX; format
+    - Hexadecimal → 0x48 0x65 0x6C
+    - Binary → 01001000 01100101
+    - Rot13 → Caesar cipher (geser 13 huruf)
+    - Reverse → Kebalik dari belakang
+    
+    🎨 ENCODE MODE - Bikin kode aneh
+    
+    Bisa juga SEBALIKNYA: dari teks biasa jadi kode!
+    - Punya password → encode ke Base64
+    - Punya link → encode ke URL format
+    - Punya pesan → encode ke binary
+    
+    💡 CONTOH PENGGUNAAN:
+    
+    1. CTF Competition - Decode hint yang di-encode
+    2. Malware Analysis - Baca payload yang di-obfuscate
+    3. Web Pentesting - Decode cookie/session yang di-encode
+    4. Debugging - Liat isi data yang di-transmit
+    
+    📊 FITUR UNGGULAN:
+    
+    - CONFIDENCE SCORE - Seberapa yakin tool ini
+    - READABLE CHECK - Hasil bisa dibaca manusia atau gak
+    - ALL RESULTS - Liat semua kemungkinan decode
+    - CLICK TO VIEW - Klik hasil buat liat full text
+    - COPY RESULT - Salin hasil dengan 1 klik
+    
+    "Every code has its cipher!" 🔐
+    """
     
     def __init__(self):
         self.encoding_history = []

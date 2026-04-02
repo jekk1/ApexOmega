@@ -6,6 +6,31 @@ from typing import Optional, List, Dict, Union
 
 # * Modul manipulasi data dan kriptografi standar
 class CryptoTools:
+    """
+    CryptoTools itu kayak Swiss Army Knife buat urus password dan enkripsi.
+    
+    Punya 3 fungsi utama:
+    
+    1. HASH DETECTOR - Tebak jenis gembok
+       - Liat panjang hash, langsung bisa nebak ini pake gembok jenis apa
+       - MD5 (32 karakter), SHA1 (40), SHA256 (64), dll
+    
+    2. HASH CRACKER - Pecahin gembok password
+       - Punya hash password tapi gak tau isi aslinya?
+       - Tool ini bakal nyoba jutaan kombinasi password umum
+       - Cocok buat password yang lemah (admin123, password, 123456, dll)
+       - Bisa pake wordlist custom juga buat hasil lebih akurat
+    
+    3. PASSWORD GENERATOR - Bikin password super kuat
+       - Password acak yang gak mungkin ditebak
+       - Panjang sesuai mau lu (default 16 karakter)
+       - Campuran huruf besar, kecil, angka, simbol
+    
+    Analogi sederhana:
+    Hash itu kayak blender - buah masuk, jadi jus. Gak bisa balik lagi.
+    Tapi kalo lu punya daftar buah yang mungkin, lu bisa blender satu-satu 
+    dan bandingin jusnya sampe cocok!
+    """
     def __init__(self):
         self.default_wordlist = [
             "admin", "password", "123456", "12345678", "123456789", "qwerty", "root", "user", 

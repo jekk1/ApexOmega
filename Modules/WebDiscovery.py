@@ -5,6 +5,40 @@ from typing import List, Optional
 
 # * Modul Ekstraksi dan Pemetaan Permukaan Aset Digital Peladen
 class WebDiscovery:
+    """
+    WebDiscovery itu kayak drone mata-mata buat mapping kerajaan digital sebuah perusahaan.
+    
+    Perusahaan besar punya BANYAK subdomain:
+    - mail.perusahaan.com (email)
+    - admin.perusahaan.com (dashboard admin)
+    - dev.perusahaan.com (server development)
+    - api.perusahaan.com (API backend)
+    - Dan masih ratusan lagi...
+    
+    Masalahnya: Sering ada subdomain yang LUPA diproteksi!
+    
+    Tool ini punya 500+ kandidat subdomain umum yang bakal dicoba satu-satu:
+    
+    1. SUBDOMAIN BRUTEFORCE - Tebak subdomain umum
+       - www, mail, ftp, admin, dev, staging, api, dll
+       - Pake wordlist 500+ nama yang sering dipake
+    
+    2. CERTIFICATE TRANSPARENCY - Intip sertifikat SSL
+       - Setiap subdomain punya sertifikat SSL
+       - Dari situ kita bisa liat semua subdomain yang terdaftar
+    
+    3. DNS ENUMERATION - Cek DNS record
+       - A record (IP address)
+       - MX record (email server)
+       - NS record (name server)
+    
+    4. VIRTUAL HOST DETECTION - Cari website tersembunyi
+       - Satu IP bisa hosting banyak website
+       - Tool ini nyari tau semua yang numpang di IP itu
+    
+    Analogi: Kayak punya daftar semua alamat rumah di satu kota, 
+    terus datengin satu-satu buat liat mana yang pintunya kebuka!
+    """
     def __init__(self):
         self.session = requests.Session()
         self.headers = {'User-Agent': 'ApexOmega/5.0 (Discovery Engine)'}

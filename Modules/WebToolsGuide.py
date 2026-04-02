@@ -1,4 +1,67 @@
 class WebToolsGuide:
+    """
+    WebToolsGuide itu kayak katalog referensi tools pentesting eksternal.
+    
+    ApexOmega punya banyak tool bawaan, TAPI kadang lu butuh tool khusus.
+    Di sini ada 70+ tools eksternal yang bisa lu install & pake:
+    
+    🔍 RECONNAISSANCE (Pengumpulan Info):
+    - photon - Crawler website super cepat
+    - gospider - Web spider modern
+    - hakrawler - Crawler buat OSINT
+    - subfinder - Subdomain discovery tool
+    - theharvester - Email & subdomain hunter
+    
+    📁 DIRECTORY SCANNING:
+    - dirb - Classic directory scanner
+    - dirsearch - Fast web path scanner
+    - gobuster - Directory/DNS bruteforcer
+    - ffuf - Fast web fuzzer (Go-based)
+    - feroxbuster - Recursive content discovery
+    
+    🛡️ VULNERABILITY SCANNING:
+    - nikto - Web server scanner (CGI, outdated files)
+    - nuclei - Template-based vulnerability scanner
+    - wapiti - Web application vulnerability scanner
+    - skipfish - Automated security reconnaissance
+    
+    💉 INJECTION TOOLS:
+    - sqlmap - Automatic SQL injection tool
+    - commix - Command injection automation
+    - xsstrike - XSS detection suite
+    - ssrfmap - SSRF exploitation
+    
+    📊 ANALYSIS & DEBUGGING:
+    - burpsuite - Full-featured web pentest platform
+    - owasp-zap - Free security testing platform
+    - mitmproxy - HTTP/HTTPS proxy
+    - wireshark - Network protocol analyzer
+    
+    🔐 PASSWORD TOOLS:
+    - cewl - Custom wordlist generator
+    - hashcat - Password hash cracker
+    - john - John the Ripper password cracker
+    - hydra - Network login cracker
+    
+    📱 CMS-SPECIFIC:
+    - wpscan - WordPress security scanner
+    - joomscan - Joomla vulnerability scanner
+    - drupscan - Drupal security scanner
+    
+    ☁️ CLOUD & API:
+    - aws-cli - Amazon Web Services CLI
+    - gcloud - Google Cloud CLI
+    - postman - API testing platform
+    
+    🎯 SPECIAL PURPOSE:
+    - cutycapt - Web screenshot utility
+    - httprobe - HTTP/HTTPS probe tool
+    - httpx - Multi-purpose HTTP toolkit
+    - nuclei - Fast vulnerability scanner
+    
+    💡 CARA PAKE:
+    Ketik !webtools di terminal buat liat daftar lengkap!
+    """
     def __init__(self, core):
         self.core = core
         

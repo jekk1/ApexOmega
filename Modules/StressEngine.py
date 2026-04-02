@@ -7,6 +7,46 @@ from typing import List
 
 # * Modul Pengujian Beban Layer-7 (HTTP Flood)
 class StressEngine:
+    """
+    StressEngine itu kayak stress test buat jembatan - kita uji apakah website bisa nahan beban berat.
+    
+    Bayangin website itu kayak toko:
+    - Normalnya: 10-100 pengunjung per menit
+    - Stress test: Kita datengin 1000+ pengunjung bareng-bareng
+    
+    TUJUANNYA BUKAN buat nge-DDoS (itu ilegal!), tapi:
+    - Tau batas maksimal server
+    - Cari tau apakah ada proteksi DDoS
+    - Liat gimana website behave under pressure
+    
+    Cara kerja:
+    
+    1. MULTI-THREADING - Ribuan koneksi paralel
+       - Setiap thread = 1 'pengunjung'
+       - 50 threads = 50 pengunjung bareng-bareng
+       - Bisa sampe 500+ threads
+    
+    2. REQUEST FLOOD - Banjir request
+       - Tiap thread kirim request terus-terusan
+       - Server bakal kewalahan kalo gak kuat
+    
+    3. CACHE BYPASS - Tembus proteksi
+       - Pake IP random biar gak kebanned
+       - Cache buster biar gak dilayanin dari cache
+       - User-Agent random biar kayak banyak device berbeda
+    
+    4. REAL-TIME STATS - Laporan langsung
+       - Request sukses
+       - Request blocked (403, 429)
+       - Error (500, timeout)
+    
+    HASILNYA:
+    - Server kuat = bagus, siap production
+    - Server down = perlu upgrade/optimasi
+    - WAF ke-trigger = ada proteksi DDoS
+    
+    ⚠️ PENTING: Cuma pake di website LU SENDIRI atau yang ada ijin tertulis!
+    """
     def __init__(self):
         self.isFlooding = False
         self.user_agents: List[str] = [

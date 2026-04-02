@@ -2,3 +2,12 @@ requests
 beautifulsoup4
 rich
 customtkinter
+
+# Optional dependencies for advanced features
+scapy
+# Install with: pip install scapy
+scapy
+
+netifaces
+# Windows: pip install netifaces (requires Visual C++ Build Tools)
+# Alternative: Use built-in ipconfig fallback (no installation needed)

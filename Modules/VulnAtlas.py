@@ -7,6 +7,42 @@ from typing import List, Dict, Tuple, Optional, Any
 
 # * Pustaka Pemindai Kerentanan Injeksi & Path Sensitif
 class VulnAtlas:
+    """
+    VulnAtlas itu kayak dokter umum yang kasih diagnosa penyakit website.
+    
+    Dia punya 300+ 'obat tes' yang bakal disuntikin ke website buat liat reaksinya:
+    
+    1. SENSITIVE FILES - Cari file yang seharusnya disembunyiin
+       - .env (database password, API keys)
+       - .git/config (source code history)
+       - wp-config.php (WordPress config)
+       - backup.sql, database.sql (data dump)
+       - .ssh/id_rsa (private key server)
+    
+    2. CORS VULNERABILITY - Cek apakah website bisa di-hack dari domain lain
+       - Seharusnya website cuma terima request dari domain sendiri
+       - Kalo CORS salah config, hacker bisa ambil data user dari browser korban
+    
+    3. SSTI (Server-Side Template Injection) - Inject code di template
+       - Website modern pake template engine (Jinja2, Twig, dll)
+       - Kalo input user gak difilter, bisa inject code berbahaya
+    
+    4. CRLF INJECTION - Inject header HTTP
+       - Set cookie palsu
+       - Redirect ke website phishing
+       - Cache poisoning
+    
+    5. HOST HEADER INJECTION - Manipulasi header Host
+       - Password reset link bisa diarahkan ke domain hacker
+       - Cache poisoning via host header
+    
+    6. FILE UPLOAD - Cek apakah bisa upload file berbahaya
+       - Upload PHP shell buat remote control server
+       - Upload HTML buat phishing
+    
+    Tool ini kerja dengan cara 'nyuntik' payload dan liat gejalanya.
+    Dari reaksi website, kita bisa tau penyakit apa yang diderita!
+    """
     def __init__(self):
         self.session = requests.Session()
         self.headers = {'User-Agent': 'ApexOmega/5.0 (Vulnerability Scanner)'}
@@ -148,12 +184,13 @@ class VulnAtlas:
 
     def fuzzSensitivePaths(self, baseUrl: str) -> List[Tuple[str, int]]:
         """Pindai puluhan+ path kritis yang seharusnya tidak terakses publik.
-        
+        HANYA laporkan path yang benar-benar terekspos (HTTP 200), bukan yang diblokir (403/401).
+
         Args:
             baseUrl: Root URL web.
-            
+
         Returns:
-            Penyebutan path/ruang beserta kode statusnya.
+            Penyebutan path/ruang beserta kode statusnya (hanya yang valid).
         """
         found = []
         base = baseUrl.rstrip('/')
@@ -162,13 +199,14 @@ class VulnAtlas:
             target = f"{base}/{p}"
             try:
                 res = self.session.head(target, headers=self.headers, timeout=3, allow_redirects=False)
-                # Catat rute yang dapat diakses murni (termasuk forbidden di akar internal)
-                if res.status_code in [200, 301, 302, 401, 403]:
-                    # Jika 200, dianggap exposure data
+                # HANYA catat yang benar-benar accessible (200) atau redirect (301/302)
+                # JANGAN laporkan 403/401/404 karena itu artinya path tidak ada atau diblokir
+                if res.status_code in [200, 301, 302]:
                     if res.status_code == 200:
                         self._log_finding(f"Direct Path Exposure: {target}", "Information Disclosure", "High", f"Status: 200")
                     found.append((p, res.status_code))
-            except Exception: 
+                # 403/401/404 = File tidak ada atau diblokir - ini BAGUS, bukan vulnerability
+            except Exception:
                 pass
         return found
 

@@ -4,6 +4,41 @@ from typing import List, Dict, Tuple, Optional
 
 # * Auditor Keamanan API (REST, GraphQL, Dokumentasi Terbuka)
 class ApiAuditor:
+    """
+    ApiAuditor itu kayak inspektur bangunan buat API (Application Programming Interface).
+    
+    API itu kayak pelayan restoran:
+    - Lu pesan (request) → Pelayan ambil dari dapur (server) → Sajiin ke lu (response)
+    - Masalahnya: Gimana kalo pelayannya bisa dibohongi?
+    
+    Tool ini cek:
+    
+    1. ENDPOINT FUZZING - Cari 'pintu masuk' API yang tersembunyi
+       - /api, /api/v1, /api/v2, /graphql, /rest
+       - /swagger, /api-docs (dokumentasi yang kadang kebuka publik)
+       - /admin/api, /user/api (endpoint internal yang bocor)
+    
+    2. HTTP METHODS CHECK - Cek metode apa aja yang bisa dipake
+       - GET (ambil data)
+       - POST (kirim data)
+       - PUT (update data)
+       - DELETE (hapus data) ← Ini yang bahaya kalo gak diproteksi!
+       - OPTIONS (cek method yang tersedia)
+    
+    3. AUTHENTICATION BYPASS - Coba tembus login
+       - Kadang API lupa proteksi endpoint tertentu
+       - Bisa akses data user tanpa login
+    
+    4. DATA EXPOSURE - Cek data yang kebocoran
+       - API kadang terlalu 'baik hati' kasih data
+       - Password hash, email, nomor telepon, dll
+    
+    5. GRAPHQL INTROSPECTION - Cek schema GraphQL
+       - GraphQL punya fitur 'introspection' (cerita tentang diri sendiri)
+       - Dari situ hacker bisa tau semua query yang tersedia
+    
+    API yang gak diproteksi itu kayak brankas yang kuncinya ditinggal di pintu!
+    """
     def __init__(self):
         self.session = requests.Session()
         self.headers = {'User-Agent': 'ApexOmega/5.0 (API Scanner)'}
@@ -24,10 +59,11 @@ class ApiAuditor:
 
     def fuzzEndpoints(self, baseUrl: str) -> List[str]:
         """Pencarian paksa keberadaan endpoint API tersembunyi.
-        
+        HANYA laporkan endpoint yang benar-benar ada (HTTP 200/301/302), bukan yang unauthorized (401/403).
+
         Args:
             baseUrl: URL dasar target (misal: https://api.target.com)
-            
+
         Returns:
             Daftar endpoint API yang bereaksi aktif (status valid).
         """
@@ -37,9 +73,14 @@ class ApiAuditor:
             target = f"{base}/{e}"
             try:
                 # Menggunakan GET tanpa mengikuti pengalihan (untuk menghindari misdireksi false positive)
+                # HANYA anggap endpoint valid jika return 200 (OK), 301/302 (Redirect)
+                # JANGAN anggap 401/403/404/500 sebagai "found" karena itu artinya endpoint tidak ada/tidak accessible
                 res = self.session.get(target, timeout=3, allow_redirects=False)
-                if res.status_code in [200, 401, 403, 405, 500]:
+                if res.status_code in [200, 301, 302]:
                     found.append(e)
+                # 401/403 = Unauthorized/Forbidden (endpoint mungkin ada tapi tidak accessible - bukan vulnerability)
+                # 404 = Not Found (endpoint tidak ada)
+                # 500 = Server Error (bukan indikator endpoint valid)
             except Exception:
                 pass
         return found

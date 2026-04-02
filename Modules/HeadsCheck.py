@@ -2,6 +2,46 @@ import requests
 
 # * HeadsCheck v5.8 (Advanced Security Header Auditor)
 class HeadsCheck:
+    """
+    HeadsCheck itu kayak inspektur safety buat header keamanan website.
+    
+    Header HTTP itu kayak surat keterangan dari server:
+    - "Ini lho website saya, pake HTTPS ya!"
+    - "Jangan coba-coba inject script di sini!"
+    - "Data user gak boleh di-share ke domain lain!"
+    
+    Tool ini cek 6 header keamanan utama:
+    
+    1. HSTS (Strict-Transport-Security) - Paksa HTTPS
+       - Tanpa ini: User bisa akses via HTTP (gak aman)
+       - Dengan ini: Browser maksa pake HTTPS
+    
+    2. CSP (Content-Security-Policy) - Anti XSS
+       - Batasi dari mana script bisa dimuat
+       - Kalo ada hacker inject script dari domain lain → diblokir
+    
+    3. X-Frame-Options - Anti Clickjacking
+       - Mencegah website di-embed di iframe hacker
+       - Tanpa ini: Hacker bisa bikin website lu 'dipake' buat phishing
+    
+    4. X-Content-Type-Options - Anti MIME Sniffing
+       - Browser jangan nebak-nebak tipe file
+       - File .jpg ya .jpg, bukan .exe yang disamarkan
+    
+    5. Referrer-Policy - Kontrol Privacy
+       - Batasi info yang dikirim ke website lain
+       - Jangan sampe URL yang sensitif kebocoran
+    
+    6. Permissions-Policy - Kontrol Fitur Browser
+       - Matikan fitur yang gak dipake (camera, mic, location)
+       - Kurangi attack surface
+    
+    HASIL SCAN:
+    - ✓ FOUND = Header ada, website aman
+    - ✗ MISSING = Header gak ada, POTENSI BAHAYA!
+    
+    Website tanpa header keamanan itu kayak rumah tanpa kunci!
+    """
     def __init__(self, core):
         self.core = core
         self.target = core.active_target

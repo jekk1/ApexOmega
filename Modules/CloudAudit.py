@@ -3,6 +3,49 @@ from typing import List, Dict, Optional
 
 # * Modul Auditor Layanan Cloud Terbuka (S3, Firebase, Azure, DO, Alibaba)
 class CloudAudit:
+    """
+    CloudAudit itu kayak detektif yang nyari harta karun di awan (cloud storage).
+    
+    Perusahaan modern nyimpen data di cloud:
+    - AWS S3 (Amazon)
+    - Firebase (Google)
+    - Google Cloud Storage
+    - Azure Blob (Microsoft)
+    - DigitalOcean Spaces
+    
+    MASALAH BESAR: Banyak yang lupa setting permission!
+    
+    Bayangin lu punya gudang data di cloud, tapi:
+    - Gak dikunci (public access)
+    - Siapa aja bisa baca (data leakage)
+    - Siapa aja bisa tulis (upload file malicious)
+    - Siapa aja bisa hapus (data destruction)
+    
+    Tool ini bisa:
+    
+    1. BUCKET NAMING PERMUTATIONS - Tebak nama bucket
+       - Dari nama domain, dia bikin variasi:
+       - nama.com → nama, nama-bucket, nama-storage, nama-assets
+       - bucket-nama, nama.prod, nama.dev, dll
+    
+    2. PERMISSION CHECKING - Cek apakah bucket kebuka publik
+       - Bisa baca file? (data breach)
+       - Bisa upload file? (bisa nyelipin malware)
+       - Bisa hapus file? (sabotage)
+    
+    3. MULTI-CLOUD SCAN - Cek semua provider cloud
+       - AWS S3, Firebase, GCS, Azure, dll
+       - Satu command, semua dicek
+    
+    Data sensitif yang sering kebocoran:
+    - Database backup (.sql, .dump)
+    - Config file (.env, credentials.json)
+    - User data (CSV, Excel dengan data pelanggan)
+    - Log file (bisa ada password/API key)
+    - Source code backup
+    
+    Ini bukan hack - ini NYURI YANG LEGAL karena pintunya kebuka!
+    """
     def __init__(self):
         self.session = requests.Session()
         self.headers = {'User-Agent': 'ApexOmega/5.0 (Cloud Auditor)'}
@@ -68,26 +111,28 @@ class CloudAudit:
 
     def findCloudBuckets(self, domain: str) -> List[Dict[str, str]]:
         """Mencari eksistensi bucket cloud terbuka dari sebuah target domain.
-        
+        HANYA laporkan bucket yang benar-benar PUBLIC (HTTP 200), bukan yang private/auth-required (401/403).
+
         Args:
             domain: Domain dari target pencarian.
-            
+
         Returns:
-            List of dictionary berisi informasi tentang URL dan Status.
+            List of dictionary berisi informasi tentang URL dan Status (hanya yang public).
         """
         found = []
         names_to_test = self.generateBucketPermutations(domain)
-        
+
         for name in names_to_test:
             # * Robust Handling: Cek apakah data source adalah dict atau list (v6.3.1 Fix)
             items = self.cloudSuffixes.items() if isinstance(self.cloudSuffixes, dict) else [(f"Provider_{i}", s) for i, s in enumerate(self.cloudSuffixes)]
-            
+
             for provider, suffix in items:
                 target = f"https://{name}{suffix}"
                 try:
                     res = self.session.head(target, timeout=3, allow_redirects=True)
-                    # Hanya log kalau server bereaksi valid terhadap request cloud (200, 403, 401)
-                    if res.status_code in [200, 401, 403]:
+                    # HANYA laporkan bucket yang benar-benar PUBLIC (200)
+                    # JANGAN laporkan 401/403 karena itu artinya bucket PRIVATE (bukan vulnerability)
+                    if res.status_code == 200:
                         perm = self.checkPermissions(target)
                         found.append({
                             "provider": provider,
@@ -95,6 +140,7 @@ class CloudAudit:
                             "permission": perm,
                             "status_code": str(res.status_code)
                         })
+                    # 401/403/404 = Bucket tidak ada atau private - ini NORMAL, bukan vulnerability
                 except Exception:
                     pass
         return found

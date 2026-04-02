@@ -1,5 +1,62 @@
 # * Modul edukasi untuk pemula (Pentesting Academy v4.7)
 class EduModule:
+    """
+    EduModule itu kayak sekolah hacker online GRATIS!
+    
+    Punya 3 materi utama:
+    
+    1. WIKI - Kamus Istilah Hacker (Bahasa Manusia)
+       
+       "XSS itu apa?"
+       → Cross-Site Scripting. Nyelipin script (biasanya JS) biar 
+         jalan di browser korban via website target.
+       
+       "SQL Injection?"
+       → Nyelipin perintah database via input form biar data 
+         kesedot semua.
+       
+       "Reverse Shell?"
+       → Teknik biar server target yang 'nelfon' balik ke komputer 
+         lu (dapet akses terminal).
+       
+       "Honeypot?"
+       → Server jebakan buat manggil hacker, padahal isinya cuma 
+         rekaman aktivitas mereka.
+    
+    2. ROADMAP - Panduan Jadi Hacker dari 0 sampe Pro
+    
+       LEVEL 0: THE INFRASTRUCTURE (Dasar-dasar)
+       - Paham Linux & Terminal (ls, cd, pwd)
+       - File System (file teks, binary, script)
+       - User Power (user biasa vs sudo/root)
+       - Basic Network (IP, ping, tracert)
+       
+       LEVEL 1: WEB BASICS
+       - HTTP Protocol (GET vs POST)
+       - Browser DevTools (F12)
+       - Domain & DNS (nslookup)
+       
+       LEVEL 2: ATTACK FUNDAMENTALS
+       - Information Gathering (Whois, Port Scan)
+       - Vulnerability Scan (tool otomatis)
+       - Exploitation (SQLi, XSS)
+       
+       LEVEL 3: PROFESSIONALISM
+       - Bug Bounty Platform (HackerOne, Bugcrowd)
+       - Documentation (Report = bukti kerja)
+    
+    3. QUICK TIPS - Tips Keamanan Cepat
+       - "JANGAN PERNAH audit tanpa ijin!" (Itu kriminal!)
+       - "Selalu pake VM buat nyobain tool baru"
+       - "Join Discord/Telegram security lokal"
+       - "Gunakan platform legal kayak TryHackMe"
+    
+    Cocok buat lu yang:
+    - Baru mau belajar hacking
+    - Bingung mulai dari mana
+    - Gak punya background IT
+    - Mau penjelasan santai gak ribet
+    """
     def __init__(self):
         pass
 

@@ -5,6 +5,25 @@ from typing import List, Dict
 
 # * Modul pemindaian infrastruktur jaringan
 class NetworkScanner:
+    """
+    NetworkScanner itu kayak Google Maps buat jaringan komputer.
+    
+    Fungsinya:
+    - Nyari tau IP address asli dari sebuah domain (misal: google.com itu IP-nya berapa)
+    - Nyari subdomain tersembunyi (dev.google.com, admin.google.com, dll)
+    - Ngecek DNS record buat liat email server, name server, dll
+    - Mapping semua 'ruangan' di jaringan target
+    
+    Cara kerjanya kayak detektif yang ngumpulin info dari berbagai sumber:
+    1. Sertifikat SSL - Setiap website punya sertifikat, dari situ kita bisa liat subdomain lain
+    2. DNS Records - Kayak buku telepon internet, nyimpen info IP, email server, dll
+    3. Port Scanning - Ngetok satu-satu pintu (port) buat liat ada yang jawab gak
+    
+    Hasil scan bisa kasih tau kita:
+    - Berapa banyak 'pintu masuk' ke server target
+    - Layanan apa aja yang jalan (web, email, database, dll)
+    - Subdomain yang lupa diproteksi atau terlupakan
+    """
     def __init__(self, bridge=None):
         self.bridge = bridge
         self.timeout = 2

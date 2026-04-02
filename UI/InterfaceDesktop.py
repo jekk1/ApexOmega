@@ -162,15 +162,39 @@ oLink.Save
         self.content_area = ctk.CTkFrame(self.main_container, fg_color="#0a0a0a")
         self.content_area.pack(side="right", fill="both", expand=True, padx=10, pady=10)
 
+        # * --- Mode Selector (Top Bar) ---
+        self.mode_frame = ctk.CTkFrame(self.content_area, fg_color="#1a1a1a", height=50, corner_radius=5)
+        self.mode_frame.pack(fill="x", padx=5, pady=5)
+        
+        self.mode_label = ctk.CTkLabel(self.mode_frame, text="MODE:", font=("Roboto", 12, "bold"), text_color="#888888")
+        self.mode_label.pack(side="left", padx=10, pady=10)
+        
+        self.mode_var = tk.StringVar(value="WEB")
+        self.mode_web = ctk.CTkRadioButton(self.mode_frame, text="WEB HACKING", variable=self.mode_var, value="WEB", 
+                                           font=("Roboto", 11, "bold"), command=self._on_mode_change)
+        self.mode_web.pack(side="left", padx=5, pady=10)
+        
+        self.mode_wifi = ctk.CTkRadioButton(self.mode_frame, text="WIFI HACKING", variable=self.mode_var, value="WIFI", 
+                                            font=("Roboto", 11, "bold"), command=self._on_mode_change)
+        self.mode_wifi.pack(side="left", padx=5, pady=10)
+
+        self.mode_status = ctk.CTkLabel(self.mode_frame, text="● WEB", font=("Roboto", 11, "bold"), text_color="#00ff00")
+        self.mode_status.pack(side="right", padx=10, pady=10)
+        
+        # Mode indicator icon next to status
+        self.mode_icon = ctk.CTkLabel(self.mode_frame, text="📡", font=("Roboto", 14), text_color="#00ff00")
+        self.mode_icon.pack(side="right", padx=5, pady=10)
+
         self.tabview = ctk.CTkTabview(self.content_area, border_width=1, border_color="#222222", fg_color="#050505")
         self.tabview.pack(fill="both", expand=True)
-        
+
+        # * Tab Order: Terminal, Found, Decoder, Roadmap, Scripts, How to Use
         self.tab_console = self.tabview.add("Terminal")
-        self.tab_roadmap = self.tabview.add("Roadmap")
         self.tab_found = self.tabview.add("Found")
-        self.tab_tutorial = self.tabview.add("How to Use")
-        self.tab_scripts = self.tabview.add("Scripts")
         self.tab_decoder = self.tabview.add("Decoder")
+        self.tab_roadmap = self.tabview.add("Roadmap")
+        self.tab_scripts = self.tabview.add("Scripts")
+        self.tab_tutorial = self.tabview.add("How to Use")
 
         # * Populate Tabs
         self._setup_roadmap_tab()
@@ -441,73 +465,88 @@ oLink.Save
 
         # -- Header --
         header_frame = ctk.CTkFrame(self.tab_decoder, fg_color="transparent")
-        header_frame.pack(fill="x", padx=20, pady=(15, 5))
+        header_frame.pack(fill="x", padx=20, pady=(15, 10))
 
         lbl_title = ctk.CTkLabel(header_frame, text="UNIVERSAL DECODER v6.1", font=("Roboto", 20, "bold"), text_color="#00ffff")
         lbl_title.pack(side="left")
 
         lbl_hint = ctk.CTkLabel(header_frame, text="Auto-detect & Decode Multiple Encodings", font=("Roboto", 11), text_color="#555555")
-        lbl_hint.pack(side="right")
+        lbl_hint.pack(side="right", padx=10)
 
-        # -- Mode Selection --
-        mode_frame = ctk.CTkFrame(self.tab_decoder, fg_color="transparent")
-        mode_frame.pack(fill="x", padx=20, pady=5)
+        # -- Mode Selection (Frame dengan border) --
+        mode_frame = ctk.CTkFrame(self.tab_decoder, fg_color="#080808", border_width=1, border_color="#222222")
+        mode_frame.pack(fill="x", padx=20, pady=10)
 
         self.decoder_mode_var = ctk.StringVar(value="auto")
-        
-        radio_auto = ctk.CTkRadioButton(mode_frame, text="AUTO DETECT (Recommended)", variable=self.decoder_mode_var, value="auto", 
-                                         font=("Roboto", 12, "bold"), command=self._decoder_mode_changed)
-        radio_auto.pack(side="left", padx=10)
 
-        radio_manual = ctk.CTkRadioButton(mode_frame, text="MANUAL SELECT", variable=self.decoder_mode_var, value="manual", 
-                                           font=("Roboto", 12, "bold"), command=self._decoder_mode_changed)
-        radio_manual.pack(side="left", padx=10)
+        radio_auto = ctk.CTkRadioButton(mode_frame, text="AUTO DETECT", variable=self.decoder_mode_var, value="auto",
+                                         font=("Roboto", 12, "bold"), command=self._decoder_mode_changed,
+                                         fg_color="#0066cc", hover_color="#0088ff")
+        radio_auto.pack(side="left", padx=15, pady=10)
 
-        # -- Manual Mode Dropdown (Hidden by default) --
-        self.manual_mode_frame = ctk.CTkFrame(self.tab_decoder, fg_color="transparent")
-        
-        lbl_manual = ctk.CTkLabel(self.manual_mode_frame, text="Encoding Type:", font=("Roboto", 11), text_color="#888888")
-        lbl_manual.pack(side="left", padx=(20, 5))
+        radio_manual = ctk.CTkRadioButton(mode_frame, text="MANUAL SELECT", variable=self.decoder_mode_var, value="manual",
+                                           font=("Roboto", 12, "bold"), command=self._decoder_mode_changed,
+                                           fg_color="#cc6600", hover_color="#ff8800")
+        radio_manual.pack(side="left", padx=15, pady=10)
+
+        # -- Dropdown Encoding Type (Always Visible) --
+        dropdown_frame = ctk.CTkFrame(self.tab_decoder, fg_color="#080808", border_width=1, border_color="#222222")
+        dropdown_frame.pack(fill="x", padx=20, pady=5)
+
+        lbl_manual = ctk.CTkLabel(dropdown_frame, text="Encoding Type:", font=("Roboto", 11, "bold"), text_color="#00ff00")
+        lbl_manual.pack(side="left", padx=(20, 10), pady=10)
 
         self.decoder_type_var = ctk.StringVar(value="base64")
-        encoding_types = ["base64", "base64url", "base32", "base85", "ascii85", "url", "urldouble", "html", "hex", "binary", "rot13", "reverse"]
-        
-        self.decoder_type_menu = ctk.CTkOptionMenu(self.manual_mode_frame, values=encoding_types, variable=self.decoder_type_var,
-                                                    font=("Roboto", 11), fg_color="#1a1a1a", button_color="#2a2a2a",
-                                                    button_hover_color="#3a3a3a", width=150)
-        self.decoder_type_menu.pack(side="left", padx=5)
+        encoding_types = [
+            "base64", "base64url", "base64double", "base32", "base85", "ascii85",
+            "url", "urldouble", "html", "hex", "binary", "rot13", "reverse"
+        ]
+
+        self.decoder_type_menu = ctk.CTkOptionMenu(dropdown_frame, values=encoding_types, variable=self.decoder_type_var,
+                                                    font=("Roboto", 11, "bold"), fg_color="#1a1a1a", button_color="#2a2a2a",
+                                                    button_hover_color="#3a3a3a", width=200, height=32)
+        self.decoder_type_menu.pack(side="left", padx=10, pady=10)
+
+        lbl_hint_decode = ctk.CTkLabel(dropdown_frame, text="(For AUTO: detects automatically)  (For MANUAL: use dropdown)", 
+                                        font=("Roboto", 9, "italic"), text_color="#555555")
+        lbl_hint_decode.pack(side="right", padx=10, pady=10)
 
         # -- Input Area --
         input_frame = ctk.CTkFrame(self.tab_decoder, fg_color="#080808", border_width=1, border_color="#222222")
-        input_frame.pack(fill="both", expand=True, padx=20, pady=5)
+        input_frame.pack(fill="both", expand=False, padx=20, pady=10)
 
         lbl_input = ctk.CTkLabel(input_frame, text="ENCODED INPUT:", font=("Roboto", 11, "bold"), text_color="#00ff00")
         lbl_input.pack(anchor="w", padx=10, pady=(10, 5))
 
-        self.decoder_input = ctk.CTkTextbox(input_frame, font=("Consolas", 13), fg_color="#050505", border_width=0, 
-                                             text_color="#cccccc", height=100)
+        self.decoder_input = ctk.CTkTextbox(input_frame, font=("Consolas", 13), fg_color="#050505", border_width=0,
+                                             text_color="#cccccc", height=120)
         self.decoder_input.pack(fill="both", expand=True, padx=10, pady=5)
 
         # -- Action Buttons --
         btn_frame = ctk.CTkFrame(self.tab_decoder, fg_color="transparent")
         btn_frame.pack(fill="x", padx=20, pady=5)
 
-        self.btn_decode = ctk.CTkButton(btn_frame, text="🔍 AUTO DECODE", font=("Roboto", 13, "bold"), 
-                                         fg_color="#0066cc", hover_color="#0088ff", height=40, width=150,
+        self.btn_decode = ctk.CTkButton(btn_frame, text="AUTO DECODE", font=("Roboto", 13, "bold"),
+                                         fg_color="#0066cc", hover_color="#0088ff", height=40, width=160,
                                          command=self._run_auto_decode)
         self.btn_decode.pack(side="left", padx=10)
 
-        self.btn_decode_manual = ctk.CTkButton(btn_frame, text="DECODE (MANUAL)", font=("Roboto", 13, "bold"), 
-                                                fg_color="#cc6600", hover_color="#ff8800", height=40, width=150,
+        self.btn_decode_manual = ctk.CTkButton(btn_frame, text="DECODE (MANUAL)", font=("Roboto", 13, "bold"),
+                                                fg_color="#cc6600", hover_color="#ff8800", height=40, width=160,
                                                 command=self._run_manual_decode)
         self.btn_decode_manual.pack(side="left", padx=10)
 
-        self.btn_clear = ctk.CTkButton(btn_frame, text="CLEAR", font=("Roboto", 13, "bold"), 
+        self.btn_encode = ctk.CTkButton(btn_frame, text="ENCODE", font=("Roboto", 13, "bold"),
+                                         fg_color="#9933cc", hover_color="#aa44dd", height=40, width=120,
+                                         command=self._run_encode)
+        self.btn_encode.pack(side="left", padx=10)
+
+        self.btn_clear = ctk.CTkButton(btn_frame, text="CLEAR", font=("Roboto", 13, "bold"),
                                         fg_color="#333333", hover_color="#444444", height=40, width=100,
                                         command=self._decoder_clear)
         self.btn_clear.pack(side="right", padx=10)
 
-        self.btn_copy = ctk.CTkButton(btn_frame, text="COPY RESULT", font=("Roboto", 13, "bold"), 
+        self.btn_copy = ctk.CTkButton(btn_frame, text="COPY RESULT", font=("Roboto", 13, "bold"),
                                        fg_color="#006600", hover_color="#008800", height=40, width=130,
                                        command=self._decoder_copy_result)
         self.btn_copy.pack(side="right", padx=10)
@@ -538,15 +577,19 @@ oLink.Save
     # * Handle decoder mode change (auto/manual)
     def _decoder_mode_changed(self):
         mode = self.decoder_mode_var.get()
-        
+
         if mode == "manual":
-            self.manual_mode_frame.pack(fill="x", padx=20, pady=5)
             self.btn_decode.configure(state="disabled", fg_color="#222222", text_color="#555555")
             self.btn_decode_manual.configure(state="normal", fg_color="#cc6600", text_color="#ffffff")
+            self.btn_encode.configure(state="normal", fg_color="#9933cc", text_color="#ffffff")
+            # Enable dropdown - bright colors
+            self.decoder_type_menu.configure(fg_color="#1a1a1a", button_color="#2a2a2a", state="normal")
         else:
-            self.manual_mode_frame.pack_forget()
             self.btn_decode.configure(state="normal", fg_color="#0066cc", text_color="#ffffff")
             self.btn_decode_manual.configure(state="disabled", fg_color="#222222", text_color="#555555")
+            self.btn_encode.configure(state="disabled", fg_color="#222222", text_color="#555555")
+            # Disable dropdown - gray/inactive colors
+            self.decoder_type_menu.configure(fg_color="#1a1a1a", button_color="#1a1a1a", state="disabled")
 
     # * Run auto decode
     def _run_auto_decode(self):
@@ -608,6 +651,34 @@ oLink.Save
             output_text += f"[success] {result['decoded_text']}\n"
         else:
             output_text += f"[error] ✗ Decoding Failed: {result.get('error', 'Unknown error')}\n"
+
+        self._decoder_output_show(output_text)
+        self._decoder_show_all_results([])
+
+    # * Run encode
+    def _run_encode(self):
+        text = self.decoder_input.get("1.0", "end-1c").strip()
+        encoding_type = self.decoder_type_var.get()
+
+        if not text:
+            self._decoder_output_show("[error] Error: Input is empty\n")
+            return
+
+        if not hasattr(self.core, 'decoder'):
+            self._decoder_output_show("[error] Error: Decoder module not initialized\n")
+            return
+
+        # Run encode
+        result = self.core.decoder.encode(text, encoding_type)
+
+        # Display result
+        output_text = ""
+
+        if result['success']:
+            output_text += f"[success] ✓ Encoded ({encoding_type.upper()}):\n\n"
+            output_text += f"[cyanText] {result['encoded_text']}\n"
+        else:
+            output_text += f"[error] ✗ Encoding Failed: {result.get('error', 'Unknown error')}\n"
 
         self._decoder_output_show(output_text)
         self._decoder_show_all_results([])
@@ -686,7 +757,7 @@ oLink.Save
             clean_text = result_text
             for tag in ["[success]", "[error]", "[warning]", "[info]", "[cyanText]", "[dimText]"]:
                 clean_text = clean_text.replace(tag, "")
-            
+
             self.clipboard_clear()
             self.clipboard_append(clean_text)
             self.log_to_terminal("[success] Decoder result copied to clipboard!\n", "[success] ")
@@ -869,7 +940,7 @@ oLink.Save
         if self.hacker_mode: return
         self.hacker_mode = True
         self.log_to_terminal("\n" + "="*60 + "\n", "[success] ")
-        self.log_to_terminal("  [!!!] APEXOMEGA OVERRIDE: HACKER MODE ACTIVATED [!!!]\n", "[danger] ")
+        self.log_to_terminal("  [!!!] APEXOMEGA OVERRIDE: ACTIVATED [!!!]\n", "[danger] ")
         self.log_to_terminal("="*60 + "\n\n", "[success] ")
         
         # Bind ESC globally
@@ -920,7 +991,7 @@ oLink.Save
                     self.after(0, lambda m=hit, t=tag: self.log_to_terminal(m, t))
                     time.sleep(0.01)
                 
-            self.after(0, lambda: self.log_to_terminal("\n[!] HACKER MODE TERMINATED BY USER SIGINT.\n", "[warning] "))
+            self.after(0, lambda: self.log_to_terminal("\n[!] TERMINATED BY USER SIGINT.\n", "[warning] "))
 
         threading.Thread(target=run_hacker, daemon=True).start()
 
@@ -1116,6 +1187,21 @@ oLink.Save
                 self.found_box.configure(state="disabled")
         self.after(0, _exec)
 
+    def _on_mode_change(self):
+        """Handle mode switch between WEB and WIFI hacking"""
+        mode = self.mode_var.get()
+        if mode == "WEB":
+            self.mode_icon.configure(text="📡", text_color="#00ff00")
+            self.log_to_terminal("\n[MODE] Switched to WEB HACKING mode\n", "[success] ")
+        else:
+            self.mode_icon.configure(text="📶", text_color="#ff6600")
+            self.log_to_terminal("\n[MODE] Switched to WIFI HACKING mode\n", "[warning] ")
+        # Refresh tools sidebar
+        if self.tools_visible:
+            self._populate_tools()
+        # Auto-show prompt agar bisa langsung ngetik (no need Ctrl+C)
+        self.after(100, self.show_prompt)
+
     def _toggle_tools(self):
         if not self.tools_visible:
             self.tools_frame.pack(fill="both", expand=True, padx=5, pady=5)
@@ -1126,61 +1212,174 @@ oLink.Save
             self.tools_visible = False
 
     def _populate_tools(self):
+        """Populate tools sidebar based on current mode"""
         for widget in self.tools_frame.winfo_children():
             widget.destroy()
-        
-        categories = {
+
+        # Mode-specific tool categories
+        web_categories = {
             "RECON / INFO": ["nmap", "recon", "webaudit", "headers", "cookie", "cewl", "dmitry", "sslscan", "testssl", "wayback", "gau"],
             "DISCOVERY": ["subdomain", "vhost", "webports", "dirb", "git", "dnsenum", "fierce", "nikto", "apacheusers"],
             "VULNERABILITY": ["vuln", "wp", "form", "waf", "cms", "joomscan", "wapiti", "webcache", "nuclei", "padbuster"],
             "API / CLOUD": ["api", "cloud", "ffuf", "wfuzz", "skipfish"],
             "EXPLOITATION": ["payload", "stress", "cmdi", "davtest", "weevely", "webacoo", "laudanum", "slowhttp"],
+            "NETWORK CONTROL": ["evil", "scanlan", "kill", "monitor"],
             "UTILITY": ["help", "script", "urlcrazy", "gowitness", "webtools", "websploit"]
         }
         
+        wifi_categories = {
+            "WIFI RECON": ["wash", "airodump", "airodump-ng", "kismet", "wigle"],
+            "WIFI ATTACKS": ["aireplay", "aireplay-ng", "mdk4", "mdk3", "reaver", "bully"],
+            "WIFI CRACK": ["aircrack", "aircrack-ng", "hashcat", "john"],
+            "WIFI UTILITY": ["macchanger", "ifconfig", "iwconfig", "rfkill"],
+            "GENERAL": ["help", "script", "monitor"]
+        }
+        
+        categories = wifi_categories if self.mode_var.get() == "WIFI" else web_categories
+
         for cat, tools in categories.items():
             lbl = ctk.CTkLabel(self.tools_frame, text=cat, font=("Roboto", 11, "bold"), text_color="#444444", anchor="w")
             lbl.pack(fill="x", pady=(10, 2), padx=5)
-            
+
             for t in sorted(tools):
                 btn = ctk.CTkButton(self.tools_frame, text=t.upper(), anchor="w", fg_color="transparent", text_color="#777777", hover_color="#1a1a1a", height=28, command=lambda x=t: self._show_how_to(x))
                 btn.pack(fill="x", pady=0)
 
-    # * Setup Roadmap Tab v5.9 (8 Misi)
+    # * Setup Roadmap Tab v6.3 (Flowchart Style - Beginner Friendly)
     def _setup_roadmap_tab(self):
         for widget in self.tab_roadmap.winfo_children():
             widget.destroy()
 
-        lbl_title = ctk.CTkLabel(self.tab_roadmap, text="MISI PENAKLUKAN WEBSITE", font=("Roboto", 24, "bold"), text_color="#00cc66")
-        lbl_title.pack(pady=(30, 5))
-        
-        lbl_sub = ctk.CTkLabel(self.tab_roadmap, text="8 Langkah menuju akses penuh (v5.9 Detailed Guide)", font=("Roboto", 13), text_color="#555555")
-        lbl_sub.pack(pady=(0, 20))
-        
+        lbl_title = ctk.CTkLabel(self.tab_roadmap, text="🗺️ PETA PENAKLUKAN WEBSITE", font=("Roboto", 28, "bold"), text_color="#00cc66")
+        lbl_title.pack(pady=(20, 5))
+
+        lbl_sub = ctk.CTkLabel(self.tab_roadmap, text="8 Langkah mudah buat hack website - Dari 0 sampe akses penuh!", font=("Roboto", 14), text_color="#555555")
+        lbl_sub.pack(pady=(0, 15))
+
         self.roadmap_checks = []
-        roadmap_frame = ctk.CTkScrollableFrame(self.tab_roadmap, fg_color="#0a0a0a", border_width=1, border_color="#222222")
-        roadmap_frame.pack(fill="both", expand=True, padx=80, pady=20)
-        
-        # * 8 Misi Detail
+        roadmap_frame = ctk.CTkScrollableFrame(self.tab_roadmap, fg_color="#0a0a0a", border_width=0)
+        roadmap_frame.pack(fill="both", expand=True, padx=40, pady=10)
+
+        # * Flowchart Style - Visual Boxes with Arrows
         missions = [
-            ("1. Reconnaissance (!recon)", "Stalking IP, DNS, WHOIS, Tech Detection. Mode: !recon quick | deep | full"),
-            ("2. Infrastructure Scan (!nmap)", "Port scanning: !nmap (default 10 ports) atau !nmap 80,443,3306 (custom)"),
-            ("3. Discovery (!subdomain / !dirb)", "Subdomain brute/passive dan directory bruteforce common/deep"),
-            ("4. Web Analysis (!headers / !cookie / !form / !git)", "Audit security headers, cookie flags, form inputs, dan .git exposure"),
-            ("5. Vulnerability Scan (!vuln)", "CORS, SSTI, CRLF, Host Injection, Upload, 100+ Path Fuzzing"),
-            ("6. API & Cloud (!api / !cloud)", "Endpoint fuzzing, method check, S3/Firebase/GCS bucket hunting"),
-            ("7. CMS Audit (!wp)", "WP version, plugins, users, vulnerable files: !wp all"),
-            ("8. Stress Testing (!stress)", "Load test: !stress <threads> <duration>. Duration 0 = infinite")
+            {
+                "num": 1,
+                "title": "RECONNAISSANCE",
+                "subtitle": "🔍 Stalking Target (Pengumpulan Info)",
+                "desc": "Seperti detektif yang ngumpulin info target sebelum aksi. Kita cari tau:\n• IP Address & Lokasi server\n• Pemilik domain & tanggal daftar\n• Teknologi yang dipake (framework, web server)\n• Subdomain yang tersembunyi",
+                "command": "!recon quick  |  !recon deep  |  !recon full",
+                "color": "#3498db"  # Blue
+            },
+            {
+                "num": 2,
+                "title": "INFRASTRUCTURE SCAN",
+                "subtitle": "️ Cek Pintu & Jendela (Port Scanning)",
+                "desc": "Ngetok satu-satu 'pintu' (port) server buat liat apa yang kebuka:\n• Port 80/443 = Web server\n• Port 22 = SSH (remote access)\n• Port 3306 = Database MySQL\n• Port 21 = FTP (file transfer)",
+                "command": "!nmap  |  !nmap 80,443,8080",
+                "color": "#e74c3c"  # Red
+            },
+            {
+                "num": 3,
+                "title": "DISCOVERY",
+                "subtitle": "Mapping Kerajaan Digital",
+                "desc": "Nyari semua 'cabang' target:\n• Subdomain (dev.site.com, admin.site.com)\n• Folder tersembunyi (/admin, /backup, /.git)\n• File sensitif (.env, config.php, database.sql)",
+                "command": "!subdomain  |  !dirb  |  !webdiscovery",
+                "color": "#f39c12"  # Orange
+            },
+            {
+                "num": 4,
+                "title": "WEB ANALYSIS",
+                "subtitle": "Bedah Website Mikroskopis",
+                "desc": "Periksa komponen website satu-satu:\n• Security Headers (HSTS, CSP, X-Frame)\n• Cookie Security (HttpOnly, Secure flags)\n• Form Input (cek bisa inject atau gak)\n• Git Exposure (.git folder yang kebuka)",
+                "command": "!headers  |  !cookie  |  !form  |  !git",
+                "color": "#9b59b6"  # Purple
+            },
+            {
+                "num": 5,
+                "title": "VULNERABILITY SCAN",
+                "subtitle": "Cari Penyakit/Celah Keamanan",
+                "desc": "Suntik 'obat tes' buat diagnosa penyakit website:\n• CORS Misconfiguration (bisa akses dari domain lain)\n• SSTI (Server-Side Template Injection)\n• CRLF Injection (inject header HTTP)\n• File Upload (bisa upload shell atau gak)",
+                "command": "!vuln full  |  !vuln cors  |  !vuln ssti",
+                "color": "#e67e22"  # Dark Orange
+            },
+            {
+                "num": 6,
+                "title": "API & CLOUD AUDIT",
+                "subtitle": "Cek API & Cloud Storage",
+                "desc": "Audit 'pintu belakang' modern:\n• API Endpoints (/api, /graphql, /swagger)\n• Cloud Buckets (S3, Firebase, Azure Blob)\n• Data Exposure (API yang kebuka publik)\n• Authentication Bypass",
+                "command": "!api fuzz  |  !cloud all  |  !cloud s3",
+                "color": "#1abc9c"  # Teal
+            },
+            {
+                "num": 7,
+                "title": "CMS AUDIT",
+                "subtitle": "Audit CMS (WordPress, Joomla, Drupal)",
+                "desc": "Specialized scan buat CMS populer:\n• Version detection (versi lama = rentan)\n• Plugin scanning (50+ plugin rentan)\n• User enumeration (daftar user)\n• Vulnerable files (wp-config.php, backup)",
+                "command": "!wp all  |  !wp version  |  !wp plugins",
+                "color": "#2ecc71"  # Green
+            },
+            {
+                "num": 8,
+                "title": "STRESS TESTING",
+                "subtitle": "Uji Kekuatan Server",
+                "desc": "Bebani server buat tau batas maksimal:\n• HTTP Flood (ribuan request bareng-bareng)\n• Multi-threading (50-500 concurrent connections)\n• Cache bypass (tembus proteksi WAF/CDN)\n• Real-time statistics",
+                "command": "!stress 50 30  |  !nitro 100 60",
+                "color": "#c0392b"  # Dark Red
+            }
         ]
-        
-        for i, (m, desc) in enumerate(missions):
-            cb = ctk.CTkCheckBox(roadmap_frame, text=m, font=("Roboto", 15, "bold"), text_color="#00ff00", fg_color="#00cc66", hover_color="#00aa55", border_color="#333333")
-            cb.pack(anchor="w", padx=40, pady=(20, 2))
-            
-            lbl_desc = ctk.CTkLabel(roadmap_frame, text=desc, font=("Roboto", 12), text_color="#666666", wraplength=500, justify="left")
-            lbl_desc.pack(anchor="w", padx=75, pady=(0, 10))
-            
+
+        for i, mission in enumerate(missions):
+            # Connector Arrow (except first)
+            if i > 0:
+                arrow_lbl = ctk.CTkLabel(roadmap_frame, text="⬇️", font=("Roboto", 24), text_color="#555555")
+                arrow_lbl.pack(pady=(5, 5))
+
+            # Mission Box
+            box_frame = ctk.CTkFrame(roadmap_frame, fg_color="#0f0f0f", border_width=2, 
+                                     border_color=mission["color"], corner_radius=10)
+            box_frame.pack(fill="x", padx=60, pady=5)
+
+            # Header: Number + Title + Checkbox
+            header_frame = ctk.CTkFrame(box_frame, fg_color="transparent")
+            header_frame.pack(fill="x", padx=15, pady=(15, 10))
+
+            # Number badge
+            num_badge = ctk.CTkLabel(header_frame, text=f"#{mission['num']}", 
+                                     font=("Roboto", 16, "bold"), text_color=mission["color"],
+                                     width=50)
+            num_badge.pack(side="left")
+
+            # Title
+            title_lbl = ctk.CTkLabel(header_frame, text=mission["title"], 
+                                     font=("Roboto", 16, "bold"), text_color="#ffffff")
+            title_lbl.pack(side="left", padx=10)
+
+            # Checkbox (right aligned)
+            cb = ctk.CTkCheckBox(header_frame, text="✓", width=30, 
+                                 font=("Roboto", 14, "bold"),
+                                 text_color=mission["color"], fg_color=mission["color"],
+                                 hover_color=mission["color"], border_color="#333333")
+            cb.pack(side="right")
             self.roadmap_checks.append(cb)
+
+            # Subtitle
+            sub_lbl = ctk.CTkLabel(box_frame, text=mission["subtitle"], 
+                                   font=("Roboto", 13, "italic"), text_color="#888888")
+            sub_lbl.pack(anchor="w", padx=75, pady=(0, 10))
+
+            # Description
+            desc_lbl = ctk.CTkLabel(box_frame, text=mission["desc"], 
+                                    font=("Roboto", 12), text_color="#aaaaaa",
+                                    wraplength=600, justify="left")
+            desc_lbl.pack(anchor="w", padx=75, pady=(0, 10))
+
+            # Command box
+            cmd_frame = ctk.CTkFrame(box_frame, fg_color="#1a1a1a", corner_radius=5)
+            cmd_frame.pack(fill="x", padx=75, pady=(0, 15))
+
+            cmd_lbl = ctk.CTkLabel(cmd_frame, text=f"{mission['command']}", 
+                                   font=("Consolas", 11), text_color="#00ff00")
+            cmd_lbl.pack(padx=10, pady=8)
 
     # * Tandai misi selesai
     def update_roadmap_check(self, step_idx):
