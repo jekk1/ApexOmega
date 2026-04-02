@@ -46,6 +46,7 @@ from Modules.ApiAuditor import ApiAuditor
 from Modules.CloudAudit import CloudAudit
 from Modules.ScriptLibrary import ScriptLibrary
 from Modules.WebToolsGuide import WebToolsGuide
+from Modules.DecoderTools import DecoderTools
 import requests
 import socket
 from tkinter import messagebox
@@ -83,6 +84,7 @@ class ApexOmega:
         self.cloud_audit = CloudAudit()
         self.script_lib = ScriptLibrary()
         self.web_guide = WebToolsGuide(self)
+        self.decoder = DecoderTools()
         
         # * Link Core for Global Events (v5.4)
         self.web.core = self

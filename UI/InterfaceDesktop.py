@@ -170,10 +170,12 @@ oLink.Save
         self.tab_found = self.tabview.add("Found")
         self.tab_tutorial = self.tabview.add("How to Use")
         self.tab_scripts = self.tabview.add("Scripts")
-        
+        self.tab_decoder = self.tabview.add("Decoder")
+
         # * Populate Tabs
         self._setup_roadmap_tab()
         self._setup_scripts_tab()
+        self._setup_decoder_tab()
 
         # * Terminal
         self.terminal = ctk.CTkTextbox(self.tab_console, font=("Consolas", 13), text_color="#cccccc", border_width=0, border_spacing=20, fg_color="#050505")
@@ -429,6 +431,265 @@ oLink.Save
     def _on_script_search(self, *args):
         query = self.script_search_var.get().lower().strip()
         self._populate_script_list(filterQuery=query)
+
+    # * ========== DECODER TAB (v6.1 New) ==========
+
+    # * Setup halaman Decoder dengan auto/manual mode
+    def _setup_decoder_tab(self):
+        for widget in self.tab_decoder.winfo_children():
+            widget.destroy()
+
+        # -- Header --
+        header_frame = ctk.CTkFrame(self.tab_decoder, fg_color="transparent")
+        header_frame.pack(fill="x", padx=20, pady=(15, 5))
+
+        lbl_title = ctk.CTkLabel(header_frame, text="UNIVERSAL DECODER v6.1", font=("Roboto", 20, "bold"), text_color="#00ffff")
+        lbl_title.pack(side="left")
+
+        lbl_hint = ctk.CTkLabel(header_frame, text="Auto-detect & Decode Multiple Encodings", font=("Roboto", 11), text_color="#555555")
+        lbl_hint.pack(side="right")
+
+        # -- Mode Selection --
+        mode_frame = ctk.CTkFrame(self.tab_decoder, fg_color="transparent")
+        mode_frame.pack(fill="x", padx=20, pady=5)
+
+        self.decoder_mode_var = ctk.StringVar(value="auto")
+        
+        radio_auto = ctk.CTkRadioButton(mode_frame, text="AUTO DETECT (Recommended)", variable=self.decoder_mode_var, value="auto", 
+                                         font=("Roboto", 12, "bold"), command=self._decoder_mode_changed)
+        radio_auto.pack(side="left", padx=10)
+
+        radio_manual = ctk.CTkRadioButton(mode_frame, text="MANUAL SELECT", variable=self.decoder_mode_var, value="manual", 
+                                           font=("Roboto", 12, "bold"), command=self._decoder_mode_changed)
+        radio_manual.pack(side="left", padx=10)
+
+        # -- Manual Mode Dropdown (Hidden by default) --
+        self.manual_mode_frame = ctk.CTkFrame(self.tab_decoder, fg_color="transparent")
+        
+        lbl_manual = ctk.CTkLabel(self.manual_mode_frame, text="Encoding Type:", font=("Roboto", 11), text_color="#888888")
+        lbl_manual.pack(side="left", padx=(20, 5))
+
+        self.decoder_type_var = ctk.StringVar(value="base64")
+        encoding_types = ["base64", "base64url", "base32", "base85", "ascii85", "url", "urldouble", "html", "hex", "binary", "rot13", "reverse"]
+        
+        self.decoder_type_menu = ctk.CTkOptionMenu(self.manual_mode_frame, values=encoding_types, variable=self.decoder_type_var,
+                                                    font=("Roboto", 11), fg_color="#1a1a1a", button_color="#2a2a2a",
+                                                    button_hover_color="#3a3a3a", width=150)
+        self.decoder_type_menu.pack(side="left", padx=5)
+
+        # -- Input Area --
+        input_frame = ctk.CTkFrame(self.tab_decoder, fg_color="#080808", border_width=1, border_color="#222222")
+        input_frame.pack(fill="both", expand=True, padx=20, pady=5)
+
+        lbl_input = ctk.CTkLabel(input_frame, text="ENCODED INPUT:", font=("Roboto", 11, "bold"), text_color="#00ff00")
+        lbl_input.pack(anchor="w", padx=10, pady=(10, 5))
+
+        self.decoder_input = ctk.CTkTextbox(input_frame, font=("Consolas", 13), fg_color="#050505", border_width=0, 
+                                             text_color="#cccccc", height=100)
+        self.decoder_input.pack(fill="both", expand=True, padx=10, pady=5)
+
+        # -- Action Buttons --
+        btn_frame = ctk.CTkFrame(self.tab_decoder, fg_color="transparent")
+        btn_frame.pack(fill="x", padx=20, pady=5)
+
+        self.btn_decode = ctk.CTkButton(btn_frame, text="🔍 AUTO DECODE", font=("Roboto", 13, "bold"), 
+                                         fg_color="#0066cc", hover_color="#0088ff", height=40, width=150,
+                                         command=self._run_auto_decode)
+        self.btn_decode.pack(side="left", padx=10)
+
+        self.btn_decode_manual = ctk.CTkButton(btn_frame, text="DECODE (MANUAL)", font=("Roboto", 13, "bold"), 
+                                                fg_color="#cc6600", hover_color="#ff8800", height=40, width=150,
+                                                command=self._run_manual_decode)
+        self.btn_decode_manual.pack(side="left", padx=10)
+
+        self.btn_clear = ctk.CTkButton(btn_frame, text="CLEAR", font=("Roboto", 13, "bold"), 
+                                        fg_color="#333333", hover_color="#444444", height=40, width=100,
+                                        command=self._decoder_clear)
+        self.btn_clear.pack(side="right", padx=10)
+
+        self.btn_copy = ctk.CTkButton(btn_frame, text="COPY RESULT", font=("Roboto", 13, "bold"), 
+                                       fg_color="#006600", hover_color="#008800", height=40, width=130,
+                                       command=self._decoder_copy_result)
+        self.btn_copy.pack(side="right", padx=10)
+
+        # -- Output Area --
+        output_frame = ctk.CTkFrame(self.tab_decoder, fg_color="#080808", border_width=1, border_color="#222222")
+        output_frame.pack(fill="both", expand=True, padx=20, pady=5)
+
+        lbl_output = ctk.CTkLabel(output_frame, text="DECODED OUTPUT:", font=("Roboto", 11, "bold"), text_color="#00ff00")
+        lbl_output.pack(anchor="w", padx=10, pady=(10, 5))
+
+        self.decoder_output = ctk.CTkTextbox(output_frame, font=("Consolas", 13), fg_color="#050505", border_width=0,
+                                              text_color="#00ff00", state="disabled")
+        self.decoder_output.pack(fill="both", expand=True, padx=10, pady=5)
+
+        # -- All Results Frame (Collapsible) --
+        self.results_frame = ctk.CTkScrollableFrame(self.tab_decoder, fg_color="#080808", border_width=1, border_color="#222222", height=150)
+        self.results_frame.pack(fill="x", padx=20, pady=(5, 10))
+
+        lbl_results = ctk.CTkLabel(self.results_frame, text="ALL DECODING RESULTS:", font=("Roboto", 10, "bold"), text_color="#888888")
+        lbl_results.pack(anchor="w", padx=10, pady=(5, 0))
+
+        self.all_results_labels = []
+
+        # Initialize manual mode visibility
+        self._decoder_mode_changed()
+
+    # * Handle decoder mode change (auto/manual)
+    def _decoder_mode_changed(self):
+        mode = self.decoder_mode_var.get()
+        
+        if mode == "manual":
+            self.manual_mode_frame.pack(fill="x", padx=20, pady=5)
+            self.btn_decode.configure(state="disabled", fg_color="#222222", text_color="#555555")
+            self.btn_decode_manual.configure(state="normal", fg_color="#cc6600", text_color="#ffffff")
+        else:
+            self.manual_mode_frame.pack_forget()
+            self.btn_decode.configure(state="normal", fg_color="#0066cc", text_color="#ffffff")
+            self.btn_decode_manual.configure(state="disabled", fg_color="#222222", text_color="#555555")
+
+    # * Run auto decode
+    def _run_auto_decode(self):
+        encoded_text = self.decoder_input.get("1.0", "end-1c").strip()
+        
+        if not encoded_text:
+            self._decoder_output_show("[error] Error: Input is empty\n")
+            return
+
+        if not hasattr(self.core, 'decoder'):
+            self._decoder_output_show("[error] Error: Decoder module not initialized\n")
+            return
+
+        # Run auto decode
+        result = self.core.decoder.auto_decode(encoded_text)
+
+        # Display result
+        output_text = ""
+        
+        if result['success']:
+            output_text += f"[success] ✓ Encoding Detected: {result['encoding_type']}\n"
+            output_text += f"[info] Confidence: {result['confidence'] * 100:.1f}%\n"
+            output_text += f"[info] Readable: {'Yes' if result.get('readable', False) else 'No'}\n"
+            output_text += "[cyanText] " + "="*50 + "\n"
+            output_text += f"[success] DECODED TEXT:\n\n{result['decoded_text']}\n"
+        else:
+            output_text += f"[error] ✗ Decoding Failed: {result.get('error', 'Unknown error')}\n"
+            if result.get('all_results'):
+                output_text += "[warning] Partial results available:\n"
+                for r in result['all_results'][:3]:
+                    output_text += f"  [info] - {r['encoding']}: {r['decoded'][:50]}...\n"
+
+        self._decoder_output_show(output_text)
+
+        # Show all results
+        self._decoder_show_all_results(result.get('all_results', []))
+
+    # * Run manual decode
+    def _run_manual_decode(self):
+        encoded_text = self.decoder_input.get("1.0", "end-1c").strip()
+        encoding_type = self.decoder_type_var.get()
+        
+        if not encoded_text:
+            self._decoder_output_show("[error] Error: Input is empty\n")
+            return
+
+        if not hasattr(self.core, 'decoder'):
+            self._decoder_output_show("[error] Error: Decoder module not initialized\n")
+            return
+
+        # Run manual decode
+        result = self.core.decoder.manual_decode(encoded_text, encoding_type)
+
+        # Display result
+        output_text = ""
+        
+        if result['success']:
+            output_text += f"[success] ✓ Manual Decode ({encoding_type.upper()}):\n\n"
+            output_text += f"[success] {result['decoded_text']}\n"
+        else:
+            output_text += f"[error] ✗ Decoding Failed: {result.get('error', 'Unknown error')}\n"
+
+        self._decoder_output_show(output_text)
+        self._decoder_show_all_results([])
+
+    # * Show all decoding results
+    def _decoder_show_all_results(self, results):
+        # Clear previous results
+        for widget in self.results_frame.winfo_children():
+            if isinstance(widget, ctk.CTkLabel):
+                widget.destroy()
+
+        if not results:
+            return
+
+        for i, result in enumerate(results[:10]):  # Show top 10
+            readable_tag = "✓" if result.get('readable', False) else "✗"
+            conf_pct = result.get('confidence', 0) * 100
+            
+            result_text = f"[{readable_tag}] {result['encoding']} ({conf_pct:.0f}%) → {result['decoded'][:60]}..."
+            
+            lbl = ctk.CTkLabel(self.results_frame, text=result_text, font=("Consolas", 10), 
+                               text_color="#00ff00" if result.get('readable', False) else "#888888",
+                               anchor="w", cursor="hand2")
+            lbl.pack(fill="x", padx=10, pady=2)
+            
+            # Click to view full result
+            lbl.bind("<Button-1>", lambda e, r=result: self._decoder_show_full_result(r))
+
+    # * Show full result on click
+    def _decoder_show_full_result(self, result):
+        self.decoder_input.delete("1.0", "end")
+        self.decoder_input.insert("1.0", result['decoded'])
+        self._decoder_output_show(f"[info] Full result from {result['encoding']}:\n\n{result['decoded']}\n")
+
+    # * Helper: Show output in decoder output box
+    def _decoder_output_show(self, text):
+        self.decoder_output.configure(state="normal")
+        self.decoder_output.delete("1.0", "end")
+        
+        # Parse tags and insert with formatting
+        lines = text.split('\n')
+        for line in lines:
+            tag = "end"
+            if "[success]" in line:
+                tag = "success"
+            elif "[error]" in line:
+                tag = "error"
+            elif "[warning]" in line:
+                tag = "warning"
+            elif "[info]" in line:
+                tag = "info"
+            elif "[cyanText]" in line:
+                tag = "cyanText"
+            
+            # Remove tags from display text
+            display_line = line.replace("[success]", "").replace("[error]", "").replace("[warning]", "")
+            display_line = display_line.replace("[info]", "").replace("[cyanText]", "").replace("[dimText]", "")
+            
+            self.decoder_output.insert("end", display_line + "\n", tag)
+        
+        self.decoder_output.configure(state="disabled")
+
+    # * Clear decoder input/output
+    def _decoder_clear(self):
+        self.decoder_input.delete("1.0", "end")
+        self._decoder_output_show("")
+        for widget in self.results_frame.winfo_children():
+            if isinstance(widget, ctk.CTkLabel):
+                widget.destroy()
+
+    # * Copy result to clipboard
+    def _decoder_copy_result(self):
+        result_text = self.decoder_output.get("1.0", "end-1c").strip()
+        if result_text:
+            # Remove ANSI-like tags for clean copy
+            clean_text = result_text
+            for tag in ["[success]", "[error]", "[warning]", "[info]", "[cyanText]", "[dimText]"]:
+                clean_text = clean_text.replace(tag, "")
+            
+            self.clipboard_clear()
+            self.clipboard_append(clean_text)
+            self.log_to_terminal("[success] Decoder result copied to clipboard!\n", "[success] ")
 
     # * Jalankan Windows OLE Drag-and-Drop (External Bridge v6.0.1)
     def _on_script_drag_start(self, event, script):
